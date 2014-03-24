@@ -1,0 +1,122 @@
+CROSS=arm-none-eabi-
+CC=$(CROSS)gcc
+LD=$(CROSS)ld
+OBJCOPY=$(CROSS)objcopy
+OBJDUMP=$(CROSS)objdump
+AR=$(CROSS)ar
+LDSCRIPT=$(CORE)linker/$(CPU).ld
+SEGGER=/opt/SEGGER
+JLINK=$(SEGGER)/JLink/JLinkExe
+
+# determine program version
+PROGRAM_VERSION:=$(shell git describe --tags --abbrev=4 --dirty 2>/dev/null | sed s/^v//)
+ifeq ("$(PROGRAM_VERSION)","")
+    PROGRAM_VERSION:='unknown'
+endif
+
+CORE=../core/
+
+#
+# CFLAGS common to both the THUMB and ARM mode builds
+#
+CFLAGS= \
+-D __$(CPU)__ \
+-D __$(ARCH)__ \
+-D PROGRAM_VERSION=\"$(PROGRAM_VERSION)\" \
+-D PROGRAM_NAME=\"$(TARGET)\" \
+-I$(CORE)cmsis \
+-I$(CORE)nrf/inc \
+-I$(CORE)openbeacon/inc \
+-Wall \
+-Werror \
+-Wextra  \
+-Wno-multichar \
+-Wstrict-prototypes  \
+-Wno-strict-aliasing  \
+-D CORTEXM0_GCC  \
+-mcpu=cortex-m0 \
+-msoft-float \
+-mthumb \
+-fno-common \
+-T$(LDSCRIPT) \
+$(DEBUG)  \
+$(OPTIM) \
+-fomit-frame-pointer \
+-ffunction-sections \
+-fdata-sections \
+$(APP_CFLAGS)
+
+LINKER_FLAGS=$(APP_LDFLAGS) -Xlinker --gc-sections -Xlinker -o$(TARGET).elf -Xlinker -M -Xlinker -Map=$(TARGET).map
+
+ARM_SRC= \
+  $(APP_SRC) \
+  $(CORE)startup/$(ARCH).c \
+  $(CORE)nrf/src/system_$(ARCH).c \
+  $(CORE)openbeacon/src/crc16.c \
+  $(CORE)openbeacon/src/crc8.c \
+  $(CORE)openbeacon/src/debug_printf.c \
+  $(CORE)openbeacon/src/printf.c \
+  $(CORE)openbeacon/src/uart.c \
+  $(CORE)openbeacon/src/xxtea.c
+
+#
+# JLink flash script
+#
+define TARGET_FLASH
+	si 1
+	device $(CPU)
+	rx 100
+	halt
+	w4 4001e504 1
+	erase
+	sleep 1000
+	loadbin $(TARGET).bin 0
+	rx 100
+	g
+	exit
+endef
+export TARGET_FLASH
+
+define TARGET_ERASE
+	r
+	si 1
+	device $(CPU)
+	w4 4001e504 2
+	w4 4001e50c 1
+	w4 4001e514 1
+	r
+	exit
+endef
+export TARGET_ERASE
+
+#
+# Define all object files.
+#
+ARM_OBJ = $(ARM_SRC:.c=.o)
+APP_ADDITIONAL?=
+
+$(TARGET).bin : $(TARGET).elf
+	$(OBJCOPY) $(TARGET).elf -O binary $(TARGET).bin
+
+$(TARGET).hex : $(TARGET).elf
+	$(OBJCOPY) $(TARGET).elf -O ihex $(TARGET).hex
+
+$(TARGET).elf : $(ARM_OBJ) $(CRT0) $(BOOTLOADER) $(APP_ADDITIONAL) Makefile
+	$(CC) $(CFLAGS) $(ARM_OBJ) $(BOOTLOADER) $(APP_ADDITIONAL) -nostartfiles $(CRT0) $(LINKER_FLAGS)
+	$(OBJDUMP) -d $(TARGET).elf > $(TARGET).asm
+
+$(ARM_OBJ) : %.o : %.c $(LDSCRIPT) Makefile
+	$(CC) -c $(CFLAGS) $< -o $@
+
+flash: $(TARGET).bin
+	@echo "$$TARGET_FLASH" | $(JLINK)
+
+erase:
+	@echo "$$TARGET_ERASE" | $(JLINK)
+
+version:
+	@echo "$(TARGET) version $(PROGRAM_VERSION)"
+
+clean : app_clean
+	find $(CORE) -name '*.o' -exec rm \{\} \;
+	rm -f $(TARGET).bin $(TARGET).elf $(TARGET).map $(TARGET).asm $(TARGET)-$(CPU).bin JLink.log
