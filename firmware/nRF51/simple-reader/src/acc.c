@@ -25,6 +25,27 @@
 #include <openbeacon.h>
 #include <acc.h>
 
+void acc_write(uint8_t cmd, uint8_t data)
+{
+	nrf_gpio_pin_clear(CONFIG_ACC_nCS);
+
+	/* send command */
+	SPI_ACC->TXD = cmd;
+	while (!SPI_ACC->EVENTS_READY);
+	SPI_ACC->EVENTS_READY = 0;
+	/* dummy read */
+	SPI_ACC->RXD;
+
+	/* send command */
+	SPI_ACC->TXD = data;
+	while (!SPI_ACC->EVENTS_READY);
+	SPI_ACC->EVENTS_READY = 0;
+	/* dummy read */
+	SPI_ACC->RXD;
+
+	nrf_gpio_pin_set(CONFIG_ACC_nCS);
+}
+
 void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 {
 	nrf_gpio_pin_clear(CONFIG_ACC_nCS);
@@ -83,7 +104,13 @@ uint8_t acc_init(void)
 		(SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos);
 
 	/* check accelerometer read */
-	acc_read(0xF, sizeof(data), &data);
-	return (data==0x33)?0:1;
+	acc_read(ACC_REG_WHO_AM_I, sizeof(data), &data);
+	if(data!=0x33)
+		return 1;
+
+	/* enable accelerometer */
+	acc_write(ACC_REG_CTRL_REG1, 0x83);
+
+	return 0;
 }
 
