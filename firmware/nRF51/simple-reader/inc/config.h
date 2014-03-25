@@ -38,6 +38,9 @@
 #define CONFIG_FLASH_nCS     12
 #define SPI_FLASH            NRF_SPI0
 
+#define CONFIG_ADC0          1
+#define CONFIG_ADC1          2
+
 #define CONFIG_ACC_INT1      3
 #define CONFIG_ACC_nCS       4
 #define CONFIG_ACC_MISO      5
@@ -45,6 +48,8 @@
 #define CONFIG_ACC_SCK       7
 #define SPI_ACC              NRF_SPI1
 
+
 #define CONFIG_LED_PIN       17
+#define CONFIG_SWITCH_PIN    29
 
 #endif/*__CONFIG_H__*/

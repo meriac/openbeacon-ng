@@ -67,6 +67,9 @@ static void init_hardware(void)
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
 	nrf_gpio_pin_set(CONFIG_LED_PIN);
 
+	/* enabled input pin */
+	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_NOPULL);
+
 	/* start 16MHz crystal oscillator */
 	NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 	NRF_CLOCK->TASKS_HFCLKSTART = 1;
