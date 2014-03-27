@@ -105,16 +105,6 @@ void main_entry(void)
 
 	init_hardware();
 
-	while(1)
-	{
-		debug_printf("t=08%u\r\n", NRF_RTC0->COUNTER);
-		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		timer_wait(SECONDS(2));
-		debug_printf("t=08%u\r\n", NRF_RTC0->COUNTER);
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-		timer_wait(SECONDS(2));
-	}
-
 	while(true)
 	{
 		/* briefly blink LED */
