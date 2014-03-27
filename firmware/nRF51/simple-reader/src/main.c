@@ -112,7 +112,7 @@ void main_entry(void)
 		debug_printf("RX: ");
 
 		/* enable & start RX */
-		NRF_RADIO->EVENTS_END  = 0;
+		NRF_RADIO->EVENTS_END = 0;
 		NRF_RADIO->TASKS_RXEN = 1;
 
 		/* wait for packet end */
