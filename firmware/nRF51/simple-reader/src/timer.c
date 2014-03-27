@@ -71,7 +71,6 @@ void timer_init(void)
 	NRF_RTC0->COUNTER = 0;
 	NRF_RTC0->PRESCALER = (LF_FREQUENCY/TIMER_FREQUENCY)-1;
 	NRF_RTC0->TASKS_START = 1;
-	debug_printf("NRF_RTC0->PRESCALER=0x%06X\r\n", NRF_RTC0->PRESCALER);
 
 	/* setup delay routine */
 	NRF_RTC1->COUNTER = 0;
