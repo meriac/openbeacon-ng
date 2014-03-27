@@ -45,16 +45,16 @@ void timer_wait(uint32_t ticks)
 		__WFI();
 }
 
-void RTC1_IRQHandler(void)
+void RTC1_IRQ_Handler(void)
 {
-	nrf_gpio_pin_set(CONFIG_LED_PIN);
+	/* allow wait loop to exit */
+	g_timer_wait = FALSE;
 
 	/* stop timer */
 	NRF_RTC1->TASKS_STOP = 1;
 	NRF_RTC1->TASKS_CLEAR = 1;
+	/* acknowledge interrupt */
 	NRF_RTC1->EVENTS_COMPARE[0] = 0;
-
-	g_timer_wait = FALSE;
 }
 
 void timer_init(void)

@@ -30,6 +30,7 @@ CFLAGS= \
 -D PROGRAM_NAME=\"$(TARGET)\" \
 -I$(CORE)cmsis \
 -I$(CORE)nrf/inc \
+-I$(CORE)startup/inc \
 -I$(CORE)openbeacon/inc \
 -Wall \
 -Werror \
@@ -54,7 +55,7 @@ LINKER_FLAGS=$(APP_LDFLAGS) -Xlinker --gc-sections -Xlinker -o$(TARGET).elf -Xli
 
 ARM_SRC= \
   $(APP_SRC) \
-  $(CORE)startup/$(ARCH).c \
+  $(CORE)startup/src/$(ARCH).c \
   $(CORE)nrf/src/system_$(ARCH).c \
   $(CORE)openbeacon/src/crc16.c \
   $(CORE)openbeacon/src/crc8.c \

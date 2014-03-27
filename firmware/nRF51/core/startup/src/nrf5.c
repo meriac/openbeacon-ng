@@ -23,6 +23,7 @@
 
 */
 #include <openbeacon.h>
+#include "nrf5.h"
 
 void ResetDefaultHandler(void) __attribute__ ((noreturn));
 
@@ -40,31 +41,31 @@ void HardFault_Handler(void) ALIAS(IntDefaultHandler);
 void SVC_Handler(void) ALIAS(IntDefaultHandler);
 void PendSV_Handler(void) ALIAS(IntDefaultHandler);
 void SysTick_Handler(void) ALIAS(IntDefaultHandler);
-void POWER_CLOCK_IRQHandler(void) ALIAS(IntDefaultHandler);
-void RADIO_IRQHandler(void) ALIAS(IntDefaultHandler);
-void UART0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SPI0_TWI0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SPI1_TWI1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void GPIOTE_IRQHandler(void) ALIAS(IntDefaultHandler);
-void ADC_IRQHandler(void) ALIAS(IntDefaultHandler);
-void TIMER0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void TIMER1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void TIMER2_IRQHandler(void) ALIAS(IntDefaultHandler);
-void RTC0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void TEMP_IRQHandler(void) ALIAS(IntDefaultHandler);
-void RNG_IRQHandler(void) ALIAS(IntDefaultHandler);
-void ECB_IRQHandler(void) ALIAS(IntDefaultHandler);
-void CCM_AAR_IRQHandler(void) ALIAS(IntDefaultHandler);
-void WDT_IRQHandler(void) ALIAS(IntDefaultHandler);
-void RTC1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void QDEC_IRQHandler(void) ALIAS(IntDefaultHandler);
-void LPCOMP_COMP_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SWI0_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SWI1_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SWI2_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SWI3_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SWI4_IRQHandler(void) ALIAS(IntDefaultHandler);
-void SWI5_IRQHandler(void) ALIAS(IntDefaultHandler);
+void POWER_CLOCK_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void RADIO_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void UART0_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void SPI0_TWI0_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void SPI1_TWI1_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void GPIOTE_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void ADC_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void TIMER0_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void TIMER1_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void TIMER2_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void RTC0_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void TEMP_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void RNG_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void ECB_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void CCM_AAR_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void WDT_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void RTC1_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void QDEC_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void LPCOMP_COMP_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void SWI0_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void SWI1_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void SWI2_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void SWI3_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void SWI4_IRQ_Handler(void) ALIAS(IntDefaultHandler);
+void SWI5_IRQ_Handler(void) ALIAS(IntDefaultHandler);
 
 
 //*****************************************************************************
@@ -94,32 +95,32 @@ void (*const g_pfnVectors[]) (void) =
 	0,                           /* - 3 */
 	PendSV_Handler,              /* - 2 */
 	SysTick_Handler,             /* - 1 */
-	POWER_CLOCK_IRQHandler,      /*   0 */
-	RADIO_IRQHandler,            /*   1 */
-	UART0_IRQHandler,            /*   2 */
-	SPI0_TWI0_IRQHandler,        /*   3 */
-	SPI1_TWI1_IRQHandler,        /*   4 */
+	POWER_CLOCK_IRQ_Handler,     /*   0 */
+	RADIO_IRQ_Handler,           /*   1 */
+	UART0_IRQ_Handler,           /*   2 */
+	SPI0_TWI0_IRQ_Handler,       /*   3 */
+	SPI1_TWI1_IRQ_Handler,       /*   4 */
 	0,                           /*   5 */
-	GPIOTE_IRQHandler,           /*   6 */
-	ADC_IRQHandler,              /*   7 */
-	TIMER0_IRQHandler,           /*   8 */
-	TIMER1_IRQHandler,           /*   9 */
-	TIMER2_IRQHandler,           /*  10 */
-	RTC0_IRQHandler,             /*  11 */
-	TEMP_IRQHandler,             /*  12 */
-	RNG_IRQHandler,              /*  13 */
-	ECB_IRQHandler,              /*  14 */
-	CCM_AAR_IRQHandler,          /*  15 */
-	WDT_IRQHandler,              /*  16 */
-	RTC1_IRQHandler,             /*  17 */
-	QDEC_IRQHandler,             /*  18 */
-	LPCOMP_COMP_IRQHandler,      /*  19 */
-	SWI0_IRQHandler,             /*  20 */
-	SWI1_IRQHandler,             /*  21 */
-	SWI2_IRQHandler,             /*  22 */
-	SWI3_IRQHandler,             /*  23 */
-	SWI4_IRQHandler,             /*  24 */
-	SWI5_IRQHandler,             /*  25 */
+	GPIOTE_IRQ_Handler,          /*   6 */
+	ADC_IRQ_Handler,             /*   7 */
+	TIMER0_IRQ_Handler,          /*   8 */
+	TIMER1_IRQ_Handler,          /*   9 */
+	TIMER2_IRQ_Handler,          /*  10 */
+	RTC0_IRQ_Handler,            /*  11 */
+	TEMP_IRQ_Handler,            /*  12 */
+	RNG_IRQ_Handler,             /*  13 */
+	ECB_IRQ_Handler,             /*  14 */
+	CCM_AAR_IRQ_Handler,         /*  15 */
+	WDT_IRQ_Handler,             /*  16 */
+	RTC1_IRQ_Handler,            /*  17 */
+	QDEC_IRQ_Handler,            /*  18 */
+	LPCOMP_COMP_IRQ_Handler,     /*  19 */
+	SWI0_IRQ_Handler,            /*  20 */
+	SWI1_IRQ_Handler,            /*  21 */
+	SWI2_IRQ_Handler,            /*  22 */
+	SWI3_IRQ_Handler,            /*  23 */
+	SWI4_IRQ_Handler,            /*  24 */
+	SWI5_IRQ_Handler,            /*  25 */
 	0,                           /*  26 */
 	0,                           /*  27 */
 	0,                           /*  28 */

@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <config.h>
+#include <nrf5.h>
 
 #define PACKED __attribute__((packed))
 #define WEAK __attribute__ ((weak))
