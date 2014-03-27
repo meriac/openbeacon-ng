@@ -108,8 +108,8 @@ uint8_t acc_init(void)
 	if(data!=0x33)
 		return 1;
 
-	/* enable accelerometer */
-	acc_write(ACC_REG_CTRL_REG1, 0x83);
+	/* disable accelerometer */
+	acc_write(ACC_REG_CTRL_REG1, 0x00);
 
 	return 0;
 }

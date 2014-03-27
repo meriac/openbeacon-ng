@@ -87,7 +87,12 @@ uint8_t flash_init(void)
 
 	/* check for flash */
 	flash_cmd(0x9F, sizeof(data), data);
+	if(memcmp(data, g_flash_id, sizeof(g_flash_id)))
+		return 1;
 
-	return memcmp(data, g_flash_id, sizeof(g_flash_id)) ? 1:0;
+	/* send flash to deep power down */
+	flash_cmd(0x79, 0, NULL);
+
+	return 0;
 }
 

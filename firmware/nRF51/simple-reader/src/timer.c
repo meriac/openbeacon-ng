@@ -25,9 +25,36 @@
 #include <openbeacon.h>
 #include <timer.h>
 
+static volatile uint8_t g_timer_wait;
+
 uint32_t timer_s(void)
 {
 	return NRF_RTC0->COUNTER/TIMER_FREQUENCY;
+}
+
+void timer_wait(uint32_t ticks)
+{
+	g_timer_wait = TRUE;
+
+	/* configure timeout */
+	NRF_RTC1->CC[0] = ticks;
+	/* start timer */
+	NRF_RTC1->TASKS_START = 1;
+
+	while(g_timer_wait)
+		__WFI();
+}
+
+void RTC1_IRQHandler(void)
+{
+	nrf_gpio_pin_set(CONFIG_LED_PIN);
+
+	/* stop timer */
+	NRF_RTC1->TASKS_STOP = 1;
+	NRF_RTC1->TASKS_CLEAR = 1;
+	NRF_RTC1->EVENTS_COMPARE[0] = 0;
+
+	g_timer_wait = FALSE;
 }
 
 void timer_init(void)
@@ -49,5 +76,8 @@ void timer_init(void)
 	/* setup delay routine */
 	NRF_RTC1->COUNTER = 0;
 	NRF_RTC1->PRESCALER = 0;
-	NRF_RTC1->TASKS_START = 0;
+	NRF_RTC1->TASKS_STOP = 1;
+	NRF_RTC1->INTENSET =
+		(RTC_INTENSET_COMPARE0_Enabled << RTC_INTENSET_COMPARE0_Pos);
+	NVIC_EnableIRQ(RTC1_IRQn);
 }
