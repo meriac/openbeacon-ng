@@ -5,13 +5,17 @@ OBJCOPY=$(CROSS)objcopy
 OBJDUMP=$(CROSS)objdump
 AR=$(CROSS)ar
 LDSCRIPT=$(CORE)linker/$(CPU).ld
-SEGGER=/opt/SEGGER
-JLINK=$(SEGGER)/JLink/JLinkExe
+SEGGER=/opt/SEGGER/JLink
+JLINK=$(SEGGER)/JLinkExe
 
 # determine program version
 PROGRAM_VERSION:=$(shell git describe --tags --abbrev=4 --dirty 2>/dev/null | sed s/^v//)
 ifeq ("$(PROGRAM_VERSION)","")
     PROGRAM_VERSION:='unknown'
+endif
+
+ifeq ("$(wildcard $(JLINK))","")
+    JLINK=JLinkExe
 endif
 
 CORE=../core/
