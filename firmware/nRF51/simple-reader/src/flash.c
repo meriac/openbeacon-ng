@@ -24,6 +24,7 @@
 */
 #include <openbeacon.h>
 #include <flash.h>
+#include <timer.h>
 
 static const uint8_t g_flash_id[]={0x1f,0x25,0x00,0x01,0x00};
 
@@ -84,6 +85,13 @@ uint8_t flash_init(void)
 	/* enable SPI flash peripheral */
 	SPI_FLASH->ENABLE =
 		(SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos);
+
+	/* wake up flash */
+	timer_wait(MILLISECONDS(1));
+	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
+	timer_wait(MILLISECONDS(1));
+	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
+	timer_wait(MILLISECONDS(1));
 
 	/* check for flash */
 	flash_cmd(0x9F, sizeof(data), data);

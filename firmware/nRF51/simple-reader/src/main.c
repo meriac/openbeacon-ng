@@ -100,7 +100,6 @@ static void init_hardware(void)
 void main_entry(void)
 {
 	uint16_t crc;
-	volatile uint32_t v;
 	int strength;
 
 	init_hardware();
@@ -109,7 +108,7 @@ void main_entry(void)
 	{
 		/* briefly blink LED */
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		for(v=0;v<20000;v++);
+		timer_wait(MILLISECONDS(25));
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
 		/* set packet start address */
