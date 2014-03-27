@@ -27,11 +27,18 @@
 
 #ifdef  CONFIG_UART_BAUDRATE
 
+static uint8_t g_uart_buffer[CONFIG_UART_BUFFER];
+static uint16_t g_uart_buffer_head, g_uart_buffer_tail;
+static volatile uint16_t g_uart_buffer_count;
+
 /* allow to override default putchar output from serial to something else */
 BOOL default_putchar (uint8_t data) ALIAS(uart_tx);
 
 void uart_init(void)
 {
+	g_uart_buffer_count = 0;
+	g_uart_buffer_head = g_uart_buffer_tail = 0;
+
 #ifdef  CONFIG_UART_RXD_PIN
 	nrf_gpio_cfg_input(CONFIG_UART_RXD_PIN, NRF_GPIO_PIN_NOPULL);
 	NRF_UART0->PSELRXD = CONFIG_UART_RXD_PIN;
@@ -60,25 +67,48 @@ void uart_init(void)
 	/* set baud rate */
 	NRF_UART0->BAUDRATE = (CONFIG_UART_BAUDRATE << UART_BAUDRATE_BAUDRATE_Pos);
 
+	/* enable UART IRQ */
+	NVIC_EnableIRQ(UART0_IRQn);
+	NRF_UART0->INTENSET =
+		(UART_INTENSET_TXDRDY_Enabled << UART_INTENSET_TXDRDY_Pos);
+
 	/* start UART */
-	NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
-#ifdef  CONFIG_UART_TXD_PIN
-	NRF_UART0->TASKS_STARTTX = 1;
-#endif/*CONFIG_UART_TXD_PIN*/
 #ifdef  CONFIG_UART_RXD_PIN
+	NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
 	NRF_UART0->TASKS_STARTRX = 1;
 	NRF_UART0->EVENTS_RXDRDY = 0;
+#else
+	NRF_UART0->ENABLE = 0;
 #endif/*CONFIG_UART_RXD_PIN*/
 }
 
 #ifdef  CONFIG_UART_TXD_PIN
 BOOL uart_tx(uint8_t data)
 {
-	NRF_UART0->TXD = data;
-	/* wait for TX */
-	while (!NRF_UART0->EVENTS_TXDRDY);
-	/* reset TX event */
-	NRF_UART0->EVENTS_TXDRDY = 0;
+	/* wait for buffer */
+	while(g_uart_buffer_count==CONFIG_UART_BUFFER)
+		__WFI();
+
+	/* temporarily disable UART IRQ ... */
+	NVIC_DisableIRQ(UART0_IRQn);
+
+	/* ...and push data */
+	if(g_uart_buffer_count)
+	{
+		g_uart_buffer[g_uart_buffer_head++] = data;
+		if(g_uart_buffer_head == CONFIG_UART_BUFFER)
+			g_uart_buffer_head = 0;
+	}
+	else
+	{
+		NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
+		NRF_UART0->TASKS_STARTTX = 1;
+		NRF_UART0->TXD = data;
+	}
+	g_uart_buffer_count++;
+
+	/* enable UART IRQ again */
+	NVIC_EnableIRQ(UART0_IRQn);
 
 	return TRUE;
 }
@@ -90,6 +120,26 @@ int uart_rx(void)
 	return -1;
 }
 #endif/*CONFIG_UART_RXD_PIN*/
+
+void UART0_IRQ_Handler(void)
+{
+	if(NRF_UART0->EVENTS_TXDRDY)
+	{
+		NRF_UART0->EVENTS_TXDRDY = 0;
+		g_uart_buffer_count--;
+		if(!g_uart_buffer_count)
+		{
+			NRF_UART0->TASKS_STOPTX = 1;
+			NRF_UART0->ENABLE = 0;
+		}
+		else
+		{
+			NRF_UART0->TXD = g_uart_buffer[g_uart_buffer_tail++];
+			if(g_uart_buffer_tail == CONFIG_UART_BUFFER)
+				g_uart_buffer_tail = 0;
+		}
+	}
+}
 
 #endif/*CONFIG_UART_BAUDRATE*/
 

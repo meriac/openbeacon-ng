@@ -25,6 +25,10 @@
 #ifndef __UART_H__
 #define __UART_H__
 
+#ifndef CONFIG_UART_BUFFER
+#define CONFIG_UART_BUFFER 128
+#endif/*CONFIG_UART_BUFFER*/
+
 #ifdef  CONFIG_UART_BAUDRATE
 extern void uart_init(void);
 extern BOOL uart_tx(uint8_t data);

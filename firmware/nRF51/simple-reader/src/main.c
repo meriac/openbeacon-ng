@@ -39,25 +39,21 @@ static const uint32_t xxtea_key[XXTEA_BLOCK_COUNT] = {
 
 void blink(uint8_t times)
 {
-	volatile uint32_t v;
-
 	while(times--)
 	{
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		for(v=0;v<200000;v++);
+		timer_wait(MILLISECONDS(10));
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-		for(v=0;v<200000;v++);
+		timer_wait(MILLISECONDS(490));
 	}
 }
 
 void halt(uint8_t times)
 {
-	volatile uint32_t v;
-
 	while(TRUE)
 	{
 		blink(times);
-		for(v=0;v<1000000;v++);
+		timer_wait(SECONDS(3));
 	}
 }
 
@@ -69,11 +65,6 @@ static void init_hardware(void)
 
 	/* enabled input pin */
 	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_NOPULL);
-
-	/* start 16MHz crystal oscillator */
-	NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-	NRF_CLOCK->TASKS_HFCLKSTART = 1;
-	while(!NRF_CLOCK->EVENTS_HFCLKSTARTED);
 
 	/* reset LED */
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
@@ -101,9 +92,14 @@ void main_entry(void)
 {
 	uint16_t crc;
 	int strength;
-
 	init_hardware();
 
+	/* start 16MHz crystal oscillator */
+	NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+	NRF_CLOCK->TASKS_HFCLKSTART = 1;
+	while(!NRF_CLOCK->EVENTS_HFCLKSTARTED);
+
+	/* enter RX loop */
 	while(true)
 	{
 		/* briefly blink LED */
