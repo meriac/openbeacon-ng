@@ -101,6 +101,7 @@ BOOL uart_tx(uint8_t data)
 	}
 	else
 	{
+		/* enable UART for sending out first byte */
 		NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
 		NRF_UART0->TASKS_STARTTX = 1;
 		NRF_UART0->TXD = data;
