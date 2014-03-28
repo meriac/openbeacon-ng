@@ -25,6 +25,9 @@
 #include <openbeacon.h>
 #include <radio.h>
 #include <aes.h>
+#include <timer.h>
+
+#define NRF_TIMER_FREQUENCY 8
 
 #define NRF_MAC_SIZE 5UL
 #define NRF_PROX_SIZE sizeof(TBeaconNgProx)
@@ -46,11 +49,21 @@
 
 void RTC0_IRQ_Handler(void)
 {
-	/* stop timer */
-	NRF_RTC0->TASKS_STOP = 1;
-	NRF_RTC0->TASKS_CLEAR = 1;
-	/* acknowledge interrupt */
-	NRF_RTC0->EVENTS_COMPARE[0] = 0;
+	if(NRF_RTC0->EVENTS_COMPARE[0])
+	{
+		NRF_RTC0->EVENTS_COMPARE[0] = 0;
+		NRF_RTC0->CC[0]+=LF_FREQUENCY;
+
+		nrf_gpio_pin_set(CONFIG_LED_PIN);
+	}
+
+	if(NRF_RTC0->EVENTS_COMPARE[1])
+	{
+		NRF_RTC0->EVENTS_COMPARE[1] = 0;
+		NRF_RTC0->CC[1]+=LF_FREQUENCY;
+
+		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+	}
 }
 
 void radio_init(uint32_t uid)
@@ -83,9 +96,12 @@ void radio_init(uint32_t uid)
 	NRF_RTC0->TASKS_START = 0;
 	NRF_RTC0->COUNTER = 0;
 	NRF_RTC0->PRESCALER = 0;
-//	NRF_RTC0->TASKS_START = 1;
-	NRF_RTC0->INTENSET =
-		(RTC_INTENSET_COMPARE0_Enabled << RTC_INTENSET_COMPARE0_Pos);
+	NRF_RTC0->TASKS_START = 1;
+	NRF_RTC0->CC[0] = LF_FREQUENCY*2;
+	NRF_RTC0->CC[1] = NRF_RTC0->CC[0]+MILLISECONDS(1);
+	NRF_RTC0->INTENSET = (
+		(RTC_INTENCLR_COMPARE0_Enabled   << RTC_INTENCLR_COMPARE0_Pos) |
+		(RTC_INTENCLR_COMPARE1_Enabled   << RTC_INTENCLR_COMPARE1_Pos)
+	);
 	NVIC_EnableIRQ(RTC0_IRQn);
 }
-
