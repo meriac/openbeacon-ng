@@ -44,10 +44,20 @@
 		(NRF_PROX_SIZE                << RADIO_PCNF1_STATLEN_Pos) |\
 		(NRF_PROX_SIZE                << RADIO_PCNF1_MAXLEN_Pos)
 
+void RTC0_IRQ_Handler(void)
+{
+	/* stop timer */
+	NRF_RTC0->TASKS_STOP = 1;
+	NRF_RTC0->TASKS_CLEAR = 1;
+	/* acknowledge interrupt */
+	NRF_RTC0->EVENTS_COMPARE[0] = 0;
+}
+
 void radio_init(uint32_t uid)
 {
+	/* setup default radio settings */
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_2Mbit << RADIO_MODE_MODE_Pos;
-	NRF_RADIO->FREQUENCY = CONFIG_TRACKER_CHANNEL;
+	NRF_RADIO->FREQUENCY = CONFIG_PROX_CHANNEL;
 	NRF_RADIO->TXPOWER = (RADIO_TXPOWER_TXPOWER_0dBm << RADIO_TXPOWER_TXPOWER_Pos);
 	NRF_RADIO->PREFIX0 = 0x80D7UL;
 	NRF_RADIO->BASE0 = 0xEA8AF0B1UL;
@@ -68,5 +78,14 @@ void radio_init(uint32_t uid)
 
 	/* initialize AES encryption engine */
 	aes_init(uid);
+
+	/* setup radio timer */
+	NRF_RTC0->TASKS_START = 0;
+	NRF_RTC0->COUNTER = 0;
+	NRF_RTC0->PRESCALER = 0;
+//	NRF_RTC0->TASKS_START = 1;
+	NRF_RTC0->INTENSET =
+		(RTC_INTENSET_COMPARE0_Enabled << RTC_INTENSET_COMPARE0_Pos);
+	NVIC_EnableIRQ(RTC0_IRQn);
 }
 

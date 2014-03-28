@@ -27,11 +27,6 @@
 
 static volatile uint8_t g_timer_wait;
 
-uint32_t timer_s(void)
-{
-	return NRF_RTC0->COUNTER/TIMER_FREQUENCY;
-}
-
 void timer_wait(uint32_t ticks)
 {
 	g_timer_wait = TRUE;
@@ -65,12 +60,6 @@ void timer_init(void)
 	while(!NRF_CLOCK->EVENTS_LFCLKSTARTED);
 	NRF_CLOCK->LFCLKSRC =
 		(CLOCK_LFCLKSRCCOPY_SRC_Xtal << CLOCK_LFCLKSRCCOPY_SRC_Pos);
-
-	/* setup 1s system timer */
-	NRF_RTC0->TASKS_START = 0;
-	NRF_RTC0->COUNTER = 0;
-	NRF_RTC0->PRESCALER = (LF_FREQUENCY/TIMER_FREQUENCY)-1;
-	NRF_RTC0->TASKS_START = 1;
 
 	/* setup delay routine */
 	NRF_RTC1->COUNTER = 0;

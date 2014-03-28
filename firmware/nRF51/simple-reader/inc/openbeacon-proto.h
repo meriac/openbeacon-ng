@@ -29,9 +29,9 @@
 
 #define CONFIG_TRACKER_CHANNEL 81
 #define CONFIG_PROX_CHANNEL 76
-#define CONFIG_SIGNATURE_SIZE 6
 
-#define BEACON_SIGHTING_SLOTS 3
+#define CONFIG_SIGNATURE_SIZE 6
+#define CONFIG_SIGHTING_SLOTS 3
 
 #define RFBPROTO_BEACON_NG_TRACKER  30
 #define RFBPROTO_BEACON_NG_SIGHTING 31
@@ -47,7 +47,7 @@ typedef struct
 
 typedef union
 {
-	TBeaconNgSighting sighting[BEACON_SIGHTING_SLOTS];
+	TBeaconNgSighting sighting[CONFIG_SIGHTING_SLOTS];
 	uint8_t raw[16];
 } PACKED TBeaconNgPayload;
 
