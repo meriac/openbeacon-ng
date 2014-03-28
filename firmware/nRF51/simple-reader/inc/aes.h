@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - nRF51 AES Hardware Encryption & Signing
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2014 Milosch Meriac <meriac@openbeacon.de>
  *
  ***************************************************************
 
