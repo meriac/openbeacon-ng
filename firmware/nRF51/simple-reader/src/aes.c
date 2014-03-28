@@ -25,7 +25,12 @@
 #include <openbeacon.h>
 #include <aes.h>
 
-static TCryptoEngine g_signature, g_encrypt;
+const TAES g_default_key = {
+	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+	0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
+};
+
+static TCryptoEngine g_signature, g_encrypt, g_auth;
 
 TAES* aes_sign(const void* data, uint32_t length)
 {
@@ -163,9 +168,35 @@ void aes_encrypt(TCryptoEngine* engine)
 	NRF_ECB->EVENTS_ENDECB = 0;
 }
 
-void aes_init(void)
+/* initial key derivation */
+void aes_key_derivation(const TAES* key, uint32_t uid)
+{
+	/* use base key to derieve needed keys */
+	memcpy(g_encrypt.key, key, sizeof(g_encrypt.key));
+
+	/* create site-signature key */
+	memset(g_encrypt.in, AES_KEYID_SIGNATURE, sizeof(g_encrypt.in));
+	aes_encrypt(&g_encrypt);
+	memcpy(g_signature.key, g_encrypt.out, sizeof(g_signature.key));
+
+	/* create tag-specific authentication key */
+	memset(g_encrypt.in, AES_KEYID_AUTH, sizeof(g_encrypt.in));
+	*((uint32_t*)&g_encrypt.in) ^= uid;
+	aes_encrypt(&g_encrypt);
+	memcpy(g_auth.key, g_encrypt.out, sizeof(g_auth.key));
+
+	/* finally, create site-encryption key */
+	memset(g_encrypt.in, AES_KEYID_ENCRYPTION, sizeof(g_encrypt.in));
+	aes_encrypt(&g_encrypt);
+	memcpy(g_encrypt.key, g_encrypt.out, sizeof(g_encrypt.key));
+}
+
+void aes_init(uint32_t uid)
 {
 	NRF_ECB->TASKS_STOPECB = 1;
 	NRF_ECB->INTENSET =
 		(ECB_INTENSET_ENDECB_Enabled << ECB_INTENSET_ENDECB_Pos);
+
+	/* derieve initial key */
+	aes_key_derivation(&g_default_key, uid);
 }

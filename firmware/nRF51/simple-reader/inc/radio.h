@@ -27,13 +27,6 @@
 
 #include <openbeacon-proto.h>
 
-#define NRF_MAC_SIZE 5UL
-#define NRF_PKT_SIZE ((uint32_t)sizeof(g_Beacon))
-
-#define AES_KEY_SIZE 16
-
-extern TBeaconEnvelope g_Beacon;
-
-extern void radio_init(void);
+extern void radio_init(uint32_t uid);
 
 #endif/*__RADIO_H__*/

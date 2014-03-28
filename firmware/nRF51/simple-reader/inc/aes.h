@@ -28,16 +28,19 @@
 #define AES_BLOCK_SIZE 16
 #define AES_BLOCKS32 (AES_BLOCK_SIZE/4)
 
+#define AES_KEYID_ENCRYPTION 0x01
+#define AES_KEYID_SIGNATURE  0x02
+#define AES_KEYID_AUTH       0x03
+
 typedef uint8_t TAES[AES_BLOCK_SIZE];
 
 typedef struct {
 	TAES key, in, out;
 } PACKED TCryptoEngine;
 
-extern void aes_init(void);
+extern void aes_init(uint32_t uid);
+extern void aes_key_derivation(const TAES* key, uint32_t uid);
 extern void aes_encrypt(TCryptoEngine* engine);
 extern TAES* aes_sign(const void* data, uint32_t length);
-
-
 
 #endif/*__AES_H__*/

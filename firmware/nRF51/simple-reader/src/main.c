@@ -29,14 +29,6 @@
 #include <radio.h>
 #include <timer.h>
 
-/* Default TEA encryption key of the tag - MUST CHANGE ! */
-static const uint32_t xxtea_key[XXTEA_BLOCK_COUNT] = {
-	0x00112233,
-	0x44556677,
-	0x8899AABB,
-	0xCCDDEEFF
-};
-
 void blink(uint8_t times)
 {
 	while(times--)
@@ -85,13 +77,13 @@ static void init_hardware(void)
 
 	/* start radio */
 	debug_printf("\n\rInitializing Radio @24%02iMHz ....\n\r", CONFIG_TRACKER_CHANNEL);
-	radio_init();
+	radio_init(0x12345678);
 }
 
 void main_entry(void)
 {
-	uint16_t crc;
-	int strength;
+	TBeaconNgProx prox;
+
 	init_hardware();
 
 	/* start 16MHz crystal oscillator */
@@ -108,7 +100,7 @@ void main_entry(void)
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
 		/* set packet start address */
-		NRF_RADIO->PACKETPTR = (uint32_t)&g_Beacon;
+		NRF_RADIO->PACKETPTR = (uint32_t)&prox;
 		debug_printf("RX: ");
 
 		/* enable & start RX */
@@ -121,8 +113,10 @@ void main_entry(void)
 		/* verify CRC */
 		if(NRF_RADIO->CRCSTATUS == 1)
 		{
+			hex_dump((uint8_t*)&prox, 0, sizeof(prox));
+#if 0
 			/* adjust byte order and decode */
-			xxtea_decode ((uint32_t*)&g_Beacon.block, XXTEA_BLOCK_COUNT, xxtea_key);
+			xxtea_decode ((uint32_t*)&g_Beacon.p.raw, XXTEA_BLOCK_COUNT, xxtea_key);
 
 			/* verify the CRC checksum */
 			crc = crc16 ((uint8_t*)&g_Beacon.byte,
@@ -148,6 +142,7 @@ void main_entry(void)
 					debug_printf("RSSI[%i@-%03idBm] (%08us) ", strength, NRF_RADIO->RSSISAMPLE, timer_s());
 				hex_dump((uint8_t*)&g_Beacon.byte, 0, sizeof(g_Beacon.byte));
 			}
+#endif
 		}
 		else
 			debug_printf("CRC_ERROR_PLAIN\n\r");

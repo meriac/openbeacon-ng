@@ -24,32 +24,30 @@
 */
 #include <openbeacon.h>
 #include <radio.h>
+#include <aes.h>
 
-TBeaconEnvelope g_Beacon;
+#define NRF_MAC_SIZE 5UL
+#define NRF_PROX_SIZE sizeof(TBeaconNgProx)
 
-typedef struct {
-	uint8_t aeskey[AES_KEY_SIZE];
-	uint8_t cleart[AES_KEY_SIZE];
-	uint8_t cipher[AES_KEY_SIZE];
-} PACKED TCryptoEngine;
+#define RADIO_PCNF1_PROX \
+		(RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos) |\
+		(RADIO_PCNF1_ENDIAN_Big       << RADIO_PCNF1_ENDIAN_Pos)  |\
+		((NRF_MAC_SIZE-1UL)           << RADIO_PCNF1_BALEN_Pos)   |\
+		(NRF_PROX_SIZE                << RADIO_PCNF1_STATLEN_Pos) |\
+		(NRF_PROX_SIZE                << RADIO_PCNF1_MAXLEN_Pos)
 
-static TCryptoEngine g_Crypto;
-
-void radio_init(void)
+void radio_init(uint32_t uid)
 {
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_2Mbit << RADIO_MODE_MODE_Pos;
 	NRF_RADIO->FREQUENCY = CONFIG_TRACKER_CHANNEL;
 	NRF_RADIO->TXPOWER = (RADIO_TXPOWER_TXPOWER_0dBm << RADIO_TXPOWER_TXPOWER_Pos);
-	NRF_RADIO->PREFIX0 = 0x80UL;
-	NRF_RADIO->BASE0 = 0x40C04080UL;
-	NRF_RADIO->RXADDRESSES = 1;
+	NRF_RADIO->PREFIX0 = 0x80D7UL;
+	NRF_RADIO->BASE0 = 0xEA8AF0B1UL;
+	NRF_RADIO->BASE1 = 0x40C04080UL;
+	NRF_RADIO->RXADDRESSES = 2;
+	NRF_RADIO->TXADDRESS = 0;
 	NRF_RADIO->PCNF0 = 0x0;
-	NRF_RADIO->PCNF1 =
-		(RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos) |
-		(RADIO_PCNF1_ENDIAN_Big       << RADIO_PCNF1_ENDIAN_Pos)  |
-		((NRF_MAC_SIZE-1UL)           << RADIO_PCNF1_BALEN_Pos)   |
-		(NRF_PKT_SIZE                 << RADIO_PCNF1_STATLEN_Pos) |
-		(NRF_PKT_SIZE                 << RADIO_PCNF1_MAXLEN_Pos);
+	NRF_RADIO->PCNF1 = RADIO_PCNF1_PROX;
 	NRF_RADIO->CRCCNF = (RADIO_CRCCNF_LEN_One << RADIO_CRCCNF_LEN_Pos);
 	NRF_RADIO->CRCINIT = 0xFFUL;
 	NRF_RADIO->CRCPOLY = 0x107UL;
@@ -60,8 +58,7 @@ void radio_init(void)
 		(RADIO_SHORTS_DISABLED_RSSISTOP_Enabled << RADIO_SHORTS_DISABLED_RSSISTOP_Pos)
 	);
 
-	/* initialize AES engine */
-	memset(&g_Crypto, 0, sizeof(g_Crypto));
-	NRF_ECB->ECBDATAPTR = (uint32_t)&g_Crypto;
+	/* initialize AES encryption engine */
+	aes_init(uid);
 }
 
