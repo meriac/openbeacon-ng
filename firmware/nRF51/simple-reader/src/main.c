@@ -82,15 +82,15 @@ static void init_hardware(void)
 
 void main_entry(void)
 {
-	TBeaconNgProx prox;
+//	TBeaconNgProx prox;
 
 	init_hardware();
 
-	/* start 16MHz crystal oscillator */
-	NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-	NRF_CLOCK->TASKS_HFCLKSTART = 1;
-	while(!NRF_CLOCK->EVENTS_HFCLKSTARTED);
+	/* enter main loop */
+	while(TRUE)
+		__WFI();
 
+#if 0
 	/* enter RX loop */
 	while(true)
 	{
@@ -114,7 +114,6 @@ void main_entry(void)
 		if(NRF_RADIO->CRCSTATUS == 1)
 		{
 			hex_dump((uint8_t*)&prox, 0, sizeof(prox));
-#if 0
 			/* adjust byte order and decode */
 			xxtea_decode ((uint32_t*)&g_Beacon.p.raw, XXTEA_BLOCK_COUNT, xxtea_key);
 
@@ -142,9 +141,9 @@ void main_entry(void)
 					debug_printf("RSSI[%i@-%03idBm] (%08us) ", strength, NRF_RADIO->RSSISAMPLE, timer_s());
 				hex_dump((uint8_t*)&g_Beacon.byte, 0, sizeof(g_Beacon.byte));
 			}
-#endif
 		}
 		else
 			debug_printf("CRC_ERROR_PLAIN\n\r");
 	}
+#endif
 }
