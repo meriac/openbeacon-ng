@@ -29,6 +29,7 @@
 
 static uint32_t g_time;
 static volatile uint32_t g_rxed;
+static TBeaconNgProx g_pkt_prox;
 
 #define NRF_TIMER_FREQUENCY 8
 
@@ -64,6 +65,7 @@ void RTC0_IRQ_Handler(void)
 		g_time++;
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
+
 		/* start DC-DC converter */
 		NRF_POWER->DCDCEN = (
 			(POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos)
@@ -100,6 +102,9 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* retrigger listening stop */
 		NRF_RTC0->CC[1] = NRF_RTC0->COUNTER + MILLISECONDS(CONFIG_PROX_WINDOW_MS);
 
+		/* set first packet pointer */
+		NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox;
+
 		/* start listening */
 		NRF_RADIO->TASKS_RXEN = 1;
 
@@ -118,6 +123,15 @@ void RADIO_IRQ_Handler(void)
 		/* set LED on every RX */
 		if(NRF_RADIO->CRCSTATUS == 1)
 			g_rxed++;
+	}
+
+	if(NRF_RADIO->EVENTS_RSSIEND)
+	{
+		/* acknowledge event */
+		NRF_RADIO->EVENTS_RSSIEND = 0;
+
+		/* disable RSSI measurement */
+		NRF_RADIO->TASKS_RSSISTOP = 1;
 	}
 }
 
@@ -147,6 +161,7 @@ void radio_init(uint32_t uid)
 		(RADIO_SHORTS_DISABLED_RSSISTOP_Enabled << RADIO_SHORTS_DISABLED_RSSISTOP_Pos)
 	);
 	NRF_RADIO->INTENSET = (
+		(RADIO_INTENSET_RSSIEND_Enabled         << RADIO_INTENSET_RSSIEND_Pos) |
 		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)
 	);
 	NVIC_EnableIRQ(RADIO_IRQn);
