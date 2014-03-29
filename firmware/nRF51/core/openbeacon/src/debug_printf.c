@@ -33,9 +33,6 @@ putc_debug (void *p, char c)
 {
 	(void) p;
 
-	if (c == '\n')
-		default_putchar ('\r');
-
 	default_putchar (c);
 }
 
