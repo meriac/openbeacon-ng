@@ -24,12 +24,14 @@
 */
 #include <openbeacon.h>
 #include <radio.h>
+#include <adc.h>
 #include <aes.h>
 #include <timer.h>
 
 static uint32_t g_time;
 static volatile uint32_t g_rxed;
 static TBeaconNgProx g_pkt_prox;
+
 
 #define NRF_TIMER_FREQUENCY 8
 
@@ -110,6 +112,9 @@ void POWER_CLOCK_IRQ_Handler(void)
 
 		/* disable LED */
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+
+		/* ADC start */
+		adc_start();
 	}
 }
 
@@ -168,6 +173,9 @@ void radio_init(uint32_t uid)
 
 	/* initialize AES encryption engine */
 	aes_init(uid);
+
+	/* initialize ADC battery voltage measurements */
+	adc_init();
 
 	/* setup HF-clock IRQ */
 	NRF_CLOCK->INTENSET = (

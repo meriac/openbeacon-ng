@@ -17,6 +17,7 @@ APP_LDFLAGS=-lm
 
 APP_SRC= \
   src/acc.c \
+  src/adc.c \
   src/aes.c \
   src/flash.c \
   src/radio.c \
