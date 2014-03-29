@@ -27,5 +27,6 @@
 #define __RNG_H__
 
 extern void rng_init(void);
+extern uint32_t rng(uint8_t bits);
 
 #endif/*__RNG_H__*/
