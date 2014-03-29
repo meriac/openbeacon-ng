@@ -26,9 +26,10 @@
 #include <radio.h>
 #include <adc.h>
 #include <aes.h>
+#include <rng.h>
 #include <timer.h>
 
-static uint32_t g_time;
+static volatile uint32_t g_time;
 static volatile uint32_t g_rxed;
 static TBeaconNgProx g_pkt_prox;
 
@@ -55,6 +56,8 @@ static TBeaconNgProx g_pkt_prox;
 
 void RTC0_IRQ_Handler(void)
 {
+	uint16_t delta_t;
+
 	/* run every second */
 	if(NRF_RTC0->EVENTS_COMPARE[0])
 	{
@@ -63,8 +66,24 @@ void RTC0_IRQ_Handler(void)
 
 		/* re-trigger in one second */
 		NRF_RTC0->CC[0]+=LF_FREQUENCY;
+
 		/* increment time */
 		g_time++;
+
+		/* measure battery voltage once per second */
+		adc_start();
+	}
+
+	if(NRF_RTC0->EVENTS_COMPARE[1])
+	{
+		/* acknowledge event */
+		NRF_RTC0->EVENTS_COMPARE[1] = 0;
+
+		/* re-trigger next RX/TX-slot */
+		delta_t = (CONFIG_PROX_SPACING - CONFIG_PROX_LISTEN) -
+			rng(CONFIG_PROX_SPACING_RNG_BITS);
+		NRF_RTC0->CC[1] = NRF_RTC0->COUNTER + delta_t;
+
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
 
@@ -76,25 +95,21 @@ void RTC0_IRQ_Handler(void)
 				(POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos)
 			);
 		}
-
-		if(g_rxed)
-		{
-			g_rxed = 0;
-			nrf_gpio_pin_set(CONFIG_LED_PIN);
-		}
 	}
 
 	/* listen for CONFIG_PROX_WINDOW_MS every second */
-	if(NRF_RTC0->EVENTS_COMPARE[1])
+	if(NRF_RTC0->EVENTS_COMPARE[2])
 	{
 		/* acknowledge event */
-		NRF_RTC0->EVENTS_COMPARE[1] = 0;
+		NRF_RTC0->EVENTS_COMPARE[2] = 0;
 		/* stop radio */
 		NRF_RADIO->TASKS_DISABLE = 1;
 		/* stop HF clock */
 		NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 		/* disable DC-DC converter */
 		NRF_POWER->DCDCEN = 0;
+		/* disable LED */
+		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	}
 }
 
@@ -106,7 +121,7 @@ void POWER_CLOCK_IRQ_Handler(void)
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
 		/* retrigger listening stop */
-		NRF_RTC0->CC[1] = NRF_RTC0->COUNTER + MILLISECONDS(CONFIG_PROX_WINDOW_MS);
+		NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + CONFIG_PROX_LISTEN;
 
 		/* set first packet pointer */
 		NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox;
@@ -114,11 +129,12 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* start listening */
 		NRF_RADIO->TASKS_RXEN = 1;
 
-		/* disable LED */
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-
-		/* ADC start */
-		adc_start();
+		/* enable LED if seen proximity packets */
+		if(g_rxed)
+		{
+			g_rxed = 0;
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+		}
 	}
 }
 
@@ -149,6 +165,13 @@ void radio_init(uint32_t uid)
 	/* reset variables */
 	g_time = 0;
 
+	/* start random number genrator */
+	rng_init();
+	/* initialize AES encryption engine */
+	aes_init(uid);
+	/* initialize ADC battery voltage measurements */
+	adc_init();
+
 	/* setup default radio settings */
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_2Mbit << RADIO_MODE_MODE_Pos;
 	NRF_RADIO->FREQUENCY = CONFIG_PROX_CHANNEL;
@@ -175,12 +198,6 @@ void radio_init(uint32_t uid)
 	);
 	NVIC_EnableIRQ(RADIO_IRQn);
 
-	/* initialize AES encryption engine */
-	aes_init(uid);
-
-	/* initialize ADC battery voltage measurements */
-	adc_init();
-
 	/* setup HF-clock IRQ */
 	NRF_CLOCK->INTENSET = (
 		(CLOCK_INTENSET_HFCLKSTARTED_Enabled << CLOCK_INTENSET_HFCLKSTARTED_Pos)
@@ -192,11 +209,13 @@ void radio_init(uint32_t uid)
 	NRF_RTC0->COUNTER = 0;
 	NRF_RTC0->PRESCALER = 0;
 	NRF_RTC0->CC[0] = LF_FREQUENCY;
-	NRF_RTC0->CC[1] = 0;
+	NRF_RTC0->CC[1] = LF_FREQUENCY*2;
+	NRF_RTC0->CC[2] = 0;
 	NRF_RTC0->TASKS_START = 1;
 	NRF_RTC0->INTENSET = (
 		(RTC_INTENCLR_COMPARE0_Enabled   << RTC_INTENCLR_COMPARE0_Pos) |
-		(RTC_INTENCLR_COMPARE1_Enabled   << RTC_INTENCLR_COMPARE1_Pos)
+		(RTC_INTENCLR_COMPARE1_Enabled   << RTC_INTENCLR_COMPARE1_Pos) |
+		(RTC_INTENCLR_COMPARE2_Enabled   << RTC_INTENCLR_COMPARE2_Pos)
 	);
 	NVIC_EnableIRQ(RTC0_IRQn);
 }
