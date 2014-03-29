@@ -68,7 +68,7 @@ uint32_t rng(uint8_t bits)
 	bytes = (bits+7)/8;
 	/* wait for pool to fill up */
 	while(bytes>g_rng_pool_count)
-		__WFI();
+		__WFE();
 
 	data = 0;
 	p = (uint8_t*)&data;
