@@ -28,6 +28,7 @@
 #include <timer.h>
 
 static uint32_t g_time;
+static volatile uint32_t g_rxed;
 
 #define NRF_TIMER_FREQUENCY 8
 
@@ -57,15 +58,22 @@ void RTC0_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[0] = 0;
 
-		/* increment time */
-		g_time++;
 		/* re-trigger in one second */
 		NRF_RTC0->CC[0]+=LF_FREQUENCY;
+		/* increment time */
+		g_time++;
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
-		/* set LED every 4 seconds */
-//		if((((uint8_t)g_time)&3) == 0)
-//			nrf_gpio_pin_set(CONFIG_LED_PIN);
+		/* start DC-DC converter */
+		NRF_POWER->DCDCEN = (
+			(POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos)
+		);
+
+		if(g_rxed)
+		{
+			g_rxed = 0;
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+		}
 	}
 
 	/* listen for CONFIG_PROX_WINDOW_MS every second */
@@ -73,10 +81,12 @@ void RTC0_IRQ_Handler(void)
 	{
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[1] = 0;
-		/* disable radio */
+		/* stop radio */
 		NRF_RADIO->TASKS_DISABLE = 1;
 		/* stop HF clock */
 		NRF_CLOCK->TASKS_HFCLKSTOP = 1;
+		/* disable DC-DC converter */
+		NRF_POWER->DCDCEN = 0;
 	}
 }
 
@@ -92,6 +102,9 @@ void POWER_CLOCK_IRQ_Handler(void)
 
 		/* start listening */
 		NRF_RADIO->TASKS_RXEN = 1;
+
+		/* disable LED */
+		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	}
 }
 
@@ -104,11 +117,7 @@ void RADIO_IRQ_Handler(void)
 
 		/* set LED on every RX */
 		if(NRF_RADIO->CRCSTATUS == 1)
-		{
-			nrf_gpio_pin_set(CONFIG_LED_PIN);
-			/* retrigger LED disable */
-			NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + MILLISECONDS(1);
-		}
+			g_rxed++;
 	}
 }
 
