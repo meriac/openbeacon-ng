@@ -49,7 +49,7 @@ void halt(uint8_t times)
 	}
 }
 
-static void init_hardware(void)
+void main_entry(void)
 {
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
@@ -57,9 +57,6 @@ static void init_hardware(void)
 
 	/* enabled input pin */
 	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_NOPULL);
-
-	/* reset LED */
-	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
 	/* initialize UART */
 	uart_init();
@@ -78,72 +75,8 @@ static void init_hardware(void)
 	/* start radio */
 	debug_printf("\n\rInitializing Radio @24%02iMHz ....\n\r", CONFIG_TRACKER_CHANNEL);
 	radio_init(0x12345678);
-}
-
-void main_entry(void)
-{
-//	TBeaconNgProx prox;
-
-	init_hardware();
 
 	/* enter main loop */
 	while(TRUE)
 		__WFI();
-
-#if 0
-	/* enter RX loop */
-	while(true)
-	{
-		/* briefly blink LED */
-		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(25));
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-
-		/* set packet start address */
-		NRF_RADIO->PACKETPTR = (uint32_t)&prox;
-		debug_printf("RX: ");
-
-		/* enable & start RX */
-		NRF_RADIO->EVENTS_END = 0;
-		NRF_RADIO->TASKS_RXEN = 1;
-
-		/* wait for packet end */
-		while(!NRF_RADIO->EVENTS_END);
-
-		/* verify CRC */
-		if(NRF_RADIO->CRCSTATUS == 1)
-		{
-			hex_dump((uint8_t*)&prox, 0, sizeof(prox));
-			/* adjust byte order and decode */
-			xxtea_decode ((uint32_t*)&g_Beacon.p.raw, XXTEA_BLOCK_COUNT, xxtea_key);
-
-			/* verify the CRC checksum */
-			crc = crc16 ((uint8_t*)&g_Beacon.byte,
-				sizeof (g_Beacon) - sizeof (g_Beacon.pkt.crc));
-
-			if (ntohs (g_Beacon.pkt.crc) != crc)
-				debug_printf("CRC_ERROR_ENCR\n\r");
-			else
-			{
-				switch(g_Beacon.pkt.proto)
-				{
-					case RFBPROTO_PROXREPORT:
-					case RFBPROTO_PROXREPORT_EXT:
-						strength = 3;
-						break;
-					case RFBPROTO_BEACONTRACKER:
-						strength = g_Beacon.pkt.p.tracker.strength;
-						break;
-					default:
-						strength = -1;
-				}
-				if(strength>=0)
-					debug_printf("RSSI[%i@-%03idBm] (%08us) ", strength, NRF_RADIO->RSSISAMPLE, timer_s());
-				hex_dump((uint8_t*)&g_Beacon.byte, 0, sizeof(g_Beacon.byte));
-			}
-		}
-		else
-			debug_printf("CRC_ERROR_PLAIN\n\r");
-	}
-#endif
 }
