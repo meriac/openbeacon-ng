@@ -32,8 +32,8 @@ static uint32_t g_time;
 static volatile uint32_t g_rxed;
 static TBeaconNgProx g_pkt_prox;
 
-
-#define NRF_TIMER_FREQUENCY 8
+/* don't start DC/DC converter for voltages below 2.3V */
+#define NRF_DCDC_STARTUP_VOLTAGE 23
 
 #define NRF_MAC_SIZE 5UL
 #define NRF_PROX_SIZE sizeof(TBeaconNgProx)
@@ -68,10 +68,14 @@ void RTC0_IRQ_Handler(void)
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
 
-		/* start DC-DC converter */
-		NRF_POWER->DCDCEN = (
-			(POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos)
-		);
+		/* only start DC/DC converter for larger battery voltages */
+		if(adc_bat()>=NRF_DCDC_STARTUP_VOLTAGE)
+		{
+			/* start DC-DC converter */
+			NRF_POWER->DCDCEN = (
+				(POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos)
+			);
+		}
 
 		if(g_rxed)
 		{
@@ -142,7 +146,7 @@ void RADIO_IRQ_Handler(void)
 
 void radio_init(uint32_t uid)
 {
-	/* reset time */
+	/* reset variables */
 	g_time = 0;
 
 	/* setup default radio settings */
