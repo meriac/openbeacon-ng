@@ -25,36 +25,39 @@
 #ifndef __NRF5_H__
 #define __NRF5_H__
 
+/* core exception handlers */
 extern void Reset_Handler(void);
 extern void NMI_Handler(void);
 extern void HardFault_Handler(void);
 extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
 extern void SysTick_Handler(void);
+
+/* peripheral exception handlers */
+extern void ADC_IRQ_Handler(void);
+extern void CCM_AAR_IRQ_Handler(void);
+extern void ECB_IRQ_Handler(void);
+extern void GPIOTE_IRQ_Handler(void);
+extern void LPCOMP_COMP_IRQ_Handler(void);
 extern void POWER_CLOCK_IRQ_Handler(void);
+extern void QDEC_IRQ_Handler(void);
 extern void RADIO_IRQ_Handler(void);
-extern void UART0_IRQ_Handler(void);
+extern void RNG_IRQ_Handler(void);
+extern void RTC0_IRQ_Handler(void);
+extern void RTC1_IRQ_Handler(void);
 extern void SPI0_TWI0_IRQ_Handler(void);
 extern void SPI1_TWI1_IRQ_Handler(void);
-extern void GPIOTE_IRQ_Handler(void);
-extern void ADC_IRQ_Handler(void);
-extern void TIMER0_IRQ_Handler(void);
-extern void TIMER1_IRQ_Handler(void);
-extern void TIMER2_IRQ_Handler(void);
-extern void RTC0_IRQ_Handler(void);
-extern void TEMP_IRQ_Handler(void);
-extern void RNG_IRQ_Handler(void);
-extern void ECB_IRQ_Handler(void);
-extern void CCM_AAR_IRQ_Handler(void);
-extern void WDT_IRQ_Handler(void);
-extern void RTC1_IRQ_Handler(void);
-extern void QDEC_IRQ_Handler(void);
-extern void LPCOMP_COMP_IRQ_Handler(void);
 extern void SWI0_IRQ_Handler(void);
 extern void SWI1_IRQ_Handler(void);
 extern void SWI2_IRQ_Handler(void);
 extern void SWI3_IRQ_Handler(void);
 extern void SWI4_IRQ_Handler(void);
 extern void SWI5_IRQ_Handler(void);
+extern void TEMP_IRQ_Handler(void);
+extern void TIMER0_IRQ_Handler(void);
+extern void TIMER1_IRQ_Handler(void);
+extern void TIMER2_IRQ_Handler(void);
+extern void UART0_IRQ_Handler(void);
+extern void WDT_IRQ_Handler(void);
 
 #endif/*__NRF5_H__*/
