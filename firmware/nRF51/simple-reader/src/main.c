@@ -25,6 +25,7 @@
 #include <openbeacon.h>
 
 #include <acc.h>
+#include <rng.h>
 #include <flash.h>
 #include <radio.h>
 #include <timer.h>
@@ -63,6 +64,9 @@ void main_entry(void)
 
 	/* start timer */
 	timer_init();
+
+	/* start random number genrator */
+	rng_init();
 
 	/* initialize flash */
 	if(flash_init())

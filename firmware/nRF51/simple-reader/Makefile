@@ -16,6 +16,7 @@ APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS $(ENCRYPTION_KEY)
 APP_LDFLAGS=-lm
 
 APP_SRC= \
+  src/rng.c \
   src/acc.c \
   src/adc.c \
   src/aes.c \
