@@ -38,6 +38,7 @@ void ADC_IRQ_Handler(void)
 		g_battery_voltage = (((uint16_t)(NRF_ADC->RESULT & 0xFF))*36)>>8;
 
 		/* disable ADC after sampling voltage */
+		NRF_ADC->TASKS_STOP = 1;
 		NRF_ADC->ENABLE = 0;
 	}
 }
