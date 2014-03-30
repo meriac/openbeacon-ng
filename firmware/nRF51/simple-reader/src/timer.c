@@ -55,11 +55,11 @@ void RTC1_IRQ_Handler(void)
 void timer_init(void)
 {
 	/* start 32kHz crystal oscillator */
+	NRF_CLOCK->LFCLKSRC =
+		(CLOCK_LFCLKSRCCOPY_SRC_Xtal << CLOCK_LFCLKSRCCOPY_SRC_Pos);
 	NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
 	NRF_CLOCK->TASKS_LFCLKSTART = 1;
 	while(!NRF_CLOCK->EVENTS_LFCLKSTARTED);
-	NRF_CLOCK->LFCLKSRC =
-		(CLOCK_LFCLKSRCCOPY_SRC_Xtal << CLOCK_LFCLKSRCCOPY_SRC_Pos);
 
 	/* setup delay routine */
 	NRF_RTC1->COUNTER = 0;
