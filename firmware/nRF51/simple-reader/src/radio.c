@@ -88,8 +88,8 @@ void RTC0_IRQ_Handler(void)
 
 		/* re-trigger next RX/TX-slot */
 		delta_t =
-			CONFIG_PROX_SPACING +
-			(1<<(CONFIG_PROX_SPACING_RNG_BITS-1)) -
+			CONFIG_PROX_SPACING -
+			(1<<(CONFIG_PROX_SPACING_RNG_BITS-1)) +
 			rng(CONFIG_PROX_SPACING_RNG_BITS);
 		NRF_RTC0->CC[1] = NRF_RTC0->COUNTER + delta_t;
 
@@ -123,6 +123,8 @@ void RTC0_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[2] = 0;
 
+		/* set next state */
+		g_nrf_state = NRF_STATE_IDLE;
 		/* stop radio */
 		NRF_RADIO->TASKS_DISABLE = 1;
 		/* stop HF clock */
@@ -149,15 +151,16 @@ void POWER_CLOCK_IRQ_Handler(void)
 
 void RADIO_IRQ_Handler(void)
 {
-	if(NRF_RADIO->EVENTS_END)
+	if(NRF_RADIO->EVENTS_DISABLED)
 	{
 		/* acknowledge event */
-		NRF_RADIO->EVENTS_END = 0;
+		NRF_RADIO->EVENTS_DISABLED = 0;
 
 		/* process state machine */
 		switch(g_nrf_state)
 		{
 			case NRF_STATE_RX_PROX:
+			{
 				/* set next state */
 				g_nrf_state = NRF_STATE_RX_PROX_PACKET;
 
@@ -165,25 +168,35 @@ void RADIO_IRQ_Handler(void)
 				NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox;
 				/* start listening */
 				NRF_RADIO->TASKS_RXEN = 1;
+
 				/* retrigger listening stop */
 				NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + CONFIG_PROX_LISTEN;
 				break;
+			}
 
-			case NRF_STATE_RX_PROX_PACKET:
-				if(NRF_RADIO->CRCSTATUS == 1)
-					g_rxed++;
-				break;
-
-			default:
+			case NRF_STATE_TX_PROX:
+			{
 				/* set next state */
 				g_nrf_state = NRF_STATE_IDLE;
 
-				/* stop radio */
-				NRF_RADIO->TASKS_DISABLE = 1;
 				/* stop HF clock */
 				NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 				/* disable DC-DC converter */
 				NRF_POWER->DCDCEN = 0;
+			}
+		}
+	}
+
+	if(NRF_RADIO->EVENTS_END)
+	{
+		/* acknowledge event */
+		NRF_RADIO->EVENTS_END = 0;
+
+		/* received packet */
+		if(g_nrf_state == NRF_STATE_RX_PROX_PACKET)
+		{
+			if(NRF_RADIO->CRCSTATUS == 1)
+				g_rxed++;
 		}
 	}
 
@@ -227,11 +240,13 @@ void radio_init(uint32_t uid)
 	NRF_RADIO->CRCPOLY = 0x107UL;
 	NRF_RADIO->SHORTS = (
 		(RADIO_SHORTS_READY_START_Enabled       << RADIO_SHORTS_READY_START_Pos)       |
+		(RADIO_SHORTS_END_DISABLE_Enabled       << RADIO_SHORTS_END_DISABLE_Pos)       |
 		(RADIO_SHORTS_ADDRESS_RSSISTART_Enabled << RADIO_SHORTS_ADDRESS_RSSISTART_Pos) |
 		(RADIO_SHORTS_DISABLED_RSSISTOP_Enabled << RADIO_SHORTS_DISABLED_RSSISTOP_Pos)
 	);
 	NRF_RADIO->INTENSET = (
-		(RADIO_INTENSET_RSSIEND_Enabled         << RADIO_INTENSET_RSSIEND_Pos) |
+		(RADIO_INTENSET_RSSIEND_Enabled         << RADIO_INTENSET_RSSIEND_Pos)  |
+		(RADIO_INTENSET_DISABLED_Enabled        << RADIO_INTENSET_DISABLED_Pos) |
 		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)
 	);
 	NVIC_EnableIRQ(RADIO_IRQn);
@@ -249,11 +264,11 @@ void radio_init(uint32_t uid)
 	NRF_RTC0->CC[0] = LF_FREQUENCY;
 	NRF_RTC0->CC[1] = LF_FREQUENCY*2;
 	NRF_RTC0->CC[2] = 0;
-	NRF_RTC0->TASKS_START = 1;
 	NRF_RTC0->INTENSET = (
 		(RTC_INTENSET_COMPARE0_Enabled   << RTC_INTENSET_COMPARE0_Pos) |
 		(RTC_INTENSET_COMPARE1_Enabled   << RTC_INTENSET_COMPARE1_Pos) |
 		(RTC_INTENSET_COMPARE2_Enabled   << RTC_INTENSET_COMPARE2_Pos)
 	);
 	NVIC_EnableIRQ(RTC0_IRQn);
+	NRF_RTC0->TASKS_START = 1;
 }
