@@ -30,7 +30,6 @@
 #include <timer.h>
 
 static volatile uint32_t g_time;
-static volatile uint32_t g_rxed;
 static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
 static TBeaconNgProx g_pkt_prox;
@@ -46,6 +45,7 @@ static TBeaconNgProx g_pkt_prox;
 #define NRF_STATE_TX_PROX        1
 #define NRF_STATE_RX_PROX        2
 #define NRF_STATE_RX_PROX_PACKET 3
+#define NRF_STATE_RX_PROX_BLINK  4
 
 #define RADIO_TRACKER_PCNF1 \
 		(RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos) |\
@@ -123,14 +123,28 @@ void RTC0_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[2] = 0;
 
-		/* set next state */
-		g_nrf_state = NRF_STATE_IDLE;
-		/* stop radio */
-		NRF_RADIO->TASKS_DISABLE = 1;
 		/* stop HF clock */
 		NRF_CLOCK->TASKS_HFCLKSTOP = 1;
-		/* disable DC-DC converter */
-		NRF_POWER->DCDCEN = 0;
+
+		if(g_nrf_state == NRF_STATE_RX_PROX_BLINK)
+		{
+			g_nrf_state = NRF_STATE_IDLE;
+			/* light LED */
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+			/* retrigger LED blink */
+			NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + MILLISECONDS(1);
+		}
+		else
+		{
+			/* set next state */
+			g_nrf_state = NRF_STATE_IDLE;
+			/* stop radio */
+			NRF_RADIO->TASKS_DISABLE = 1;
+			/* disable DC-DC converter */
+			NRF_POWER->DCDCEN = 0;
+			/* disable LED */
+			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		}
 	}
 }
 
@@ -196,7 +210,7 @@ void RADIO_IRQ_Handler(void)
 		if(g_nrf_state == NRF_STATE_RX_PROX_PACKET)
 		{
 			if(NRF_RADIO->CRCSTATUS == 1)
-				g_rxed++;
+				g_nrf_state = NRF_STATE_RX_PROX_BLINK;
 		}
 	}
 
