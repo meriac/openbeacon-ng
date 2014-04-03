@@ -55,6 +55,7 @@ extern BOOL default_putchar (uint8_t data);
 #include <string.h>
 #include <crc8.h>
 #include <crc16.h>
+#include <crc32.h>
 #include <xxtea.h>
 #include <uart.h>
 

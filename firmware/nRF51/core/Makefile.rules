@@ -57,6 +57,7 @@ ARM_SRC= \
   $(APP_SRC) \
   $(CORE)startup/src/$(ARCH).c \
   $(CORE)nrf/src/system_$(ARCH).c \
+  $(CORE)openbeacon/src/crc32.c \
   $(CORE)openbeacon/src/crc16.c \
   $(CORE)openbeacon/src/crc8.c \
   $(CORE)openbeacon/src/debug_printf.c \

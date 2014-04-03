@@ -29,6 +29,8 @@
 #include <radio.h>
 #include <timer.h>
 
+static uint32_t g_tag_id;
+
 void blink(uint8_t times)
 {
 	while(times--)
@@ -72,20 +74,12 @@ void main_entry(void)
 	if(acc_init())
 		halt(3);
 
+	/* calculate tag ID from NRF_FICR->DEVICEID */
+	g_tag_id = crc32(&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
+
 	/* start radio */
-	debug_printf("\n\rInitializing Radio @24%02iMHz ....\n\r", CONFIG_TRACKER_CHANNEL);
-	debug_printf("FICR:\n\r"
-		"  CONFIGID       = 0x%08X\n\r"
-		"  DEVICEID[0]    = 0x%08X\n\r"
-		"  DEVICEID[1]    = 0x%08X\n\r"
-		"  DEVICEADDRTYPE = %s\n\r"
-		"  DEVICEADDR[0]  = 0x%08X\n\r"
-		"  DEVICEADDR[1]  = 0x%04X\n\r"
-		,
-		NRF_FICR->CONFIGID,NRF_FICR->DEVICEID[0],NRF_FICR->DEVICEID[1],
-		(NRF_FICR->DEVICEADDRTYPE & 1)? "random":"public",
-		NRF_FICR->DEVICEADDR[0],(uint16_t)NRF_FICR->DEVICEADDR[1]);
-	radio_init(0x12345678);
+	debug_printf("\n\rInitializing Tag[%08X] @24%02iMHz ....\n\r", g_tag_id, CONFIG_TRACKER_CHANNEL);
+	radio_init(g_tag_id);
 
 	/* enter main loop */
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
