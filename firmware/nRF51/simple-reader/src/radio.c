@@ -86,7 +86,12 @@ void RTC0_IRQ_Handler(void)
 
 		/* schedule tracker TX */
 		if(!g_request_tx)
+		{
+			g_pkt_tracker.p.sighting.time = (uint16_t)g_time;
+
+			/* wait for random(2^5) slots */
 			g_request_tx = rng(5);
+		}
 
 		/* measure battery voltage once per second */
 		adc_start();
@@ -167,6 +172,8 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
+		/* update proximity time */
+		g_pkt_prox.p.prox.time = g_time;
 		/* set first packet pointer */
 		NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox;
 		/* transmit proximity packet */
@@ -290,6 +297,11 @@ void radio_init(uint32_t uid)
 	g_nrf_state = 0;
 	g_request_tx = 0;
 
+	/* initialize proximity packet */
+	g_pkt_prox.proto = RFBPROTO_BEACON_NG_PROX;
+	g_pkt_prox.p.prox.tx_power = 30;
+	g_pkt_prox.p.prox.uid = uid;
+
 	/* start random number genrator */
 	rng_init();
 	/* initialize AES encryption engine */
@@ -304,9 +316,9 @@ void radio_init(uint32_t uid)
 	NRF_RADIO->TXADDRESS = RADIO_PROX_TXADDRESS;
 	NRF_RADIO->PCNF1 = RADIO_PROX_PCNF1;
 	/* generic radio setup */
-	NRF_RADIO->PREFIX0 = 0x80D7UL;
+	NRF_RADIO->PREFIX0 = 0x46D7UL;
 	NRF_RADIO->BASE0 = 0xEA8AF0B1UL;
-	NRF_RADIO->BASE1 = 0x40C04080UL;
+	NRF_RADIO->BASE1 = 0xCC864569UL;
 	NRF_RADIO->RXADDRESSES = 1;
 	NRF_RADIO->PCNF0 = 0x0;
 	NRF_RADIO->CRCCNF = (RADIO_CRCCNF_LEN_One << RADIO_CRCCNF_LEN_Pos);

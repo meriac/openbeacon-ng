@@ -47,6 +47,7 @@ typedef struct
 
 typedef struct
 {
+	uint16_t time;
 	TBeaconNgSightingSlot slot[CONFIG_SIGHTING_SLOTS];
 } PACKED TBeaconNgSighting;
 
@@ -74,6 +75,7 @@ typedef struct
 
 typedef union
 {
+	TBeaconNgProxAnnounce prox;
 	uint8_t raw[9];
 } PACKED TBeaconNgProxPayload;
 
