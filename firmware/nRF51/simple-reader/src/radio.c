@@ -30,9 +30,11 @@
 #include <timer.h>
 
 static volatile uint32_t g_time;
+static volatile uint8_t g_request_tx;
 static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
 static TBeaconNgProx g_pkt_prox;
+static TBeaconNgTracker g_pkt_tracker;
 
 /* don't start DC/DC converter for voltages below 2.3V */
 #define NRF_DCDC_STARTUP_VOLTAGE 23
@@ -46,6 +48,7 @@ static TBeaconNgProx g_pkt_prox;
 #define NRF_STATE_RX_PROX        2
 #define NRF_STATE_RX_PROX_PACKET 3
 #define NRF_STATE_RX_PROX_BLINK  4
+#define NRF_STATE_TX_TRACKER     5
 
 #define RADIO_TRACKER_TXADDRESS 1
 #define RADIO_TRACKER_TXPOWER (RADIO_TXPOWER_TXPOWER_Pos4dBm << RADIO_TXPOWER_TXPOWER_Pos)
@@ -80,6 +83,10 @@ void RTC0_IRQ_Handler(void)
 
 		/* increment time */
 		g_time++;
+
+		/* schedule tracker TX */
+		if(!g_request_tx)
+			g_request_tx = rng(5);
 
 		/* measure battery voltage once per second */
 		adc_start();
@@ -194,13 +201,60 @@ void RADIO_IRQ_Handler(void)
 
 			case NRF_STATE_TX_PROX:
 			{
+				/* set default next state */
+				g_nrf_state = NRF_STATE_IDLE;
+				/* transmit pending tracker packets in a random slot */
+				if(g_request_tx)
+				{
+					g_request_tx--;
+					if(!g_request_tx)
+						/* divert to tracker TX state */
+						g_nrf_state = NRF_STATE_TX_TRACKER;
+				}
+
+				if(g_nrf_state == NRF_STATE_TX_TRACKER)
+				{
+					/* set first packet pointer */
+					NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_tracker;
+
+					/* reconfigure radio for tracker TX */
+					NRF_RADIO->FREQUENCY = CONFIG_TRACKER_CHANNEL;
+					NRF_RADIO->TXPOWER = RADIO_TRACKER_TXPOWER;
+					NRF_RADIO->TXADDRESS = RADIO_TRACKER_TXADDRESS;
+					NRF_RADIO->PCNF1 = RADIO_TRACKER_PCNF1;
+
+					/* start tracker TX */
+					NRF_RADIO->TASKS_TXEN = 1;
+				}
+				else
+				{
+					/* stop HF clock */
+					NRF_CLOCK->TASKS_HFCLKSTOP = 1;
+					/* disable DC-DC converter */
+					NRF_POWER->DCDCEN = 0;
+				}
+				break;
+			}
+
+			case NRF_STATE_TX_TRACKER:
+			{
 				/* set next state */
 				g_nrf_state = NRF_STATE_IDLE;
+
+				/* reconfigure radio back to proximity */
+				NRF_RADIO->FREQUENCY = CONFIG_PROX_CHANNEL;
+				NRF_RADIO->TXPOWER = RADIO_PROX_TXPOWER;
+				NRF_RADIO->TXADDRESS = RADIO_PROX_TXADDRESS;
+				NRF_RADIO->PCNF1 = RADIO_PROX_PCNF1;
 
 				/* stop HF clock */
 				NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 				/* disable DC-DC converter */
 				NRF_POWER->DCDCEN = 0;
+
+				/* confirm tracker transmission */
+				g_request_tx = FALSE;
+				break;
 			}
 		}
 	}
@@ -234,6 +288,7 @@ void radio_init(uint32_t uid)
 	g_time = 0;
 	g_listen_ratio = 0;
 	g_nrf_state = 0;
+	g_request_tx = 0;
 
 	/* start random number genrator */
 	rng_init();

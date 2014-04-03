@@ -40,40 +40,46 @@
 
 typedef struct
 {
-	int8_t tx_power;
-	int8_t rx_power;
+	uint8_t tx_power;
+	uint8_t rx_power;
 	uint32_t uid;
+} PACKED TBeaconNgSightingSlot;
+
+typedef struct
+{
+	TBeaconNgSightingSlot slot[CONFIG_SIGHTING_SLOTS];
 } PACKED TBeaconNgSighting;
 
 typedef union
 {
-	TBeaconNgSighting sighting[CONFIG_SIGHTING_SLOTS];
-	uint8_t raw[16];
+	TBeaconNgSighting sighting;
+	uint8_t raw[20];
 } PACKED TBeaconNgPayload;
 
 typedef struct
 {
 	uint8_t proto;
-	int8_t tx_power;
+	uint8_t tx_power;
 	uint32_t uid;
 	TBeaconNgPayload p;
-	uint32_t seq;
  	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgTracker;
 
 typedef struct
 {
+	uint8_t tx_power;
+	uint32_t uid;
+	uint32_t time;
 } PACKED TBeaconNgProxAnnounce;
 
 typedef union
 {
-	uint8_t raw[8];
+	uint8_t raw[9];
 } PACKED TBeaconNgProxPayload;
 
 typedef struct
 {
 	uint8_t proto;
-	int8_t tx_power;
 	TBeaconNgProxPayload p;
 	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgProx;
