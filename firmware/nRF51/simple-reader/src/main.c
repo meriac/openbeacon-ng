@@ -74,6 +74,17 @@ void main_entry(void)
 
 	/* start radio */
 	debug_printf("\n\rInitializing Radio @24%02iMHz ....\n\r", CONFIG_TRACKER_CHANNEL);
+	debug_printf("FICR:\n\r"
+		"  CONFIGID       = 0x%08X\n\r"
+		"  DEVICEID[0]    = 0x%08X\n\r"
+		"  DEVICEID[1]    = 0x%08X\n\r"
+		"  DEVICEADDRTYPE = %s\n\r"
+		"  DEVICEADDR[0]  = 0x%08X\n\r"
+		"  DEVICEADDR[1]  = 0x%04X\n\r"
+		,
+		NRF_FICR->CONFIGID,NRF_FICR->DEVICEID[0],NRF_FICR->DEVICEID[1],
+		(NRF_FICR->DEVICEADDRTYPE & 1)? "random":"public",
+		NRF_FICR->DEVICEADDR[0],(uint16_t)NRF_FICR->DEVICEADDR[1]);
 	radio_init(0x12345678);
 
 	/* enter main loop */
