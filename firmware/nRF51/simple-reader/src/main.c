@@ -95,7 +95,7 @@ void main_entry(void)
 		delta = a_prev - a;
 		a_prev = a;
 
-		debug_printf("delta=%i\n\r", delta);
+		debug_printf("delta=%4i\n\r", delta);
 		timer_wait(MILLISECONDS(10));
 	}
 }
