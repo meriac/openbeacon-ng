@@ -60,6 +60,7 @@ ARM_SRC= \
   $(CORE)openbeacon/src/crc32.c \
   $(CORE)openbeacon/src/crc16.c \
   $(CORE)openbeacon/src/crc8.c \
+  $(CORE)openbeacon/src/helper.c \
   $(CORE)openbeacon/src/debug_printf.c \
   $(CORE)openbeacon/src/printf.c \
   $(CORE)openbeacon/src/uart.c \

@@ -72,5 +72,6 @@
 extern uint8_t acc_init(void);
 extern void acc_write(uint8_t cmd, uint8_t data);
 extern void acc_read(uint8_t cmd, uint8_t len, uint8_t *data);
+extern uint32_t acc_magnitude(void);
 
 #endif/*__ACC_H__*/

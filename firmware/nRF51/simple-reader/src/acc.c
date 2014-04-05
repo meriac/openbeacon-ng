@@ -71,6 +71,26 @@ void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 	nrf_gpio_pin_set(CONFIG_ACC_nCS);
 }
 
+uint32_t acc_magnitude(void)
+{
+	int16_t acc[3];
+
+	/* briefly turn on accelerometer */
+	acc_write(ACC_REG_CTRL_REG1, 0x97);
+	nrf_gpio_pin_set(CONFIG_LED_PIN);
+	timer_wait(MILLISECONDS(2));
+	nrf_gpio_pin_clear(CONFIG_LED_PIN);
+	acc_read(ACC_REG_OUT_X, sizeof(acc), (uint8_t*)&acc);
+	acc_write(ACC_REG_CTRL_REG1, 0x00);
+
+	/* get acceleration vector magnitude */
+	return sqrt32(
+		((uint32_t)acc[0])*acc[0] + 
+		((uint32_t)acc[1])*acc[1] +
+		((uint32_t)acc[2])*acc[2]
+	)/64;
+}
+
 uint8_t acc_init(void)
 {
 	uint8_t data;
@@ -113,6 +133,8 @@ uint8_t acc_init(void)
 	acc_write(ACC_REG_CTRL_REG1, 0x00);
 	/* disable data ready interrupt */
 	acc_write(ACC_REG_CTRL_REG3, 0x00);
+	/* enable block update */
+	acc_write(ACC_REG_CTRL_REG4, 0x80);
 	/* disable fifo */
 	acc_write(ACC_REG_CTRL_REG5, 0x00);
 	/* enable bypass mode */
