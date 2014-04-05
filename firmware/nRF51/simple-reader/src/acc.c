@@ -24,6 +24,7 @@
 */
 #include <openbeacon.h>
 #include <acc.h>
+#include <timer.h>
 
 void acc_write(uint8_t cmd, uint8_t data)
 {
@@ -89,7 +90,7 @@ uint8_t acc_init(void)
 	SPI_ACC->PSELMOSI = CONFIG_ACC_MOSI;
 	SPI_ACC->PSELSCK = CONFIG_ACC_SCK;
 
-	/* configure flash for 8MHz */
+	/* configure accelerometer for 8MHz */
 	SPI_ACC->FREQUENCY = SPI_FREQUENCY_FREQUENCY_M8;
 	SPI_ACC->CONFIG =
 		(SPI_CONFIG_ORDER_MsbFirst << SPI_CONFIG_ORDER_Pos) |\
@@ -110,6 +111,12 @@ uint8_t acc_init(void)
 
 	/* disable accelerometer */
 	acc_write(ACC_REG_CTRL_REG1, 0x00);
+	/* disable data ready interrupt */
+	acc_write(ACC_REG_CTRL_REG3, 0x00);
+	/* disable fifo */
+	acc_write(ACC_REG_CTRL_REG5, 0x00);
+	/* enable bypass mode */
+	acc_write(ACC_REG_FIFO_CTRL_REG, 0x00);
 
 	return 0;
 }

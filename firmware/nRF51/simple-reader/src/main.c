@@ -52,6 +52,8 @@ void halt(uint8_t times)
 void main_entry(void)
 {
 	uint32_t tag_id;
+	int16_t xyz[3];
+	int8_t acc[6], delta, t;
 
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
@@ -85,6 +87,30 @@ void main_entry(void)
 
 	/* enter main loop */
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
+
+	memset(xyz, 0, sizeof(xyz));
 	while(TRUE)
-		__WFI();
+	{
+		/* briefly turn on accelerometer */
+		acc_write(ACC_REG_CTRL_REG1, 0x9F);
+		nrf_gpio_pin_set(CONFIG_LED_PIN);
+		timer_wait(MILLISECONDS(1));
+		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		acc_read(ACC_REG_OUT_X, sizeof(acc), (uint8_t*)&acc);
+		acc_write(ACC_REG_CTRL_REG1, 0x00);
+
+		/* get largest accelerometer reading */
+		delta = abs(acc[1]-xyz[0]);
+		if((t = abs(acc[3]-xyz[1])) > delta)
+			delta = t;
+		if((t = abs(acc[5]-xyz[2])) > delta)
+			delta = t;
+		/* remember previous values */
+		xyz[0] = acc[1];
+		xyz[1] = acc[3];
+		xyz[2] = acc[5];
+
+		debug_printf("delta=%i\n\r", delta);
+		timer_wait(MILLISECONDS(1000));
+	}
 }

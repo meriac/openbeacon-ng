@@ -50,6 +50,7 @@
 #define CONFIG_ADC0          1
 #define CONFIG_ADC1          2
 
+#define CONFIG_ACC_INT1_CH   0
 #define CONFIG_ACC_INT1      3
 #define CONFIG_ACC_nCS       4
 #define CONFIG_ACC_MISO      5
