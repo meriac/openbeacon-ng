@@ -51,8 +51,7 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
-	uint32_t tag_id;
-	int32_t delta, a, a_prev;
+	uint32_t tag_id, angle;
 
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
@@ -87,15 +86,12 @@ void main_entry(void)
 	/* enter main loop */
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
-	a_prev = 0;
 	while(TRUE)
 	{
-		/* get delta acceleration to cancel earth gravity */
-		a = acc_magnitude();
-		delta = a_prev - a;
-		a_prev = a;
+		/* get tag angle */
+		acc_magnitude(&angle);
 
-		debug_printf("delta=%4i\n\r", delta);
-		timer_wait(MILLISECONDS(10));
+		debug_printf("angle=%3i\n\r", angle);
+		timer_wait(MILLISECONDS(100));
 	}
 }
