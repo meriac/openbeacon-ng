@@ -121,9 +121,18 @@ uint8_t aes_decr(const void* in, void* out, uint32_t length, uint8_t mac_len)
 	if(mac_len<AES_BLOCK_SIZE)
 		memset(&g_encrypt.in[mac_len], 0xFF, AES_BLOCK_SIZE-mac_len);
 
-	/* encrypt data */
+	/* decrypt data */
 	aes_process((uint8_t*)in, (uint8_t*)out, length);
-	return 0;
+
+	/* verify signature */
+	if(memcmp(aes_sign(out, length), ((uint8_t*)in) + length, mac_len)==0)
+		return 0;
+	else
+	{
+		/* erase broken payload */
+		memset(out, 0, length);
+		return 3;
+	}
 }
 
 void aes(TCryptoEngine* engine)
