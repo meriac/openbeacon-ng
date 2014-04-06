@@ -34,131 +34,99 @@ static TCryptoEngine g_signature, g_encrypt, g_auth;
 
 TAES* aes_sign(const void* data, uint32_t length)
 {
-	uint8_t t, *src, *in, *out;
+	uint8_t i, t, *src;
 
 	/* reset signature buffer */
 	memset(g_signature.out, 0xFF, sizeof(g_signature.out));
-
-	/* reset input buffer if needed */
-	if(length<AES_BLOCK_SIZE)
-		memset(&g_signature.in[length], 0, AES_BLOCK_SIZE-length);
 
 	/* sign data */
 	src = (uint8_t*)data;
 	while(length)
 	{
-		in  = g_signature.in;
-		out = g_signature.out;
+		/* process data block by block */
+		t = (length>=AES_BLOCK_SIZE) ? AES_BLOCK_SIZE : length;
+		length -= t;
 
-		/* full block left */
-		if(length>=AES_BLOCK_SIZE)
-		{
-			/* XOR'ing out-signature with data */
-			t = AES_BLOCKS32;
-			while(t--)
-			{
-				*((uint32_t*)in) = *((uint32_t*)out) ^ *((uint32_t*)src);
-				in+=4;
-				out+=4;
-				src+=4;
-			}
-			/* decrement remaining size */
-			length -= AES_BLOCK_SIZE;
-		}
-		else
-			/* XOR remainder into in-buffer */
-			while(length)
-			{
-				length--;
-				(*in++) = (*out++) ^ (*src++);
-			}
+		/* XOR previous AES output data in */
+		for(i=0; i<t; i++)
+			g_signature.in[i] = g_signature.out[i] ^ *src++;
 
 		/* AES hash block, result in 'out' */
-		aes_encrypt(&g_signature);
-	}
-
-	/* invert result */
-	out = g_signature.out;
-	t = AES_BLOCKS32;
-	while(t--)
-	{
-		*((uint32_t*)out) ^= 0xFFFFFFFFUL;
-		out+=4;
+		aes(&g_signature);
 	}
 
 	/* return full AES signature */
 	return &g_signature.out;
 }
 
-uint8_t aes_enc(const void* in, void* out, uint32_t size, uint8_t mac_len)
+static void aes_process(const uint8_t *src, uint8_t *dst, uint32_t length)
 {
-	uint8_t *key;
-	uint32_t t,*bin,*bout,*bkey;
+	uint8_t t, i;
 
+	/* encrypt data */
+	while(length)
+	{
+		/* process data block by block */
+		t = (length>=AES_BLOCK_SIZE) ? AES_BLOCK_SIZE : length;
+		length -= t;
+
+		/* AES encrypt block, result in 'out' */
+		aes(&g_encrypt);
+		/* make AES output the IV of the next encryption */
+		if(length)
+			memcpy(g_encrypt.in, g_encrypt.out, AES_BLOCK_SIZE);
+
+		/* XOR previous AES output data in */
+		for(i=0; i<t; i++)
+			*dst++ = g_encrypt.out[i] ^ *src++;
+	}
+}
+
+uint8_t aes_encr(const void* in, void* out, uint32_t length, uint8_t mac_len)
+{
+	/* verify parameters */
 	if(mac_len>AES_BLOCK_SIZE)
 		return 1;
-	if(size<=mac_len)
+	if(length<=mac_len)
 		return 2;
 
-	/* reset IV buffer */
-	memset(&g_encrypt.out, 0xFF, sizeof(g_encrypt.out));
-
 	/* calculate payload length */
-	size -= mac_len;
-	/* sign payload */
-	memcpy(&g_encrypt.in, aes_sign(in, size), mac_len);
-	/* pad with zeros if needed to generate IV block */
+	length -= mac_len;
+	/* sign payload to create IV */
+	memcpy(&g_encrypt.in, aes_sign(in, length), mac_len);
+	/* pad IV with 0xFF if needed to generate IV block */
 	if(mac_len<AES_BLOCK_SIZE)
-		memset(&g_encrypt.in[mac_len], 0, AES_BLOCK_SIZE-mac_len);
+		memset(&g_encrypt.in[mac_len], 0xFF, AES_BLOCK_SIZE-mac_len);
+	/* copy IV to payload end */
+	memcpy((uint8_t*)out + length, &g_encrypt.in, mac_len);
 
-	/* copy IV/HMAC to end of the packet */
-	memcpy(((uint8_t*)out)+size, &g_encrypt.in, mac_len);
-
-	/* create AES keystream based on IV */
-	while(size)
-	{
-		bin  = (uint32_t*)&g_encrypt.in;
-		bout = (uint32_t*)&g_encrypt.out;
-
-		/* XOR results of previous block into new input */
-		t = AES_BLOCKS32;
-		while(t--)
-			*bin++ ^= *bout++;
-		/* create keystream block */
-		aes_encrypt(&g_encrypt);
-
-		/* encrypt full bock using the generated keystream */
-		if(size>=AES_BLOCK_SIZE)
-		{
-			bin  = (uint32_t*)in;
-			bout = (uint32_t*)out;
-			bkey = (uint32_t*)g_encrypt.out;
-			t = AES_BLOCKS32;
-			while(t--)
-				(*bout++) = (*bin++) ^ (*bkey++);
-
-			/* next block */
-			in  = (uint8_t*)in  + AES_BLOCK_SIZE;
-			out = (uint8_t*)out + AES_BLOCK_SIZE;
-		}
-		else
-		{
-			key = g_encrypt.out;
-			while(size)
-			{
-				size--;
-				*((uint8_t*)out) = *((uint8_t*)in) ^ *key++;
-
-				/* next byte */
-				in  = ((uint8_t*)in)  + 1;
-				out = ((uint8_t*)out) + 1;
-			}
-		}
-	}
+	/* encrypt data */
+	aes_process((uint8_t*)in, (uint8_t*)out, length);
 	return 0;
 }
 
-void aes_encrypt(TCryptoEngine* engine)
+uint8_t aes_decr(const void* in, void* out, uint32_t length, uint8_t mac_len)
+{
+	/* verify parameters */
+	if(mac_len>AES_BLOCK_SIZE)
+		return 1;
+	if(length<=mac_len)
+		return 2;
+
+	/* calculate payload length */
+	length -= mac_len;
+	/* re-create IV from end of packet */
+	memcpy(&g_encrypt.in, ((uint8_t*)in) + length, mac_len);
+	/* pad IV with 0xFF if needed to generate IV block */
+	if(mac_len<AES_BLOCK_SIZE)
+		memset(&g_encrypt.in[mac_len], 0xFF, AES_BLOCK_SIZE-mac_len);
+
+	/* encrypt data */
+	aes_process((uint8_t*)in, (uint8_t*)out, length);
+	return 0;
+}
+
+void aes(TCryptoEngine* engine)
 {
 	NRF_ECB->ECBDATAPTR = (uint32_t)engine;
 	NRF_ECB->TASKS_STARTECB = 1;
@@ -176,18 +144,18 @@ void aes_key_derivation(const TAES* key, uint32_t uid)
 
 	/* create site-signature key */
 	memset(g_encrypt.in, AES_KEYID_SIGNATURE, sizeof(g_encrypt.in));
-	aes_encrypt(&g_encrypt);
+	aes(&g_encrypt);
 	memcpy(g_signature.key, g_encrypt.out, sizeof(g_signature.key));
 
 	/* create tag-specific authentication key */
 	memset(g_encrypt.in, AES_KEYID_AUTH, sizeof(g_encrypt.in));
 	*((uint32_t*)&g_encrypt.in) ^= uid;
-	aes_encrypt(&g_encrypt);
+	aes(&g_encrypt);
 	memcpy(g_auth.key, g_encrypt.out, sizeof(g_auth.key));
 
 	/* finally, create site-encryption key */
 	memset(g_encrypt.in, AES_KEYID_ENCRYPTION, sizeof(g_encrypt.in));
-	aes_encrypt(&g_encrypt);
+	aes(&g_encrypt);
 	memcpy(g_encrypt.key, g_encrypt.out, sizeof(g_encrypt.key));
 }
 

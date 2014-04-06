@@ -40,7 +40,9 @@ typedef struct {
 
 extern void aes_init(uint32_t uid);
 extern void aes_key_derivation(const TAES* key, uint32_t uid);
-extern void aes_encrypt(TCryptoEngine* engine);
+extern void aes(TCryptoEngine* engine);
 extern TAES* aes_sign(const void* data, uint32_t length);
+extern uint8_t aes_encr(const void* in, void* out, uint32_t size, uint8_t mac_len);
+extern uint8_t aes_decr(const void* in, void* out, uint32_t length, uint8_t mac_len);
 
 #endif/*__AES_H__*/
