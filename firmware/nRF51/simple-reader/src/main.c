@@ -92,6 +92,6 @@ void main_entry(void)
 		acc_magnitude(&angle);
 
 		debug_printf("angle=%3i\n\r", angle);
-		timer_wait(MILLISECONDS(100));
+		timer_wait(MILLISECONDS(1000));
 	}
 }

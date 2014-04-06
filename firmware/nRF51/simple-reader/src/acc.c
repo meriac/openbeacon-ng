@@ -37,6 +37,16 @@ static const uint8_t g_asin7deg_table[] = {
 	62,63,64,65,66,67,68,70,71,72,74,76,78,80,83,90
 };
 
+/* accelerometer initialization array */
+static const uint8_t g_acc_init[][2] = {
+	{ACC_REG_CTRL_REG1,     0x00}, /* disable accelerometer */
+	{ACC_REG_CTRL_REG3,     0x00}, /* disable data ready interrupt */
+	{ACC_REG_CTRL_REG4,     0x80}, /* enable block update */
+	{ACC_REG_CTRL_REG5,     0x00}, /* disable fifo */
+	{ACC_REG_FIFO_CTRL_REG, 0x00}  /* enable bypass mode */
+};
+#define ACC_INIT_COUNT ((int)(sizeof(g_acc_init)/sizeof(g_acc_init[0])))
+
 static int8_t asin7deg(int8_t t)
 {
 	return (t>=0) ? g_asin7deg_table[t] : -g_asin7deg_table[-t];
@@ -122,9 +132,9 @@ uint16_t acc_magnitude(uint32_t* angle)
 	}
 	return a;
 }
-
 uint8_t acc_init(void)
 {
+	int i;
 	uint8_t data;
 
 	/* initialize GPIO */
@@ -161,16 +171,9 @@ uint8_t acc_init(void)
 	if(data!=0x33)
 		return 1;
 
-	/* disable accelerometer */
-	acc_write(ACC_REG_CTRL_REG1, 0x00);
-	/* disable data ready interrupt */
-	acc_write(ACC_REG_CTRL_REG3, 0x00);
-	/* enable block update */
-	acc_write(ACC_REG_CTRL_REG4, 0x80);
-	/* disable fifo */
-	acc_write(ACC_REG_CTRL_REG5, 0x00);
-	/* enable bypass mode */
-	acc_write(ACC_REG_FIFO_CTRL_REG, 0x00);
+	/* initialize accelerometer */
+	for(i=0; i<ACC_INIT_COUNT; i++)
+		acc_write(g_acc_init[i][0], g_acc_init[i][1]);
 
 	return 0;
 }
