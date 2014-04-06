@@ -126,7 +126,11 @@ uint8_t aes_decr(const void* in, void* out, uint32_t length, uint8_t mac_len)
 
 	/* verify signature */
 	if(memcmp(aes_sign(out, length), ((uint8_t*)in) + length, mac_len)==0)
+	{
+		/* reset signature in output */
+		memset(((uint8_t*)out) + length, 0xFF, mac_len);
 		return 0;
+	}
 	else
 	{
 		/* erase broken payload */
