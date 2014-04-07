@@ -343,8 +343,6 @@ void RADIO_IRQ_Handler(void)
 				g_nrf_state = NRF_STATE_RX_PROX_BLINK;
 				radio_on_prox_packet(NRF_RTC0->COUNTER-ticks);
 			}
-
-			debug_printf("RX[%i]\n\r", g_nrf_state);
 		}
 	}
 
