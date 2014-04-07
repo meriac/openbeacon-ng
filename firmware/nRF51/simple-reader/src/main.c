@@ -86,7 +86,7 @@ void main_entry(void)
 	tag_id = crc32(&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
 
 	/* start radio */
-	debug_printf("\n\rInitializing Tag[%08X] @24%02iMHz ....\n\r",
+	debug_printf("\n\rInitializing Tag[%08X] v" PROGRAM_VERSION " @24%02iMHz ...\n\r",
 		tag_id,
 		CONFIG_TRACKER_CHANNEL);
 	radio_init(tag_id);
