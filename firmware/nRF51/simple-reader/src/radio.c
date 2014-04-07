@@ -35,6 +35,7 @@ static volatile uint16_t g_ticks_offset;
 static volatile uint8_t g_request_tx;
 static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
+static uint8_t g_rssi;
 
 static TBeaconNgProx g_pkt_prox ALIGN4;
 static uint8_t g_pkt_prox_enc[sizeof(g_pkt_prox)] ALIGN4;
@@ -240,7 +241,8 @@ void RADIO_IRQ_Handler(void)
 			{
 				/* set next state */
 				g_nrf_state = NRF_STATE_RX_PROX_PACKET;
-
+				/* reset rssi measurement */
+				g_rssi = 0;
 				/* set first packet pointer */
 				NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox_rx_enc;
 				/* start listening */
@@ -348,6 +350,8 @@ void RADIO_IRQ_Handler(void)
 
 	if(NRF_RADIO->EVENTS_RSSIEND)
 	{
+		g_rssi = NRF_RADIO->RSSISAMPLE;
+
 		/* acknowledge event */
 		NRF_RADIO->EVENTS_RSSIEND = 0;
 
@@ -364,6 +368,7 @@ void radio_init(uint32_t uid)
 	g_listen_ratio = 0;
 	g_nrf_state = 0;
 	g_request_tx = 0;
+	g_rssi = 0;
 
 	/* initialize proximity packet */
 	memset(&g_pkt_prox, 0, sizeof(g_pkt_prox));
