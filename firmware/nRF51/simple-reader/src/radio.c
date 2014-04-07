@@ -23,6 +23,7 @@
 
 */
 #include <openbeacon.h>
+#include <main.h>
 #include <radio.h>
 #include <adc.h>
 #include <aes.h>
@@ -33,8 +34,15 @@ static volatile uint32_t g_time;
 static volatile uint8_t g_request_tx;
 static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
-static TBeaconNgProx g_pkt_prox;
-static TBeaconNgTracker g_pkt_tracker;
+
+static TBeaconNgProx g_pkt_prox ALIGN4;
+static uint8_t g_pkt_prox_enc[sizeof(g_pkt_prox)] ALIGN4;
+
+static TBeaconNgProx g_pkt_prox_rx ALIGN4;
+static uint8_t g_pkt_prox_rx_enc[sizeof(g_pkt_prox_rx)] ALIGN4;
+
+static TBeaconNgTracker g_pkt_tracker ALIGN4;
+static uint8_t g_pkt_tracker_enc[sizeof(g_pkt_tracker)] ALIGN4;
 
 /* don't start DC/DC converter for voltages below 2.3V */
 #define NRF_DCDC_STARTUP_VOLTAGE 23
@@ -86,12 +94,8 @@ void RTC0_IRQ_Handler(void)
 
 		/* schedule tracker TX */
 		if(!g_request_tx)
-		{
-			g_pkt_tracker.p.sighting.time = (uint16_t)g_time;
-
 			/* wait for random(2^5) slots */
 			g_request_tx = rng(5);
-		}
 
 		/* measure battery voltage once per second */
 		adc_start();
@@ -166,6 +170,8 @@ void RTC0_IRQ_Handler(void)
 
 void POWER_CLOCK_IRQ_Handler(void)
 {
+	uint32_t ticks;
+
 	/* always transmit proximity packet */
 	if(NRF_CLOCK->EVENTS_HFCLKSTARTED)
 	{
@@ -173,9 +179,23 @@ void POWER_CLOCK_IRQ_Handler(void)
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
 		/* update proximity time */
-		g_pkt_prox.p.prox.time = g_time;
+		g_pkt_prox.p.prox.epoch = g_time;
+		/* adjust transmitted time by time
+		 * it takes to encrypt the packet */
+		ticks = NRF_RTC0->COUNTER;
+		g_pkt_prox.p.prox.ticks += ticks;
+		/* encrypt data */
+		aes_encr(
+			&g_pkt_prox,
+			&g_pkt_prox_enc,
+			sizeof(g_pkt_prox_enc),
+			CONFIG_SIGNATURE_SIZE
+		);
+		/* remember time it took to encrypt packet for next TX */
+		g_pkt_prox.p.prox.ticks = NRF_RTC0->COUNTER-ticks;
+
 		/* set first packet pointer */
-		NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox;
+		NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox_enc;
 		/* transmit proximity packet */
 		NRF_RADIO->TASKS_TXEN = 1;
 	}
@@ -197,7 +217,7 @@ void RADIO_IRQ_Handler(void)
 				g_nrf_state = NRF_STATE_RX_PROX_PACKET;
 
 				/* set first packet pointer */
-				NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox;
+				NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox_rx_enc;
 				/* start listening */
 				NRF_RADIO->TASKS_RXEN = 1;
 
@@ -221,15 +241,25 @@ void RADIO_IRQ_Handler(void)
 
 				if(g_nrf_state == NRF_STATE_TX_TRACKER)
 				{
-					/* set first packet pointer */
-					NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_tracker;
-
 					/* reconfigure radio for tracker TX */
 					NRF_RADIO->FREQUENCY = CONFIG_TRACKER_CHANNEL;
 					NRF_RADIO->TXPOWER = RADIO_TRACKER_TXPOWER;
 					NRF_RADIO->TXADDRESS = RADIO_TRACKER_TXADDRESS;
 					NRF_RADIO->PCNF1 = RADIO_TRACKER_PCNF1;
 
+					/* update tracker packet */
+					g_pkt_tracker.p.sighting.epoch = g_time;
+					g_pkt_tracker.p.sighting.angle = tag_angle();
+					g_pkt_tracker.p.sighting.voltage = adc_bat();
+					/* encrypt packet */
+					aes_encr(
+						&g_pkt_tracker,
+						&g_pkt_tracker_enc,
+						sizeof(g_pkt_tracker_enc),
+						CONFIG_SIGNATURE_SIZE
+					);
+					/* set first packet pointer */
+					NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_tracker_enc;
 					/* start tracker TX */
 					NRF_RADIO->TASKS_TXEN = 1;
 				}
@@ -272,10 +302,18 @@ void RADIO_IRQ_Handler(void)
 		NRF_RADIO->EVENTS_END = 0;
 
 		/* received packet */
-		if(g_nrf_state == NRF_STATE_RX_PROX_PACKET)
+		if(	(g_nrf_state == NRF_STATE_RX_PROX_PACKET) && 
+			(NRF_RADIO->CRCSTATUS == 1) )
 		{
-			if(NRF_RADIO->CRCSTATUS == 1)
+			/* decrypt and verify packet */
+			if(!aes_decr(
+				&g_pkt_prox_rx_enc,
+				&g_pkt_prox_rx,
+				sizeof(g_pkt_prox_rx),
+				CONFIG_SIGNATURE_SIZE))
+			{
 				g_nrf_state = NRF_STATE_RX_PROX_BLINK;
+			}
 		}
 	}
 
@@ -298,10 +336,17 @@ void radio_init(uint32_t uid)
 	g_request_tx = 0;
 
 	/* initialize proximity packet */
+	memset(&g_pkt_prox, 0, sizeof(g_pkt_prox));
 	g_pkt_prox.proto = RFBPROTO_BEACON_NG_PROX;
-	g_pkt_prox.p.prox.tx_power = 30;
 	g_pkt_prox.p.prox.uid = uid;
 
+	/* initialize tracker packet */
+	memset(&g_pkt_tracker, 0, sizeof(g_pkt_tracker));
+	g_pkt_tracker.proto = RFBPROTO_BEACON_NG_TRACKER;
+	g_pkt_tracker.tx_power = 30;
+	g_pkt_tracker.p.sighting.uid = uid;
+
+	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	/* start random number genrator */
 	rng_init();
 	/* initialize AES encryption engine */
@@ -335,12 +380,18 @@ void radio_init(uint32_t uid)
 		(RADIO_INTENSET_DISABLED_Enabled        << RADIO_INTENSET_DISABLED_Pos) |
 		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)
 	);
+#ifdef  IRQ_PRIORITY_RADIO
+	NVIC_SetPriority(RADIO_IRQn, IRQ_PRIORITY_RADIO);
+#endif/*IRQ_PRIORITY_RADIO*/
 	NVIC_EnableIRQ(RADIO_IRQn);
 
 	/* setup HF-clock IRQ */
 	NRF_CLOCK->INTENSET = (
 		(CLOCK_INTENSET_HFCLKSTARTED_Enabled << CLOCK_INTENSET_HFCLKSTARTED_Pos)
 	);
+#ifdef  IRQ_PRIORITY_POWER_CLOCK
+	NVIC_SetPriority(POWER_CLOCK_IRQn, IRQ_PRIORITY_POWER_CLOCK);
+#endif/*IRQ_PRIORITY_POWER_CLOCK*/
 	NVIC_EnableIRQ(POWER_CLOCK_IRQn);
 
 	/* setup radio timer */
@@ -355,6 +406,9 @@ void radio_init(uint32_t uid)
 		(RTC_INTENSET_COMPARE1_Enabled   << RTC_INTENSET_COMPARE1_Pos) |
 		(RTC_INTENSET_COMPARE2_Enabled   << RTC_INTENSET_COMPARE2_Pos)
 	);
+#ifdef  IRQ_PRIORITY_RTC0
+	NVIC_SetPriority(RTC0_IRQn, IRQ_PRIORITY_RTC0);
+#endif/*IRQ_PRIORITY_RTC0*/
 	NVIC_EnableIRQ(RTC0_IRQn);
 	NRF_RTC0->TASKS_START = 1;
 }

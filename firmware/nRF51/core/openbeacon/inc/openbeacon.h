@@ -36,6 +36,7 @@
 #define WEAK __attribute__ ((weak))
 #define ALIAS(f) __attribute__ ((weak, alias (#f)))
 #define LINKTO(f) __attribute__ ((alias (#f)))
+#define ALIGN4 __attribute__ ((aligned (4)))
 
 typedef uint8_t BOOL;
 #define TRUE 1

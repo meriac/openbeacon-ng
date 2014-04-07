@@ -30,6 +30,7 @@ const TAES g_default_key = {
 	0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
 };
 
+static volatile uint8_t g_enc_done;
 static TCryptoEngine g_signature, g_encrypt, g_auth;
 
 TAES* aes_sign(const void* data, uint32_t length)
@@ -141,12 +142,13 @@ uint8_t aes_decr(const void* in, void* out, uint32_t length, uint8_t mac_len)
 
 void aes(TCryptoEngine* engine)
 {
+	g_enc_done = FALSE;
+	NRF_ECB->EVENTS_ENDECB = 0;
 	NRF_ECB->ECBDATAPTR = (uint32_t)engine;
 	NRF_ECB->TASKS_STARTECB = 1;
 
-	while(!NRF_ECB->EVENTS_ENDECB)
-		__WFE();
-	NRF_ECB->EVENTS_ENDECB = 0;
+	while(!g_enc_done)
+		__WFI();
 }
 
 /* initial key derivation */
@@ -172,11 +174,27 @@ void aes_key_derivation(const TAES* key, uint32_t uid)
 	memcpy(g_encrypt.key, g_encrypt.out, sizeof(g_encrypt.key));
 }
 
+void ECB_IRQ_Handler(void)
+{
+	if(NRF_ECB->EVENTS_ENDECB)
+	{
+		/* acknowledge event */
+		NRF_ECB->EVENTS_ENDECB = 0;
+		g_enc_done = TRUE;
+	}
+}
+
 void aes_init(uint32_t uid)
 {
+	g_enc_done = FALSE;
+
 	NRF_ECB->TASKS_STOPECB = 1;
 	NRF_ECB->INTENSET =
-		(ECB_INTENSET_ENDECB_Enabled << ECB_INTENSET_ENDECB_Pos);
+		ECB_INTENSET_ENDECB_Enabled   << ECB_INTENSET_ENDECB_Pos;
+#ifdef  IRQ_PRIORITY_AES
+	NVIC_SetPriority(ECB_IRQn, IRQ_PRIORITY_AES);
+#endif/*IRQ_PRIORITY_AES*/
+	NVIC_EnableIRQ(ECB_IRQn);
 
 	/* derieve initial key */
 	aes_key_derivation(&g_default_key, uid);

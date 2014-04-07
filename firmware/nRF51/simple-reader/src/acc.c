@@ -27,7 +27,7 @@
 #include <timer.h>
 
 /* lookup sine table of r/z to degrees */
-static const uint8_t g_asin7deg_table[] = {
+static const int8_t g_asin7deg_table[] = {
 	 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7,
 	 7, 8, 8, 9, 9,10,10,10,11,11,12,12,13,13,14,14,
 	15,15,16,16,16,17,17,18,18,19,19,20,20,21,21,22,
@@ -98,7 +98,7 @@ void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 	nrf_gpio_pin_set(CONFIG_ACC_nCS);
 }
 
-uint16_t acc_magnitude(uint32_t* angle)
+uint16_t acc_magnitude(int8_t* angle)
 {
 	int16_t acc[3], a, alpha;
 

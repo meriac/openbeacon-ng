@@ -58,8 +58,13 @@
 #define CONFIG_ACC_SCK       7
 #define SPI_ACC              NRF_SPI1
 
-
 #define CONFIG_LED_PIN       17
 #define CONFIG_SWITCH_PIN    29
+
+#define IRQ_PRIORITY_HIGH        0
+#define IRQ_PRIORITY_AES         (IRQ_PRIORITY_HIGH)
+#define IRQ_PRIORITY_RADIO       (IRQ_PRIORITY_AES+1)
+#define IRQ_PRIORITY_POWER_CLOCK (IRQ_PRIORITY_RADIO)
+#define IRQ_PRIORITY_RTC0        (IRQ_PRIORITY_RADIO+1)
 
 #endif/*__CONFIG_H__*/

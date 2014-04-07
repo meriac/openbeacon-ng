@@ -27,5 +27,6 @@
 
 extern void blink(uint8_t times);
 extern void halt(uint8_t times);
+extern int8_t tag_angle(void);
 
 #endif/*__MAIN_H__*/

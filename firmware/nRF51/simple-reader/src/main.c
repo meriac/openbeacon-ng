@@ -29,6 +29,13 @@
 #include <radio.h>
 #include <timer.h>
 
+static int8_t g_tag_angle;
+
+int8_t tag_angle(void)
+{
+	return g_tag_angle;
+}
+
 void blink(uint8_t times)
 {
 	while(times--)
@@ -51,7 +58,8 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
-	uint32_t tag_id, angle;
+	uint8_t blink;
+	uint32_t tag_id;
 
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
@@ -84,14 +92,23 @@ void main_entry(void)
 	radio_init(tag_id);
 
 	/* enter main loop */
+	blink = 0;
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
-
 	while(TRUE)
 	{
-		/* get tag angle */
-		acc_magnitude(&angle);
-
-		debug_printf("angle=%3i\n\r", angle);
+		/* get tag angle once per second */
+		acc_magnitude(&g_tag_angle);
 		timer_wait(MILLISECONDS(1000));
+
+		/* blink every 5 seconds */
+		if(blink<5)
+			blink++;
+		else
+		{
+			blink = 0;
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+			timer_wait(MILLISECONDS(1));
+			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		}
 	}
 }
