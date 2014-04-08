@@ -1,6 +1,6 @@
 CXX     :=g++
 TARGET  :=openbeacon-rx
-SOURCES :=src/bmMapHandleToItem.cpp src/main.cpp
+SOURCES :=src/bmMapHandleToItem.cpp src/main.cpp src/crypto.cpp
 LIBS    :=-lm
 
 # determine program version

@@ -38,9 +38,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#define PACKED __attribute__((packed))
-#include <openbeacon-proto.h>
-
+#include "crypto.h"
 #include "bmMapHandleToItem.h"
 
 static bmMapHandleToItem g_map_reader, g_map_tag, g_map_proximity;
@@ -170,6 +168,7 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 {
 	uint32_t t;
 	const TBeaconLogSighting *pkt;
+	TBeaconNgTracker track;
 
 	if(len<(int)sizeof(TBeaconLogSighting))
 		return len;
@@ -197,7 +196,9 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 	}
 
 	/* print valid packet */
-	printf("\n\r");
+	t = aes_decr(&pkt->log, &track, sizeof(track), CONFIG_SIGNATURE_SIZE);
+	fprintf(stderr, "res=[%u]\n\r", t);
+
 	hex_dump(&pkt->log, 0, sizeof(pkt->log));
 
 	return 0;
@@ -261,6 +262,9 @@ main (int argc, char **argv)
 	g_ignored_protocol = g_invalid_protocol = 0;
 
 	g_map_tag.SetItemSize (sizeof (TTagItem));
+
+	/* initialize encryption */
+	aes_init();
 
 	return listen_packets ();
 }
