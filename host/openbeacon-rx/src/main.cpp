@@ -195,11 +195,15 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 		return len;
 	}
 
-	/* print valid packet */
-	t = aes_decr(&pkt->log, &track, sizeof(track), CONFIG_SIGNATURE_SIZE);
-	fprintf(stderr, "res=[%u]\n\r", t);
+	/* decrypt valid packet */
+	if((t = aes_decr(&pkt->log, &track, sizeof(track), CONFIG_SIGNATURE_SIZE))!=0)
+	{
+		fprintf(stderr, " Failed decrypting packet with error [%i]\n\r", t);
+		return len;
+	}
 
-	hex_dump(&pkt->log, 0, sizeof(pkt->log));
+	fprintf(stderr, "\n\r");
+	hex_dump(&track, 0, sizeof(track)-CONFIG_SIGNATURE_SIZE);
 
 	return 0;
 }

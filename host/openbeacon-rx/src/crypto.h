@@ -28,6 +28,7 @@
 #define PACKED __attribute__((packed))
 #include <openbeacon-proto.h>
 
+#define AES_ROUNDS 10
 #define AES_BLOCK_SIZE 16
 #define AES_BLOCKS32 (AES_BLOCK_SIZE/4)
 
