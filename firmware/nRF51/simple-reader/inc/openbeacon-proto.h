@@ -26,6 +26,8 @@
 #ifndef __OPENBEACON_PROTO_H__
 #define __OPENBEACON_PROTO_H__
 
+#define BEACONLOG_SIGHTING 0x01
+
 #define CONFIG_TRACKER_CHANNEL 81
 #define CONFIG_PROX_CHANNEL 76
 
@@ -85,5 +87,23 @@ typedef struct
 	uint8_t proto;
 	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgProx;
+
+typedef struct
+{
+	uint16_t icrc16;
+	uint8_t protocol;
+	uint8_t interface;
+	uint16_t reader_id;
+	uint16_t size;
+} PACKED TBeaconNetworkHdr;
+
+/* BEACONLOG_SIGHTING */
+typedef struct
+{
+	TBeaconNetworkHdr hdr;
+	uint32_t sequence;
+	u_int32_t timestamp;
+	TBeaconNgTracker log;
+} PACKED TBeaconLogSighting;
 
 #endif/*__OPENBEACON_PROTO_H__*/
