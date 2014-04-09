@@ -205,6 +205,9 @@ void POWER_CLOCK_IRQ_Handler(void)
 
 static void radio_on_prox_packet(uint16_t delta_t)
 {
+	int i;
+	TBeaconNgSightingSlot *slot;
+
 	/* ignore unknown protocols */
 	if(g_pkt_prox_rx.proto != RFBPROTO_BEACON_NG_PROX)
 		return;
@@ -222,6 +225,25 @@ static void radio_on_prox_packet(uint16_t delta_t)
 		g_ticks_offset =
 			(delta_t + g_pkt_prox_rx.p.prox.ticks) -
 			((uint16_t)NRF_RTC0->COUNTER);
+	}
+
+	/* remember proximity sighting */
+	slot = g_pkt_tracker.p.sighting.slot;
+	for(i=0; i<CONFIG_SIGHTING_SLOTS; i++)
+	{
+		/* ignore older readings */
+		if(slot->uid==g_pkt_prox_rx.p.prox.uid)
+			break;
+
+		/* use first free entry */
+		if(!slot->uid)
+		{
+			slot->uid = g_pkt_prox_rx.p.prox.uid;
+			slot->rx_power = g_rssi;
+			break;
+		}
+
+		slot++;
 	}
 }
 
@@ -317,6 +339,7 @@ void RADIO_IRQ_Handler(void)
 				NRF_POWER->DCDCEN = 0;
 
 				/* confirm tracker transmission */
+				memset(&g_pkt_tracker.p.sighting.slot, 0, sizeof(g_pkt_tracker.p.sighting.slot));
 				g_request_tx = FALSE;
 				break;
 			}

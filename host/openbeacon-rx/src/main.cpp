@@ -124,7 +124,7 @@ microtime (void)
 		return 0;
 }
 
-static void
+void
 hex_dump (const void *data, unsigned int addr, unsigned int len)
 {
 	unsigned int start, i, j;
@@ -167,6 +167,7 @@ static int
 parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 {
 	uint32_t t;
+	const TBeaconNgSightingSlot *slot;
 	const TBeaconLogSighting *pkt;
 	TBeaconNgTracker track;
 
@@ -208,14 +209,25 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 		return len;
 	}
 
-	fprintf(stderr, "id=0x%08X t=%08i voltage=%imV orientation=%+3i°\n\r",
+	fprintf(stderr, "id=0x%08X t=%08i voltage=%imV orientation=%+3i°",
 		track.p.sighting.uid,
 		track.p.sighting.epoch,
 		track.p.sighting.voltage*100,
 		track.p.sighting.angle
 	);
-	hex_dump(&track, 0, sizeof(track)-CONFIG_SIGNATURE_SIZE);
 
+	slot = track.p.sighting.slot;
+	for(t=0; t<CONFIG_SIGHTING_SLOTS; t++)
+	{
+		if(slot->uid)
+			fprintf(stderr, " <0x%08X[%03idBm]",
+				slot->uid,
+				slot->rx_power
+			);
+		slot++;
+	}
+
+	fprintf(stderr, "\n\r");
 	return 0;
 }
 
