@@ -52,6 +52,10 @@ TAES* aes_sign(const void* data, uint32_t length)
 		for(i=0; i<t; i++)
 			g_signature.in[i] = g_signature.out[i] ^ *src++;
 
+		/* pad block if needed */
+		if(t<AES_BLOCK_SIZE)
+			memset(&g_signature.in[t], 0xFF, AES_BLOCK_SIZE-t);
+
 		/* AES hash block, result in 'out' */
 		aes(&g_signature);
 	}

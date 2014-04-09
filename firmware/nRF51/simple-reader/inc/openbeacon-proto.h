@@ -102,7 +102,7 @@ typedef struct
 {
 	TBeaconNetworkHdr hdr;
 	uint32_t sequence;
-	u_int32_t timestamp;
+	uint32_t timestamp;
 	TBeaconNgTracker log;
 } PACKED TBeaconLogSighting;
 
