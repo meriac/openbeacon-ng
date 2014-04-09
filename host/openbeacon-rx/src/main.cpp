@@ -202,7 +202,18 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 		return len;
 	}
 
-	fprintf(stderr, "\n\r");
+	if(track.proto != RFBPROTO_BEACON_NG_TRACKER)
+	{
+		fprintf(stderr, " Unknown protocol [%i]\n\r", track.proto);
+		return len;
+	}
+
+	fprintf(stderr, "id=0x%08X t=%08i voltage=%imV orientation=%+3i°\n\r",
+		track.p.sighting.uid,
+		track.p.sighting.epoch,
+		track.p.sighting.voltage*100,
+		track.p.sighting.angle
+	);
 	hex_dump(&track, 0, sizeof(track)-CONFIG_SIGNATURE_SIZE);
 
 	return 0;
