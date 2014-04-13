@@ -163,11 +163,62 @@ hex_dump (const void *data, unsigned int addr, unsigned int len)
 	}
 }
 
+void
+print_packet(FILE *out, TBeaconNgTracker &track)
+{
+	uint32_t t;
+	const TBeaconNgSighting *slot;
+
+	/* show common fields */
+	fprintf(out, "{\"id\"=\"0x%08X\",\"t\"=%i,\"voltage\"=%1.1f,\"orientation\"=%03i,",
+		track.uid,
+		track.epoch,
+		track.voltage/10.0,
+		track.angle
+	);
+
+	/* show specific fields */
+	switch(track.proto)
+	{
+		case RFBPROTO_BEACON_NG_SIGHTING:
+		{
+			fprintf(out, "\"sighting\"=[");
+			slot = track.p.sighting;
+			for(t=0; t<CONFIG_SIGHTING_SLOTS; t++)
+			{
+				if(slot->uid)
+				{
+					fprintf(out, "%s{\"id\"=\"0x%08X\",\"dBm\"=%03i}",
+						t ? ",":"",
+						slot->uid,
+						slot->rx_power
+					);
+				}
+				slot++;
+			}
+			fprintf(out, "]");
+			break;
+		}
+
+		case RFBPROTO_BEACON_NG_STATUS:
+		{
+			fprintf(out, "\"status\"={\"rx_loss\"=%1.2f,\"tx_loss\"=%1.2f,\"px_power\"=%2.0f,\"ticks\"=%06i}",
+				track.p.status.rx_loss/100.0,
+				track.p.status.tx_loss/100.0,
+				track.p.status.px_power/100.0,
+				track.p.status.ticks
+			);
+			break;
+		}
+	}
+
+	fprintf(out, "}\n\r");
+}
+
 static int
 parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 {
 	uint32_t t;
-	const TBeaconNgSighting *slot;
 	const TBeaconLogSighting *pkt;
 	TBeaconNgTracker track;
 
@@ -209,51 +260,10 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 		return len;
 	}
 
-	/* show common fields */
-	printf("{\"id\"=\"0x%08X\",\"t\"=%i,\"voltage\"=%1.1f,\"orientation\"=%03i,",
-		track.uid,
-		track.epoch,
-		track.voltage/10.0,
-		track.angle
-	);
+	/* show latest packet */
+	print_packet(stdout, track);
 
-	/* show specific fields */
-	switch(track.proto)
-	{
-		case RFBPROTO_BEACON_NG_SIGHTING:
-		{
-			printf("\"sighting\"=[");
-			slot = track.p.sighting;
-			for(t=0; t<CONFIG_SIGHTING_SLOTS; t++)
-			{
-				if(slot->uid)
-				{
-					printf("%s{\"id\"=\"0x%08X\",\"dBm\"=%03i}",
-						t ? ",":"",
-						slot->uid,
-						slot->rx_power
-					);
-				}
-				slot++;
-			}
-			printf("]");
-			break;
-		}
-
-		case RFBPROTO_BEACON_NG_STATUS:
-		{
-			printf("\"status\"={\"rx_loss\"=%1.2f,\"tx_loss\"=%1.2f,\"px_power\"=%2.0f,\"ticks\"=%06i}",
-				track.p.status.rx_loss/100.0,
-				track.p.status.tx_loss/100.0,
-				track.p.status.px_power/100.0,
-				track.p.status.ticks
-			);
-			break;
-		}
-	}
-
-	printf("}\n\r");
-	return 0;
+	return sizeof(TBeaconLogSighting);
 }
 
 static int
