@@ -1,7 +1,7 @@
 CXX     :=g++
 TARGET  :=openbeacon-rx
 SOURCES :=src/bmMapHandleToItem.cpp src/main.cpp src/crypto.cpp
-LIBS    :=-lm
+LIBS    :=-lm -pthread
 
 # determine program version
 PROGRAM_VERSION:=$(shell git describe --tags --abbrev=4 --dirty 2>/dev/null | sed s/^v//)

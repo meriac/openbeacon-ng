@@ -115,10 +115,9 @@ bmMapHandleToItem::Find (bmHandle handle, pthread_mutex_t ** mutex)
 				if (i)
 					fprintf (stderr, "found %lu after %i items\n",
 							 (long unsigned int) handle, i);
-#endif			 /*DEBUG*/
-					return (m_ItemSize <=
-							(int) sizeof (map->data)) ? &map->
-					data : map->data;
+#endif	/*DEBUG*/
+				return (m_ItemSize <=
+					(int) sizeof (map->data)) ? &map->data : map->data;
 			}
 
 			map++;
