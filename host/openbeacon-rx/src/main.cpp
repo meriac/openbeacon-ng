@@ -174,8 +174,6 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 	if(len<(int)sizeof(TBeaconLogSighting))
 		return len;
 
-	fprintf(stderr, "RX[0x%08X]: ", reader_id);
-
 	pkt = (const TBeaconLogSighting*)data;
 	if(pkt->hdr.protocol != BEACONLOG_SIGHTING)
 	{
@@ -212,7 +210,7 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 	}
 
 	/* show common fields */
-	fprintf(stderr, "id=0x%08X t=%08i voltage=%1.1fV orientation=%+3i°",
+	printf("{\"id\"=\"0x%08X\",\"t\"=%i,\"voltage\"=%1.1f,\"orientation\"=%03i,",
 		track.uid,
 		track.epoch,
 		track.voltage/10.0,
@@ -224,29 +222,37 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 	{
 		case RFBPROTO_BEACON_NG_SIGHTING:
 		{
+			printf("\"sighting\"=[");
 			slot = track.p.sighting;
 			for(t=0; t<CONFIG_SIGHTING_SLOTS; t++)
 			{
 				if(slot->uid)
-					fprintf(stderr, " <0x%08X[%03idBm]",
+				{
+					printf("%s{\"id\"=\"0x%08X\",\"dBm\"=%03i}",
+						t ? ",":"",
 						slot->uid,
 						slot->rx_power
 					);
+				}
 				slot++;
 			}
+			printf("]");
 			break;
 		}
 
 		case RFBPROTO_BEACON_NG_STATUS:
 		{
-			fprintf(stderr, " ticks=0x%04X",
+			printf("\"status\"={\"rx_loss\"=%1.2f,\"tx_loss\"=%1.2f,\"px_power\"=%2.0f,\"ticks\"=%06i}",
+				track.p.status.rx_loss/100.0,
+				track.p.status.tx_loss/100.0,
+				track.p.status.px_power/100.0,
 				track.p.status.ticks
 			);
 			break;
 		}
 	}
 
-	fprintf(stderr, "\n\r");
+	printf("}\n\r");
 	return 0;
 }
 
