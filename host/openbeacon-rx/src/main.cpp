@@ -167,7 +167,7 @@ static int
 parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 {
 	uint32_t t;
-	const TBeaconNgSightingSlot *slot;
+	const TBeaconNgSighting *slot;
 	const TBeaconLogSighting *pkt;
 	TBeaconNgTracker track;
 
@@ -203,28 +203,47 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 		return len;
 	}
 
-	if(track.proto != RFBPROTO_BEACON_NG_TRACKER)
+	/* ignore unknown packets */
+	if(!((track.proto == RFBPROTO_BEACON_NG_SIGHTING)||
+		(track.proto == RFBPROTO_BEACON_NG_STATUS)))
 	{
 		fprintf(stderr, " Unknown protocol [%i]\n\r", track.proto);
 		return len;
 	}
 
-	fprintf(stderr, "id=0x%08X t=%08i voltage=%imV orientation=%+3i°",
-		track.p.sighting.uid,
-		track.p.sighting.epoch,
-		track.p.sighting.voltage*100,
-		track.p.sighting.angle
+	/* show common fields */
+	fprintf(stderr, "id=0x%08X t=%08i voltage=%1.1fV orientation=%+3i°",
+		track.uid,
+		track.epoch,
+		track.voltage/10.0,
+		track.angle
 	);
 
-	slot = track.p.sighting.slot;
-	for(t=0; t<CONFIG_SIGHTING_SLOTS; t++)
+	/* show specific fields */
+	switch(track.proto)
 	{
-		if(slot->uid)
-			fprintf(stderr, " <0x%08X[%03idBm]",
-				slot->uid,
-				slot->rx_power
+		case RFBPROTO_BEACON_NG_SIGHTING:
+		{
+			slot = track.p.sighting;
+			for(t=0; t<CONFIG_SIGHTING_SLOTS; t++)
+			{
+				if(slot->uid)
+					fprintf(stderr, " <0x%08X[%03idBm]",
+						slot->uid,
+						slot->rx_power
+					);
+				slot++;
+			}
+			break;
+		}
+
+		case RFBPROTO_BEACON_NG_STATUS:
+		{
+			fprintf(stderr, " ticks=0x%04X",
+				track.p.status.ticks
 			);
-		slot++;
+			break;
+		}
 	}
 
 	fprintf(stderr, "\n\r");

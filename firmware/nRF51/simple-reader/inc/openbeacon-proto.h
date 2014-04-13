@@ -34,36 +34,39 @@
 #define CONFIG_SIGNATURE_SIZE 5
 #define CONFIG_SIGHTING_SLOTS 3
 
-#define RFBPROTO_BEACON_NG_TRACKER  30
-#define RFBPROTO_BEACON_NG_SIGHTING 31
-#define RFBPROTO_BEACON_NG_STATUS   32
-#define RFBPROTO_BEACON_NG_PROX     33
+#define RFBPROTO_BEACON_NG_SIGHTING 30
+#define RFBPROTO_BEACON_NG_STATUS   31
+#define RFBPROTO_BEACON_NG_PROX     32
 
 typedef struct
 {
-	uint8_t rx_power;
-	uint32_t uid;
-} PACKED TBeaconNgSightingSlot;
+	int16_t rx_loss;
+	int16_t tx_loss;
+	int16_t px_power;
+	uint16_t ticks;
+} PACKED TBeaconNgStatus;
 
 typedef struct
 {
+	int8_t rx_power;
 	uint32_t uid;
-	uint32_t epoch;
-	int8_t angle;
-	uint8_t voltage;
-	TBeaconNgSightingSlot slot[CONFIG_SIGHTING_SLOTS];
 } PACKED TBeaconNgSighting;
 
 typedef union
 {
-	TBeaconNgSighting sighting;
-	uint8_t raw[25];
+	TBeaconNgStatus status;
+	TBeaconNgSighting sighting[CONFIG_SIGHTING_SLOTS];
+	uint8_t raw[15];
 } PACKED TBeaconNgPayload;
 
 typedef struct
 {
 	uint8_t proto;
-	uint8_t tx_power;
+	int8_t tx_power;
+	int8_t angle;
+	uint8_t voltage;
+	uint32_t uid;
+	uint32_t epoch;
 	TBeaconNgPayload p;
  	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgTracker;

@@ -30,12 +30,20 @@
 #include <rng.h>
 #include <timer.h>
 
-static volatile uint32_t g_time, g_time_offset;
+#define RXTX_BASELOSS -4.0
+#define BALUN_INSERT_LOSS -2.25
+#define BALUN_RETURN_LOSS -10.0
+#define ANTENNA_GAIN 0.5
+#define PX_POWER -30
+#define RX_LOSS ((RXTX_BASELOSS/2.0)+BALUN_RETURN_LOSS+ANTENNA_GAIN)
+#define TX_LOSS ((RXTX_BASELOSS/2.0)+BALUN_INSERT_LOSS+ANTENNA_GAIN)
+
+static volatile uint32_t g_time, g_time_offset, g_pkt_tracker_ticks;
 static volatile uint16_t g_ticks_offset;
 static volatile uint8_t g_request_tx;
 static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
-static uint8_t g_rssi;
+static int8_t g_rssi;
 
 static TBeaconNgProx g_pkt_prox ALIGN4;
 static uint8_t g_pkt_prox_enc[sizeof(g_pkt_prox)] ALIGN4;
@@ -206,7 +214,7 @@ void POWER_CLOCK_IRQ_Handler(void)
 static void radio_on_prox_packet(uint16_t delta_t)
 {
 	int i;
-	TBeaconNgSightingSlot *slot;
+	TBeaconNgSighting *slot;
 
 	/* ignore unknown protocols */
 	if(g_pkt_prox_rx.proto != RFBPROTO_BEACON_NG_PROX)
@@ -228,7 +236,7 @@ static void radio_on_prox_packet(uint16_t delta_t)
 	}
 
 	/* remember proximity sighting */
-	slot = g_pkt_tracker.p.sighting.slot;
+	slot = g_pkt_tracker.p.sighting;
 	for(i=0; i<CONFIG_SIGHTING_SLOTS; i++)
 	{
 		/* ignore older readings */
@@ -297,9 +305,23 @@ void RADIO_IRQ_Handler(void)
 					NRF_RADIO->PCNF1 = RADIO_TRACKER_PCNF1;
 
 					/* update tracker packet */
-					g_pkt_tracker.p.sighting.epoch = g_time+g_time_offset;
-					g_pkt_tracker.p.sighting.angle = tag_angle();
-					g_pkt_tracker.p.sighting.voltage = adc_bat();
+					if(g_pkt_tracker.p.sighting[0].uid)
+						g_pkt_tracker.proto = RFBPROTO_BEACON_NG_SIGHTING;
+					else
+					{
+						g_pkt_tracker.proto = RFBPROTO_BEACON_NG_STATUS;
+						g_pkt_tracker.p.status.rx_loss = (int16_t)((RX_LOSS*100)+0.5);
+						g_pkt_tracker.p.status.tx_loss = (int16_t)((TX_LOSS*100)+0.5);
+						g_pkt_tracker.p.status.px_power = (int16_t)((PX_POWER*100)+0.5);
+						g_pkt_tracker.p.status.ticks = NRF_RTC0->COUNTER + g_ticks_offset + g_pkt_tracker_ticks;
+					}
+					g_pkt_tracker.epoch = g_time+g_time_offset;
+					g_pkt_tracker.angle = tag_angle();
+					g_pkt_tracker.voltage = adc_bat();
+
+					/* measure encryption time */
+					ticks = NRF_RTC0->COUNTER;
+
 					/* encrypt packet */
 					aes_encr(
 						&g_pkt_tracker,
@@ -311,6 +333,9 @@ void RADIO_IRQ_Handler(void)
 					NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_tracker_enc;
 					/* start tracker TX */
 					NRF_RADIO->TASKS_TXEN = 1;
+
+					/* update encryption time */
+					g_pkt_tracker_ticks = NRF_RTC0->COUNTER - ticks;
 				}
 				else
 				{
@@ -339,7 +364,7 @@ void RADIO_IRQ_Handler(void)
 				NRF_POWER->DCDCEN = 0;
 
 				/* confirm tracker transmission */
-				memset(&g_pkt_tracker.p.sighting.slot, 0, sizeof(g_pkt_tracker.p.sighting.slot));
+				memset(&g_pkt_tracker.p, 0, sizeof(g_pkt_tracker.p));
 				g_request_tx = FALSE;
 				break;
 			}
@@ -373,7 +398,7 @@ void RADIO_IRQ_Handler(void)
 
 	if(NRF_RADIO->EVENTS_RSSIEND)
 	{
-		g_rssi = NRF_RADIO->RSSISAMPLE;
+		g_rssi = -((int8_t)NRF_RADIO->RSSISAMPLE);
 
 		/* acknowledge event */
 		NRF_RADIO->EVENTS_RSSIEND = 0;
@@ -387,6 +412,7 @@ void radio_init(uint32_t uid)
 {
 	/* reset variables */
 	g_time = g_time_offset = 0;
+	g_pkt_tracker_ticks = 0;
 	g_ticks_offset = 0;
 	g_listen_ratio = 0;
 	g_nrf_state = 0;
@@ -400,9 +426,8 @@ void radio_init(uint32_t uid)
 
 	/* initialize tracker packet */
 	memset(&g_pkt_tracker, 0, sizeof(g_pkt_tracker));
-	g_pkt_tracker.proto = RFBPROTO_BEACON_NG_TRACKER;
-	g_pkt_tracker.tx_power = 30;
-	g_pkt_tracker.p.sighting.uid = uid;
+	g_pkt_tracker.tx_power = 4;
+	g_pkt_tracker.uid = uid;
 
 	/* start random number genrator */
 	rng_init();
