@@ -454,8 +454,8 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 		return;
 
 	if(g_first)
-		fprintf(g_out,"  tag=[");
-	fprintf(g_out,"%s\n    {\"id\"=%09u,\"hex\"=\"%08X\",\"age\"=%02i,\"angle\"=%03i,\"voltage\"=%1.1f}",
+		fprintf(g_out,"  \"tag\":[");
+	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i,\"angle\":%i,\"voltage\":%1.1f}",
 		g_first ? "":",",
 		tag->tag_id,
 		tag->tag_id,
@@ -507,8 +507,8 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 		return;
 
 	if(g_first)
-		fprintf(g_out,"\n  ],\n  edge=[");
-	fprintf(g_out,"%s\n    {\"tag\"=[%09u,%09u],\"age\"=%02i,\"power\"=%3.1f",
+		fprintf(g_out,"\n  ],\n  \"edge\":[");
+	fprintf(g_out,"%s\n    {\"tag\":[%u,%u],\"age\":%i,\"power\":%1.1f",
 		g_first ? "":",",
 		prox->tag1,
 		prox->tag2,
@@ -517,7 +517,7 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 	);
 
 	if(dist_count)
-		fprintf(g_out," \"dist\"=%1.1f", (dist/dist_count)/1000.0);
+		fprintf(g_out,",\"dist\":%1.1f", (dist/dist_count)/1000.0);
 
 	fprintf(g_out,"}");
 	g_first = false;
