@@ -1,6 +1,7 @@
 CXX     :=g++
 TARGET  :=openbeacon-rx
 SOURCES :=src/bmMapHandleToItem.cpp src/main.cpp src/crypto.cpp
+FILTERSS:=filter-singularsighting
 LIBS    :=-lm -pthread
 
 # determine program version
@@ -27,6 +28,9 @@ PREFIX  :=/usr/local
 
 all: $(TARGET) $(FILTERSS)
 
+demo: all
+	./$(TARGET) | ./$(FILTERSS) ~/public_html/test.json
+
 .PHONY: all version run install indent debug dependencies-fedora cleanall clean
 
 version:
@@ -37,6 +41,9 @@ run: $(TARGET)
 
 install: $(TARGET) $(FILTER)
 	install $(TARGET) $(FILTER) $(PREFIX)/bin/
+
+$(FILTERSS): src/$(FILTERSS).cpp
+	$(CXX) $(CXXFLAGS) $(CXXOPT) $(LDOPT) $^ -lz -o $@
 
 indent: $(SOURCES)
 	find src -iname '*\.[cph]*' -exec indent -c81 -i4 -cli4 -bli0 -ts 4 \{\} \;
@@ -52,12 +59,12 @@ $(TARGET): .depend $(OBJS)
 	$(CXX) $(CXXFLAGS) $(CXXOPT) -c $< -o $@
 
 dependencies-fedora:
-	sudo yum install gcc-c++
+	sudo yum install gcc-c++ zlib zlib-devel
 
 cleanall: clean
 	rm -f .depend
 
 clean:
-	rm -f $(TARGET) $(OBJS) *~
+	rm -f $(TARGET) $(OBJS) $(FILTERSS) *~
 
 include .depend
