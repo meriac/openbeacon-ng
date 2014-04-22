@@ -30,11 +30,14 @@
 #include <rng.h>
 #include <timer.h>
 
+/* set proximity power */
+#define PX_POWER -20
+#define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Neg20dBm
+
 #define RXTX_BASELOSS -4.0
 #define BALUN_INSERT_LOSS -2.25
 #define BALUN_RETURN_LOSS -10.0
 #define ANTENNA_GAIN 0.5
-#define PX_POWER -30
 #define RX_LOSS ((RXTX_BASELOSS/2.0)+BALUN_RETURN_LOSS+ANTENNA_GAIN)
 #define TX_LOSS ((RXTX_BASELOSS/2.0)+BALUN_INSERT_LOSS+ANTENNA_GAIN)
 
@@ -78,7 +81,7 @@ static uint8_t g_pkt_tracker_enc[sizeof(g_pkt_tracker)] ALIGN4;
 		(NRF_TRACKER_SIZE             << RADIO_PCNF1_MAXLEN_Pos)
 
 #define RADIO_PROX_TXADDRESS 0
-#define RADIO_PROX_TXPOWER (RADIO_TXPOWER_TXPOWER_Neg30dBm << RADIO_TXPOWER_TXPOWER_Pos)
+#define RADIO_PROX_TXPOWER (PX_POWER_VALUE << RADIO_TXPOWER_TXPOWER_Pos)
 #define RADIO_PROX_PCNF1 \
 		(RADIO_PCNF1_WHITEEN_Enabled  << RADIO_PCNF1_WHITEEN_Pos) |\
 		(RADIO_PCNF1_ENDIAN_Big       << RADIO_PCNF1_ENDIAN_Pos)  |\
