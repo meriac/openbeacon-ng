@@ -69,5 +69,6 @@ void adc_init(void)
 	NRF_ADC->INTENSET = (
 		(ADC_INTENSET_END_Enabled << ADC_INTENSET_END_Pos)
 	);
+	NVIC_SetPriority(ADC_IRQn, IRQ_PRIORITY_ADC);
 	NVIC_EnableIRQ(ADC_IRQn);
 }

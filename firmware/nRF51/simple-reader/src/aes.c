@@ -195,9 +195,7 @@ void aes_init(uint32_t uid)
 	NRF_ECB->TASKS_STOPECB = 1;
 	NRF_ECB->INTENSET =
 		ECB_INTENSET_ENDECB_Enabled   << ECB_INTENSET_ENDECB_Pos;
-#ifdef  IRQ_PRIORITY_AES
 	NVIC_SetPriority(ECB_IRQn, IRQ_PRIORITY_AES);
-#endif/*IRQ_PRIORITY_AES*/
 	NVIC_EnableIRQ(ECB_IRQn);
 
 	/* derieve initial key */

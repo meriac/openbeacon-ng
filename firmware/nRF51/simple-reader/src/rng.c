@@ -84,11 +84,11 @@ uint32_t rng(uint8_t bits)
 			g_rng_pool_read=0;
 	}
 
-	/* refill pool */
-	NRF_RNG->TASKS_START = 1;
-
 	/* leave protection */
 	NVIC_EnableIRQ(RNG_IRQn);
+
+	/* refill pool */
+	NRF_RNG->TASKS_START = 1;
 
 	/* mask needed bytes */
 	return data & ((1UL<<bits)-1);
@@ -103,5 +103,6 @@ void rng_init(void)
 	NRF_RNG->INTENSET = (
 		(RNG_INTENSET_VALRDY_Enabled << RNG_INTENSET_VALRDY_Pos)
 	);
+	NVIC_SetPriority(RNG_IRQn, IRQ_PRIORITY_RNG);
 	NVIC_EnableIRQ(RNG_IRQn);
 }
