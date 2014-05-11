@@ -61,7 +61,7 @@
 #define CONFIG_LED_PIN       17
 #define CONFIG_SWITCH_PIN    29
 
-/* only two priority bitys available ! */
+/* only two priority bits available ! */
 
 #define IRQ_PRIORITY_HIGH        0
 #define IRQ_PRIORITY_AES         (IRQ_PRIORITY_HIGH)
