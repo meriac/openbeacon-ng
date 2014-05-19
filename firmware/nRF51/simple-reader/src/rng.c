@@ -67,13 +67,19 @@ uint32_t rng(uint8_t bits)
 	/* calculate bytes and mask */
 	bytes = (bits+7)/8;
 	/* wait for pool to fill up */
-	while(bytes>g_rng_pool_count)
-		__WFE();
+	if(bytes>g_rng_pool_count)
+	{
+		/* start refilling pool */
+		NRF_RNG->TASKS_START = 1;
+		/* wait till minimum bytes were aquired */
+		while(bytes>g_rng_pool_count)
+			__WFI();
+	}
 
 	data = 0;
 	p = (uint8_t*)&data;
 	/* protect counter */
-	NVIC_DisableIRQ(RNG_IRQn);
+	__disable_irq();
 
 	/* extract number of bytes needed */
 	g_rng_pool_count-=bytes;
@@ -85,7 +91,7 @@ uint32_t rng(uint8_t bits)
 	}
 
 	/* leave protection */
-	NVIC_EnableIRQ(RNG_IRQn);
+	__enable_irq();
 
 	/* refill pool */
 	NRF_RNG->TASKS_START = 1;
