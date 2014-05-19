@@ -26,6 +26,7 @@
 #define __FLASH_H__
 
 extern uint8_t flash_init(void);
+extern uint32_t flash_size(void);
 extern void flash_cmd(uint8_t cmd, uint8_t len, uint8_t *data);
 
 #endif/*__FLASH_H__*/

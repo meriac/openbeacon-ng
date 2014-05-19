@@ -26,7 +26,22 @@
 #include <flash.h>
 #include <timer.h>
 
-static const uint8_t g_flash_id[]={0x1f,0x25,0x00,0x01,0x00};
+static const uint8_t g_flash_id[]={0x1f,0x00,0x00,0x01,0x00};
+static uint8_t g_flash_size;
+#define MEGABYTE(x) (x*1024UL*1024UL)
+
+uint32_t flash_size(void)
+{
+	switch(g_flash_size)
+	{
+		case 0x25:
+			return MEGABYTE(1);
+		case 0x28:
+			return MEGABYTE(8);
+		default:
+			return 0;
+	}
+}
 
 void flash_cmd(uint8_t cmd, uint8_t len, uint8_t *data)
 {
@@ -95,6 +110,11 @@ uint8_t flash_init(void)
 
 	/* check for flash */
 	flash_cmd(0x9F, sizeof(data), data);
+	/* remember flash size */
+	g_flash_size = data[1];
+	/* reset size for ID comparison */
+	data[1] = 0;
+	/* compare wildcard ID */
 	if(memcmp(data, g_flash_id, sizeof(g_flash_id)))
 		return 1;
 
