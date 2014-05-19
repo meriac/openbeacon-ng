@@ -90,8 +90,8 @@ BOOL uart_tx(uint8_t data)
 	while(g_uart_buffer_count==CONFIG_UART_BUFFER)
 		__WFI();
 
-	/* temporarily disable UART IRQ ... */
-	NVIC_DisableIRQ(UART0_IRQn);
+	/* temporarily disable IRQs ... */
+	__disable_irq();
 
 	/* ...and push data */
 	if(g_uart_buffer_count)
@@ -109,8 +109,8 @@ BOOL uart_tx(uint8_t data)
 	}
 	g_uart_buffer_count++;
 
-	/* enable UART IRQ again */
-	NVIC_EnableIRQ(UART0_IRQn);
+	/* enable IRQs again */
+	__enable_irq();
 
 	return TRUE;
 }
