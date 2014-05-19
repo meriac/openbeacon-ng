@@ -88,7 +88,7 @@ BOOL uart_tx(uint8_t data)
 {
 	/* wait for buffer */
 	while(g_uart_buffer_count==CONFIG_UART_BUFFER)
-		__WFI();
+		__WFE();
 
 	/* temporarily disable IRQs ... */
 	__disable_irq();

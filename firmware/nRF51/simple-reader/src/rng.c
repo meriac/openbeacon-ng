@@ -73,7 +73,7 @@ uint32_t rng(uint8_t bits)
 		NRF_RNG->TASKS_START = 1;
 		/* wait till minimum bytes were aquired */
 		while(bytes>g_rng_pool_count)
-			__WFI();
+			__WFE();
 	}
 
 	data = 0;

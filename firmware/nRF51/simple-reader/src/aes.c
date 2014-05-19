@@ -152,7 +152,7 @@ void aes(TCryptoEngine* engine)
 	NRF_ECB->TASKS_STARTECB = 1;
 
 	while(!g_enc_done)
-		__WFI();
+		__WFE();
 }
 
 /* initial key derivation */

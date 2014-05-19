@@ -37,7 +37,7 @@ void timer_wait(uint32_t ticks)
 	NRF_RTC1->TASKS_START = 1;
 
 	while(g_timer_wait)
-		__WFI();
+		__WFE();
 }
 
 void RTC1_IRQ_Handler(void)
