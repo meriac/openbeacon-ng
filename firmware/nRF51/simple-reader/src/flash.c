@@ -43,7 +43,7 @@ uint32_t flash_size(void)
 	}
 }
 
-void flash_cmd(uint8_t cmd, uint8_t len, uint8_t *data)
+static void flash_cmd_read(uint8_t cmd, uint8_t len, uint8_t *data)
 {
 	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
 
@@ -109,7 +109,7 @@ uint8_t flash_init(void)
 	timer_wait(MILLISECONDS(1));
 
 	/* check for flash */
-	flash_cmd(0x9F, sizeof(data), data);
+	flash_cmd_read(0x9F, sizeof(data), data);
 	/* remember flash size */
 	g_flash_size = data[1];
 	/* reset size for ID comparison */
@@ -119,7 +119,7 @@ uint8_t flash_init(void)
 		return 1;
 
 	/* send flash to deep power down */
-	flash_cmd(0x79, 0, NULL);
+	flash_cmd_read(0x79, 0, NULL);
 
 	return 0;
 }
