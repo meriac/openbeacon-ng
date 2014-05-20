@@ -159,6 +159,7 @@ void RTC0_IRQ_Handler(void)
 		/* stop HF clock */
 		NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 
+#ifdef  PROXIMITY_BLINK
 		if(g_nrf_state == NRF_STATE_RX_PROX_BLINK)
 		{
 			g_nrf_state = NRF_STATE_IDLE;
@@ -168,6 +169,7 @@ void RTC0_IRQ_Handler(void)
 			NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + MILLISECONDS(1);
 		}
 		else
+#endif/*PROXIMITY_BLINK*/
 		{
 			/* set next state */
 			g_nrf_state = NRF_STATE_IDLE;
