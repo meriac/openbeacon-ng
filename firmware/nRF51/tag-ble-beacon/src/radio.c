@@ -28,6 +28,9 @@
 #include <adc.h>
 #include <timer.h>
 
+/* don't start DC/DC converter for voltages below 2.3V */
+#define NRF_DCDC_STARTUP_VOLTAGE 23
+
 #define BLE_ADDRESS 0x8E89BED6UL
 #define BLE_PREFIX_SIZE 9
 #define BLE_POSTFIX (BLE_PREFIX_SIZE+2)
@@ -70,6 +73,9 @@ void RTC0_IRQ_Handler(void)
 	/* run every second */
 	if(NRF_RTC0->EVENTS_COMPARE[0])
 	{
+		/* increment sequence counter once per second */
+		g_sequence_counter++;
+
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[0] = 0;
 
@@ -83,6 +89,16 @@ void RTC0_IRQ_Handler(void)
 
 		/* start ADC conversion */
 		adc_start();
+
+		/* only start DC/DC converter for
+		 * RX & higher battery voltages */
+		if(adc_bat()>=NRF_DCDC_STARTUP_VOLTAGE)
+		{
+			/* start DC-DC converter */
+			NRF_POWER->DCDCEN = (
+				(POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos)
+			);
+		}
 	}
 }
 
@@ -114,7 +130,7 @@ void radio_send_advertisment(void)
 	g_pkt_buffer[10]= 0x04;
 
 	/* advertise name */
-	if((g_sequence_counter++) & 1)
+	if(g_sequence_counter & 1)
 	{
 		/* append iBeacon */
 		g_pkt_buffer[ 1]= BLE_PREFIX_SIZE+sizeof(g_advertisment_pdu);
@@ -169,6 +185,8 @@ void RADIO_IRQ_Handler(void)
 			g_advertisment_index = 0;
 			/* stop HF clock */
 			NRF_CLOCK->TASKS_HFCLKSTOP = 1;
+			/* disable DC-DC converter */
+			NRF_POWER->DCDCEN = 0;
 		}
 	}
 
@@ -211,7 +229,7 @@ void radio_init(uint32_t uid)
 	NRF_RADIO->CRCINIT = 0x00555555UL;
 	NRF_RADIO->CRCPOLY = 0x0100065BUL;
 	NRF_RADIO->SHORTS = (
-		(RADIO_SHORTS_READY_START_Enabled       << RADIO_SHORTS_READY_START_Pos)       |
+		(RADIO_SHORTS_READY_START_Enabled       << RADIO_SHORTS_READY_START_Pos) |
 		(RADIO_SHORTS_END_DISABLE_Enabled       << RADIO_SHORTS_END_DISABLE_Pos)
 	);
 	NRF_RADIO->INTENSET = (
