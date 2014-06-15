@@ -29,9 +29,8 @@
 #include <timer.h>
 
 #define BLE_ADDRESS 0x8E89BED6UL
-#define BLE_MAC_SIZE 6
-#define BLE_PREFIX_SIZE (2 + BLE_MAC_SIZE + sizeof(g_advertisment_pdu))
-#define BLE_POSTFIX_SIZE 3
+#define BLE_PREFIX_SIZE 9
+#define BLE_POSTFIX (BLE_PREFIX_SIZE+2)
 
 typedef struct {
 	uint8_t channel;
@@ -39,13 +38,22 @@ typedef struct {
 } TMapping;
 
 static int g_advertisment_index;
-static uint32_t g_uid; 
+static uint32_t g_uid;
+static uint32_t g_sequence_counter;
 
 static const uint8_t g_advertisment_pdu[] = {
-	/* No BT/EDR - Tx only */
-	   2, 0x01, 0x04,
 	/* Our name */
 	  15, 0x08, 'O','p','e','n','B','e','a','c','o','n',' ','T','a','g'
+};
+
+static const uint8_t g_ibeacon_pkt[] = {
+	/* iBeacon packet */
+	  26, 0xFF, 0x4C, 0x00, 0x02, 0x15,
+	      0x3B, 0x0C, 0x44, 0xC6, 0x55, 0xA8, 0xF9, 0x55,
+	      0x32, 0xEB, 0x6A, 0xB2, 0x65, 0x42, 0xFE, 0x1A,
+	      0x00, 0x00,
+	      0x00, 0x00,
+	      0xC5
 };
 
 static uint8_t g_pkt_buffer[64];
@@ -91,7 +99,7 @@ void radio_send_advertisment(void)
 
 	/* BLE header */
 	g_pkt_buffer[0] = 0x42;
-	g_pkt_buffer[1] = BLE_PREFIX_SIZE + BLE_POSTFIX_SIZE - 1;
+
 	/* add MAC address */
 	g_pkt_buffer[2] = (uint8_t)(g_uid>>24);
 	g_pkt_buffer[3] = (uint8_t)(g_uid>>16);
@@ -99,14 +107,29 @@ void radio_send_advertisment(void)
 	g_pkt_buffer[5] = (uint8_t)(g_uid>> 0);
 	g_pkt_buffer[6] = 0;
 	g_pkt_buffer[7] = 0;
-	/* add generic header */
-	memcpy(&g_pkt_buffer[8], g_advertisment_pdu, sizeof(g_advertisment_pdu));
 
-	/* append voltage & angle */
-	g_pkt_buffer[BLE_PREFIX_SIZE+0] = 0xFF;
-	g_pkt_buffer[BLE_PREFIX_SIZE+1] = BLE_POSTFIX_SIZE;
-	g_pkt_buffer[BLE_PREFIX_SIZE+2] = tag_angle();
-	g_pkt_buffer[BLE_PREFIX_SIZE+3] = adc_bat();
+	/* No BT/EDR - Tx only */
+	g_pkt_buffer[8] = 2;
+	g_pkt_buffer[9] = 0x01;
+	g_pkt_buffer[10]= 0x04;
+
+	/* advertise name */
+	if((g_sequence_counter++) & 1)
+	{
+		/* append iBeacon */
+		g_pkt_buffer[ 1]= BLE_PREFIX_SIZE+sizeof(g_advertisment_pdu);
+		memcpy(&g_pkt_buffer[BLE_POSTFIX], &g_advertisment_pdu, sizeof(g_advertisment_pdu));
+	}
+	/* advertise guid */
+	else
+	{
+		/* append iBeacon */
+		g_pkt_buffer[ 1]= BLE_PREFIX_SIZE+sizeof(g_ibeacon_pkt);
+		memcpy(&g_pkt_buffer[BLE_POSTFIX], &g_ibeacon_pkt, sizeof(g_ibeacon_pkt));
+		/* set angle & battery voltage as minor */
+		g_pkt_buffer[BLE_POSTFIX+sizeof(g_ibeacon_pkt)-3] = tag_angle();
+		g_pkt_buffer[BLE_POSTFIX+sizeof(g_ibeacon_pkt)-2] = adc_bat();
+	}
 
 	/* set packet pointer */
 	NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_buffer;
@@ -137,7 +160,7 @@ void RADIO_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_RADIO->EVENTS_DISABLED = 0;
 
-		/* switchto next channel */
+		/* switch to next channel */
 		g_advertisment_index++;
 		if(g_advertisment_index<ADVERTISMENT_CHANNELS)
 			radio_send_advertisment();
@@ -161,6 +184,9 @@ void radio_init(uint32_t uid)
 {
 	/* remember uid */
 	g_uid = uid;
+
+	/* reset sequence counter */
+	g_sequence_counter = 0;
 
 	/* initialize ADC battery voltage measurements */
 	adc_init();
