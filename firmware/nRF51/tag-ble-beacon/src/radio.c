@@ -129,17 +129,17 @@ void radio_send_advertisment(void)
 	g_pkt_buffer[9] = 0x01;
 	g_pkt_buffer[10]= 0x04;
 
-	/* advertise name */
-	if(g_sequence_counter & 1)
+	/* advertise name every 4 transmissions */
+	if((g_sequence_counter & 3)==0)
 	{
-		/* append iBeacon */
+		/* append BLE tag name */
 		g_pkt_buffer[ 1]= BLE_PREFIX_SIZE+sizeof(g_advertisment_pdu);
 		memcpy(&g_pkt_buffer[BLE_POSTFIX], &g_advertisment_pdu, sizeof(g_advertisment_pdu));
 	}
 	/* advertise guid */
 	else
 	{
-		/* append iBeacon */
+		/* append iBeacon GUID */
 		g_pkt_buffer[ 1]= BLE_PREFIX_SIZE+sizeof(g_ibeacon_pkt);
 		memcpy(&g_pkt_buffer[BLE_POSTFIX], &g_ibeacon_pkt, sizeof(g_ibeacon_pkt));
 		/* set angle & battery voltage as minor */
