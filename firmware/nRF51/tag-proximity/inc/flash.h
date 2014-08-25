@@ -3,6 +3,7 @@
  * OpenBeacon.org - nRF51 Flash Routines
  *
  * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Modified by Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ***************************************************************
 
@@ -25,7 +26,35 @@
 #ifndef __FLASH_H__
 #define __FLASH_H__
 
-extern uint8_t flash_init(void);
 extern uint32_t flash_size(void);
+
+extern uint16_t flash_status(void);
+extern uint16_t flash_wait_ready(uint8_t wait_interval_ms);
+extern uint16_t flash_wait_status(uint8_t wait_interval_ms);
+
+extern void flash_reset(void);
+extern void flash_wakeup(void);
+extern void flash_sleep_deep(void);
+extern void flash_sleep(void);
+extern void flash_sleep_resume(void);
+
+extern void flash_set_sector_protection(uint8_t enable);
+extern void flash_erase_page(uint16_t page_addr);
+extern void flash_erase_block(uint16_t page_addr);
+extern void flash_erase_sector(uint16_t page_addr);
+extern void flash_erase_chip(void);
+
+extern void flash_read_buffer(uint8_t bufnum, uint16_t byte_offset, uint16_t len, uint8_t *data);
+extern void flash_write_buffer(uint8_t bufnum, uint16_t byte_offset, uint16_t len, uint8_t *data);
+
+extern void flash_write_buffer_to_page(uint8_t bufnum, uint16_t page_addr, uint8_t erase_page);
+extern void flash_write_page_through_buffer(uint8_t bufnum, uint16_t page_addr, uint16_t byte_offset, uint16_t len, uint8_t erase_page, uint8_t *data);
+extern void flash_rewrite_page_through_buffer(uint8_t bufnum, uint16_t page_addr);
+
+extern void flash_read_page_to_buffer(uint8_t bufnum, uint16_t page_addr);
+extern void flash_read_page(uint16_t page_addr, uint16_t byte_offset, uint16_t len, uint8_t *data);
+extern uint8_t flash_compare_page_to_buffer(uint8_t bufnum, uint16_t page_addr);
+
+extern uint8_t flash_init(void);
 
 #endif/*__FLASH_H__*/
