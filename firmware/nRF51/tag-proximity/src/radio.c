@@ -29,6 +29,7 @@
 #include <aes.h>
 #include <rng.h>
 #include <timer.h>
+#include <log.h>
 
 /* set proximity power */
 #define PX_POWER -20
@@ -258,6 +259,9 @@ static void radio_on_prox_packet(uint16_t delta_t)
 
 		slot++;
 	}
+
+	/* log to flash */
+	flash_log(sizeof(g_pkt_tracker), (uint8_t *) &g_pkt_tracker);
 }
 
 void RADIO_IRQ_Handler(void)

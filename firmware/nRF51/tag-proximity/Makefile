@@ -21,6 +21,7 @@ APP_SRC= \
   src/adc.c \
   src/aes.c \
   src/flash.c \
+  src/log.c \
   src/radio.c \
   src/timer.c \
   src/main.c

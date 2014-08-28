@@ -26,6 +26,7 @@
 
 #include <acc.h>
 #include <flash.h>
+#include <log.h>
 #include <radio.h>
 #include <timer.h>
 
@@ -78,6 +79,8 @@ void main_entry(void)
 	if(flash_init())
 		halt(2);
 
+	flash_setup_logging();
+
 	/* initialize accelerometer */
 	if(acc_init())
 		halt(3);
@@ -94,11 +97,15 @@ void main_entry(void)
 	/* enter main loop */
 	blink = 0;
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
+
 	while(TRUE)
 	{
 		/* get tag angle once per second */
 		acc_magnitude(&g_tag_angle);
 		timer_wait(MILLISECONDS(1000));
+
+		flash_log_write_trigger();
+		//flash_log_status();
 
 		/* blink every 5 seconds */
 		if(blink<5)
