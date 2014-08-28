@@ -26,6 +26,18 @@
 #ifndef __FLASH_H__
 #define __FLASH_H__
 
+#define	AT45D_PAGE_SIZE	264
+
+ /*
+ Status register bit masks.
+ We assume that the 2 status bytes are packed into a uint16_t,
+ with status byte 1 as the high byte and status byte 2 as the low byte
+ */ 
+#define AT45D_STATUS_READY		0x80		/* byte 1 & 2 */
+#define AT45D_STATUS_COMP		(0x40 << 8)	/* byte 1 */
+#define AT45D_STATUS_EPE		0x20		/* byte 2 */
+
+
 extern uint32_t flash_size(void);
 
 extern uint16_t flash_status(void);

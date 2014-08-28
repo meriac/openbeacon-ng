@@ -69,15 +69,6 @@ static const uint8_t AT45D_CMD_CHIP_ERASE[] = {0xC7, 0x94, 0x80, 0x9A};
 static const uint8_t AT45D_CMD_WP_ENABLE[] = {0x3D, 0x2A, 0x7F, 0xA9};
 static const uint8_t AT45D_CMD_WP_DISABLE[] = {0x3D, 0x2A, 0x7F, 0x9A};
 
-/*
- Status register bit masks.
- We assume that the 2 status bytes are packed into a uint16_t,
- with status byte 1 as the high byte and status byte 2 as the low byte
- */ 
-#define AT45D_STATUS_READY		0x80		/* byte 1 & 2 */
-#define AT45D_STATUS_COMP		(0x40 << 8)	/* byte 1 */
-#define AT45D_STATUS_EPE		0x20		/* byte 2 */
-
 
 /* helper SPI macros */
 
