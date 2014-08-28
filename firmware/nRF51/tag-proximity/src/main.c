@@ -105,7 +105,15 @@ void main_entry(void)
 		timer_wait(MILLISECONDS(1000));
 
 		flash_log_write_trigger();
-		//flash_log_status();
+
+		/* dump log data upon key press */
+		if(nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
+		{
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+			timer_wait(MILLISECONDS(100));
+			flash_log_status();
+			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		}
 
 		/* blink every 5 seconds */
 		if(blink<5)
