@@ -27,6 +27,7 @@
 #include <heatshrink_encoder.h> 
 #include <flash.h>
 #include <radio.h>
+#include <timer.h>
 
 
 /* flash chip signature */
@@ -66,7 +67,7 @@ uint16_t flash_log(uint16_t len, uint8_t *data)
 		if (buf_head - buffer == BUF_SIZE)
 			buf_head = buffer;
 
-		/* bail out on buffer overflow */
+		/* bail out on buffer overflow -- LOG THIS */
 		if (buf_head == my_tail)
 			break;
 	}
@@ -77,18 +78,16 @@ uint16_t flash_log(uint16_t len, uint8_t *data)
 
 static void block_init(void)
 {
-	memset((void *) &LogBlock, 0, sizeof(LogBlock));
+	memset(LogBlock.data, 0, LOG_BLOCK_DATA_SIZE);
 
-	LogBlock.env.signature = BLOCK_SIGNATURE;
-	LogBlock.env.log_version = 1;
-	LogBlock.env.compressed = 1;
+	LogBlock.env.len = 0;
 	LogBlock.env.seq = seq++;;
 }
 
 
 static uint8_t flash_log_block_write(uint8_t *buf)
 {
-	uint16_t page_addr = current_block*BLOCK_PAGES;
+	uint16_t page_addr = current_block * BLOCK_PAGES;
 	uint8_t i;
 
 	flash_wakeup();
@@ -116,6 +115,8 @@ static uint8_t flash_log_block_write(uint8_t *buf)
 		flash_error_count++;
 		return 1;
 	}
+
+	current_block++;
 
 	return 0;
 }
@@ -153,7 +154,7 @@ static uint8_t flash_log_write(void)
 		LogBlock.env.epoch = get_time();
 
 		/* compute CRC, ignoring signature and CRC fields */
-		LogBlock.env.crc = crc32( (void *) &LogBlock + 8, sizeof(LogBlock) - 8);
+		LogBlock.env.crc = crc32( ((void *) &LogBlock) + 8, sizeof(LogBlock) - 8);
 
 		/* write block */
 		flash_log_block_write( (uint8_t *) &LogBlock );
@@ -182,11 +183,84 @@ void flash_log_status(void)
 }
 
 
+/*
+ base64 log dump:
+ by running uudecode(1) on the dumped data
+ we obtain a binary log file named after the tag ID
+*/
+
+char base64_char(uint8_t b)
+{
+	if (b < 26)
+		return 'A' + b;
+	else if (b < 52)
+		return 'a' + (b - 26);
+	else if (b < 62)
+		return '0' + (b - 52);
+	else if (b == 62)
+		return '+';
+	else if (b == 63)
+		return '/';
+	else
+		return 0;
+}
+
+#define CHARS_PER_LINE 64
+
+void base64_dump(uint16_t len, uint8_t *data)
+{
+	uint16_t i, j, printed_chars = 1;
+	char c[4];
+
+	for (i=0; i<len; i+=3,data+=3)
+	{
+		c[0] = base64_char( data[0] >> 2 );
+		c[1] = base64_char( (data[0] & 0x03) << 4 | (data[1] & 0xF0) >> 4 );
+		c[2] = base64_char( (data[1] & 0x0F) << 2 | (data[2] & 0xC0) >> 6 );
+		c[3] = base64_char( (data[2] & 0x3F) );
+
+		for (j=0; j<4; j++, printed_chars++)
+		{
+			debug_printf("%c", c[j]);
+			if (printed_chars % CHARS_PER_LINE == 0)
+				debug_printf("\n\r");
+		}
+	}
+
+	if (len % 3 == 2)
+	{
+		c[0] = base64_char( data[0] >> 2 );
+		c[1] = base64_char( (data[0] & 0x03) << 4 | (data[1] & 0x0F) );
+		c[2] = base64_char( (data[1] & 0xF0) >> 2 );
+		c[3] = '=';
+	} else if (len % 3 == 1) {
+		c[0] = base64_char( data[0] >> 2 );
+		c[1] = base64_char( (data[0] & 0x03) << 4 );
+		c[2] = '=';
+		c[3] = '=';
+	}
+
+	if (len % 3)
+	{
+		for (j=0; j<4; j++, printed_chars++)
+		{
+			debug_printf("%c", c[j]);
+			if (printed_chars % CHARS_PER_LINE == 0)
+				debug_printf("\n\r");
+		}
+	}
+
+	if (printed_chars % CHARS_PER_LINE)
+		debug_printf("\n\r");
+}
+
+
 void flash_log_dump(void)
 {
 	uint8_t log_page[AT45D_PAGE_SIZE];
 	uint16_t block_addr, page_addr;
-	uint16_t i;
+
+	debug_printf("\n\r\n\rbegin-base64 0644 %08X.dat\n\r", LogBlock.env.uid);
 
 	flash_wakeup();
 
@@ -196,28 +270,20 @@ void flash_log_dump(void)
 		flash_read_page(page_addr++, 0, AT45D_PAGE_SIZE, log_page);
 
 		if ( *((uint32_t *) log_page) != BLOCK_SIGNATURE )
-				break;
+			break;
 
-		//debug_printf("\r\nBLOCK %i", block_addr);
+		base64_dump(AT45D_PAGE_SIZE, log_page);
 
-		while (page_addr <= block_addr*BLOCK_PAGES+8)
+		while ( page_addr < block_addr*BLOCK_PAGES+8 )
 		{
-			for (i=0; i<AT45D_PAGE_SIZE; i++)
-			{
-				if (i % 32 == 0)
-					debug_printf("\n\r");
-
-				debug_printf(" %02X", *(log_page+i));
-			}
-			debug_printf("\n\r");
-
 			flash_read_page(page_addr++, 0, AT45D_PAGE_SIZE, log_page);
+			base64_dump(AT45D_PAGE_SIZE, log_page);
 		}
 	}
 
-	debug_printf("\n\r");
-
 	flash_sleep_deep();
+
+	debug_printf("====\n\r\n\r");
 }
 
 
@@ -233,17 +299,26 @@ uint8_t flash_setup_logging(uint32_t uid)
 
 	/* init block buffer */
 	block_init();
+	LogBlock.env.signature = BLOCK_SIGNATURE;
+	LogBlock.env.log_version = 1;
+	LogBlock.env.compressed = 1;
 	LogBlock.env.uid = uid;
 	
 	/* wake up flash */
 	flash_wakeup();
 
-	/* if we get here with the key pressed, erase the entire flash memory */
+	/* if we get here with the key pressed,
+	   and it's still pressed after 0.1s,
+	   then erase the entire flash memory */
 	if (nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
 	{
-		debug_printf("\n\rERASING FLASH\n\r");
-		flash_erase_chip();
-		flash_wait_ready(1);
+		timer_wait(MILLISECONDS(100));
+		if (nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
+		{
+			debug_printf("\n\rERASING FLASH\n\r");
+			flash_erase_chip();
+			flash_wait_ready(1);
+		}
 	}
 
 	/* erase block 0 */
