@@ -22,6 +22,7 @@ APP_SRC= \
   src/aes.c \
   src/flash.c \
   src/log.c \
+  src/heatshrink_encoder.c \
   src/radio.c \
   src/timer.c \
   src/main.c
