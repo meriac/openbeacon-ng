@@ -29,23 +29,49 @@
 
 /* RAM ring buffer */
 
-#define BUF_SIZE		4096
-#define BUF_LEN_THRES	(BUF_SIZE / 3 * 2)
+#define BUF_SIZE			4096
+#define BUF_LEN_THRES		(BUF_SIZE / 3 * 2)
 
 
 /* flash storage */
 
-#define FLASH_LOG_CONFIG_PAGE	256
-#define FLASH_LOG_FIRST_PAGE	1024
-#define FLASH_LOG_LAST_PAGE		2047 /* AT45D flash sector 1 */
+#define BLOCK_PAGES				8
+
+#define FLASH_LOG_CONFIG_PAGE	0
+#define FLASH_LOG_FIRST_BLOCK	1
+#define FLASH_LOG_LAST_BLOCK	511 /* 1 Mb flash chip */ 
+
+#define BLOCK_SIGNATURE 0x0BEBAC00
+
+/* 24-byte block envelope */
+typedef struct {
+	uint32_t signature;
+	uint32_t crc;
+	uint8_t	log_version;
+	uint8_t compressed;
+	uint8_t	transferred;
+	uint8_t	reserved;
+	uint32_t uid;
+	uint32_t epoch;
+	uint16_t seq;
+	uint16_t len;
+} PACKED TLogBlockEnvelope;
+
+/* 8 flash pages (8 * 264 = 2122 bytes): 24-byte envelope + 2088 bytes of log data */
+#define LOG_BLOCK_DATA_SIZE (AT45D_PAGE_SIZE * BLOCK_PAGES - sizeof(TLogBlockEnvelope))
+typedef struct
+{
+	TLogBlockEnvelope env;
+	uint8_t data[LOG_BLOCK_DATA_SIZE];
+} PACKED TLogBlock;
 
 
 /* logging routines */
 
-extern uint8_t flash_setup_logging(void);
+extern uint8_t flash_setup_logging(uint32_t uid);
 extern uint16_t flash_log(uint16_t len, uint8_t *data);
 extern void flash_log_write_trigger(void);
 extern void flash_log_status(void);
-extern void flash_dump(void);
+extern void flash_log_dump(void);
 
 #endif /*__LOG_H__*/

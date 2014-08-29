@@ -21,7 +21,7 @@
 #define __HEATSHRINK_CONFIG_H__
 
 /* Should functionality assuming dynamic allocation be used? */
-// #define HEATSHRINK_DYNAMIC_ALLOC 1
+#define HEATSHRINK_DYNAMIC_ALLOC 0
 
 #if HEATSHRINK_DYNAMIC_ALLOC
     /* Optional replacement of malloc/free */

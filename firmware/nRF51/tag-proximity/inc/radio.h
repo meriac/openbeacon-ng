@@ -28,5 +28,6 @@
 #include <openbeacon-proto.h>
 
 extern void radio_init(uint32_t uid);
+extern uint32_t get_time(void);
 
 #endif/*__RADIO_H__*/

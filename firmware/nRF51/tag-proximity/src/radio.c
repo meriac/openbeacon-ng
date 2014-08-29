@@ -90,6 +90,12 @@ static uint8_t g_pkt_tracker_enc[sizeof(g_pkt_tracker)] ALIGN4;
 		(NRF_PROX_SIZE                << RADIO_PCNF1_STATLEN_Pos) |\
 		(NRF_PROX_SIZE                << RADIO_PCNF1_MAXLEN_Pos)
 
+
+uint32_t get_time(void)
+{
+	return g_time;
+}
+
 void RTC0_IRQ_Handler(void)
 {
 	uint32_t delta_t;

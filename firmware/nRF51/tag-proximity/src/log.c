@@ -24,13 +24,20 @@
 
 #include <openbeacon.h>
 #include <log.h>
+#include <heatshrink_encoder.h> 
 #include <flash.h>
+#include <radio.h>
+
+
+/* flash chip signature */
+static uint8_t flash_signature[] = PROGRAM_VERSION;
 
 /* RAM ring buffer */
 static uint8_t buffer[BUF_SIZE];
 static uint8_t *buf_head, *buf_tail;
 
-static uint16_t current_page;
+static uint16_t current_page; /* FIXME */
+static uint16_t current_block;
 static uint16_t flash_error_count = 0;
 
 #define BUF_LEN(HEAD_PTR,TAIL_PTR)			\
@@ -39,6 +46,13 @@ static uint16_t flash_error_count = 0;
 	((HEAD_PTR) - (TAIL_PTR)) :				\
 	(BUF_SIZE - ((TAIL_PTR) - (HEAD_PTR)))	\
 	)
+
+/* block buffer */
+static TLogBlock LogBlock ALIGN4;
+static uint16_t seq = 1;
+
+/* Heatshrink encoder */
+// static heatshrink_encoder hse;
 
 
 uint16_t flash_log(uint16_t len, uint8_t *data)
@@ -61,33 +75,96 @@ uint16_t flash_log(uint16_t len, uint8_t *data)
 }
 
 
-static void flash_log_write(void)
+static void block_init(void)
 {
-	uint8_t *my_head = buf_head;
+	memset((void *) &LogBlock, 0, sizeof(LogBlock));
+
+	LogBlock.env.signature = BLOCK_SIGNATURE;
+	LogBlock.env.log_version = 1;
+	LogBlock.env.compressed = 1;
+	LogBlock.env.seq = seq++;;
+}
+
+
+static uint8_t flash_log_block_write(uint8_t *buf)
+{
+	uint16_t page_addr = current_block*BLOCK_PAGES;
+	uint8_t i;
 
 	flash_wakeup();
 
-	while (	BUF_LEN(my_head,buf_tail) >= AT45D_PAGE_SIZE )
-		{
-			if (buffer + BUF_SIZE - buf_tail >= AT45D_PAGE_SIZE)
-			{
-				flash_write_buffer(1, 0, AT45D_PAGE_SIZE, buf_tail);
-			} else {
-				flash_write_buffer(1, 0, buffer + BUF_SIZE - buf_tail, buf_tail);
-				flash_write_buffer(1, buffer + BUF_SIZE - buf_tail, AT45D_PAGE_SIZE - (buffer + BUF_SIZE - buf_tail), buffer);
-			}
+	/* erase current block */
+	flash_erase_block(page_addr);
+	flash_wait_ready(1);
 
-			flash_write_buffer_to_page(1, current_page++, 0);
-			if (flash_wait_status(1) & AT45D_STATUS_EPE)
-				flash_error_count++;
+	/* write block, i.e., 8 pages */
+	for (i=0; i<BLOCK_PAGES; i++, page_addr++)
+	{
+		flash_write_page_through_buffer(1, page_addr, 0, AT45D_PAGE_SIZE, 0, buf + AT45D_PAGE_SIZE*i);
+		if (flash_wait_status(1) & AT45D_STATUS_EPE)
+			break;
 
-			buf_tail += AT45D_PAGE_SIZE;
-			if (buf_tail - buffer >= BUF_SIZE)
-				buf_tail -= BUF_SIZE;
-		}
+		/* check page content */
+		if ( flash_compare_page_to_buffer(1, page_addr) )
+			break;
+	}
 
 	flash_sleep_deep();
+
+	if (i < BLOCK_PAGES)
+	{
+		flash_error_count++;
+		return 1;
+	}
+
+	return 0;
 }
+
+
+static uint8_t flash_log_write(void)
+{
+	uint8_t *my_head = buf_head;
+	uint16_t chunk_size;
+
+	while ( (BUF_LEN(my_head,buf_tail) > 0) && (LogBlock.env.len < LOG_BLOCK_DATA_SIZE) )
+	{
+		if (buf_tail < my_head)
+			chunk_size = my_head - buf_tail;
+		else
+			chunk_size = buffer + BUF_SIZE - buf_tail;
+
+		if (chunk_size > (LOG_BLOCK_DATA_SIZE - LogBlock.env.len) )
+			chunk_size = LOG_BLOCK_DATA_SIZE - LogBlock.env.len;
+
+		/* copy into block buffer */
+		memcpy(LogBlock.data + LogBlock.env.len, buf_tail, chunk_size);
+		LogBlock.env.len += chunk_size;
+
+		/* advance tail of ring buffer */
+		buf_tail += chunk_size;
+		if (buf_tail - buffer == BUF_SIZE)
+			buf_tail = buffer;
+	}
+
+	/* if block buffer is full, write block to flash memory */
+	if ( LogBlock.env.len == LOG_BLOCK_DATA_SIZE )
+	{
+		/* get timestamp */
+		LogBlock.env.epoch = get_time();
+
+		/* compute CRC, ignoring signature and CRC fields */
+		LogBlock.env.crc = crc32( (void *) &LogBlock + 8, sizeof(LogBlock) - 8);
+
+		/* write block */
+		flash_log_block_write( (uint8_t *) &LogBlock );
+
+		/* clean up block for next use */
+		block_init();
+	}
+
+	return 0;
+}
+
 
 
 void flash_log_write_trigger(void)
@@ -101,83 +178,102 @@ void flash_log_write_trigger(void)
 
 void flash_log_status(void)
 {
-	debug_printf("head: %i, tail: %i, page: %i, errors: %i\n\r", buf_head - buffer, buf_tail - buffer, current_page, flash_error_count);	
+	debug_printf("head: %i, tail: %i, block: %i, errors: %i\n\r", buf_head - buffer, buf_tail - buffer, current_block, flash_error_count);	
 }
 
 
-void flash_dump(void)
+void flash_log_dump(void)
 {
 	uint8_t log_page[AT45D_PAGE_SIZE];
-	uint16_t page_addr;
-	uint16_t i;
-
-	for (page_addr=FLASH_LOG_FIRST_PAGE; page_addr<FLASH_LOG_LAST_PAGE; page_addr++)
-	{
-		flash_read_page(page_addr, 0, AT45D_PAGE_SIZE, log_page);
-
-		/* stop at the first page which is still erased */
-		if (*log_page == 0xFF)
-			break;
-
-		debug_printf("\r\nPAGE %i", page_addr);
-
-		for (i=0; i<AT45D_PAGE_SIZE; i++) {
-			if (i % 32 == 0)
-				debug_printf("\r\n");
-
-			debug_printf(" %02X", *(log_page+i));
-		}
-
-		debug_printf("\r\n");
-	}
-
-	debug_printf("\r\n");
-
-}
-
-
-uint8_t flash_setup_logging(void)
-{
-	uint8_t FLASH_SIGNATURE[] = "OpenBeacon Flash Log"; 
-	uint8_t signature[sizeof(FLASH_SIGNATURE)] = {0x00, };
+	uint16_t block_addr, page_addr;
 	uint16_t i;
 
 	flash_wakeup();
 
-	/* check signature at the beginning of page FLASH_CONFIG_PAGE */
+	for (block_addr=FLASH_LOG_FIRST_BLOCK; block_addr <= FLASH_LOG_LAST_BLOCK; block_addr++)
+	{
+		page_addr = block_addr*BLOCK_PAGES;
+		flash_read_page(page_addr++, 0, AT45D_PAGE_SIZE, log_page);
 
-	flash_read_page(FLASH_LOG_CONFIG_PAGE, 0, sizeof(FLASH_SIGNATURE), signature);
+		if ( *((uint32_t *) log_page) != BLOCK_SIGNATURE )
+				break;
 
-	for (i=0; i<sizeof(FLASH_SIGNATURE); i++)
-		if (FLASH_SIGNATURE[i] != signature[i])
-			break;
+		//debug_printf("\r\nBLOCK %i", block_addr);
 
-	if (i == sizeof(FLASH_SIGNATURE)) {
-		debug_printf("\r\nFound OpenBeacon signature. Dumping data to serial.\r\n");
+		while (page_addr <= block_addr*BLOCK_PAGES+8)
+		{
+			for (i=0; i<AT45D_PAGE_SIZE; i++)
+			{
+				if (i % 32 == 0)
+					debug_printf("\n\r");
 
-		flash_dump();
-	} else
-		debug_printf("\r\nDid not find OpenBeacon signature.\r\n");
+				debug_printf(" %02X", *(log_page+i));
+			}
+			debug_printf("\n\r");
 
-	debug_printf("Erasing 1st sector & signing...\r\n");
+			flash_read_page(page_addr++, 0, AT45D_PAGE_SIZE, log_page);
+		}
+	}
 
-	/* erase 1st sector (pages 1024-2047) */
-	flash_erase_sector(1024);
-	flash_wait_status(1);
+	debug_printf("\n\r");
 
-	/* sign page FLASH_CONFIG_PAGE */
-	flash_write_page_through_buffer(1, FLASH_LOG_CONFIG_PAGE, 0, sizeof(FLASH_SIGNATURE), 1, FLASH_SIGNATURE);
-	flash_wait_ready(1);
+	flash_sleep_deep();
+}
+
+
+uint8_t flash_setup_logging(uint32_t uid)
+{
+	uint8_t log_page[AT45D_PAGE_SIZE];
+	uint16_t block_addr = FLASH_LOG_FIRST_BLOCK;
 
 	/* init ring buffer */
-
 	buf_head = buffer;
 	buf_tail = buffer;
-	current_page = FLASH_LOG_FIRST_PAGE;
+	current_page = 0; /* FIXME */
+
+	/* init block buffer */
+	block_init();
+	LogBlock.env.uid = uid;
 	
-	debug_printf("Logging starts at page %i\r\n", current_page);
+	/* wake up flash */
+	flash_wakeup();
+
+	/* if we get here with the key pressed, erase the entire flash memory */
+	if (nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
+	{
+		debug_printf("\n\rERASING FLASH\n\r");
+		flash_erase_chip();
+		flash_wait_ready(1);
+	}
+
+	/* erase block 0 */
+	flash_erase_block(0);
+	flash_wait_ready(1);
+
+	/* sign page 0 with PROGRAM_VERSION string */
+	flash_write_page_through_buffer(1, 0, 0, sizeof(flash_signature), 0, flash_signature);
+	flash_wait_ready(1);
+	
+	/* find first non-signed block */
+	for (block_addr=FLASH_LOG_FIRST_BLOCK; block_addr<=FLASH_LOG_LAST_BLOCK; block_addr++)
+	{
+		// debug_printf("\n\rchecking block %i\n\r", block_addr);
+		flash_read_page(block_addr*BLOCK_PAGES, 0, 4, log_page);
+
+		if ( *((uint32_t *) log_page) != BLOCK_SIGNATURE )
+			break;
+	}
+
+	/* return error if no block is available */
+	if (block_addr > FLASH_LOG_LAST_BLOCK)
+		return 1;
 
 	flash_sleep_deep();
 
-	return current_page;
+	current_block = block_addr;
+	debug_printf("\n\rLogging starts at block %i\n\r", current_block);
+
+	return 0;
 }
+
+

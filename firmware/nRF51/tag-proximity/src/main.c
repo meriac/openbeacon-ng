@@ -75,18 +75,19 @@ void main_entry(void)
 	/* start timer */
 	timer_init();
 
+	/* calculate tag ID from NRF_FICR->DEVICEID */
+	tag_id = crc32(&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
+
 	/* initialize flash */
 	if(flash_init())
 		halt(2);
 
-	flash_setup_logging();
+	if ( flash_setup_logging(tag_id) )
+		halt(2);
 
 	/* initialize accelerometer */
 	if(acc_init())
 		halt(3);
-
-	/* calculate tag ID from NRF_FICR->DEVICEID */
-	tag_id = crc32(&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
 
 	/* start radio */
 	debug_printf("\n\rInitializing Tag[%08X] v" PROGRAM_VERSION " @24%02iMHz ...\n\r",
@@ -111,7 +112,7 @@ void main_entry(void)
 		{
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 			timer_wait(MILLISECONDS(100));
-			flash_log_status();
+			flash_log_dump();
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
 		}
 
