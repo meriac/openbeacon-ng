@@ -173,7 +173,7 @@ static uint8_t flash_log_write(void)
 		if (current_block > FLASH_LOG_LAST_BLOCK)
 		{
 			log_wrap_count++;
-#ifdef LOG_WRAPAROUND
+#if LOG_WRAPAROUND
 			current_block = FLASH_LOG_FIRST_BLOCK;
 #else
 			log_running = 0;
