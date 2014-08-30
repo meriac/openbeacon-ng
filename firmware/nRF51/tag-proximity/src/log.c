@@ -207,7 +207,7 @@ void flash_log_write(uint8_t flush_buf)
 
 	/* if block buffer is full, or if we are flushing the ring buffer,
 	   commit block to flash memory */
-	if ( LogBlock.env.len == LOG_BLOCK_DATA_SIZE || flush_buf )
+	if ( (LogBlock.env.len == LOG_BLOCK_DATA_SIZE) || flush_buf )
 		flash_log_block_commit();
 }
 
@@ -352,7 +352,7 @@ uint8_t flash_setup_logging(uint32_t uid)
 	block_init();
 	LogBlock.env.signature = BLOCK_SIGNATURE;
 	LogBlock.env.log_version = 1;
-	LogBlock.env.compressed = 1;
+	LogBlock.env.compressed = 0;
 	LogBlock.env.uid = uid;
 	
 	/* wake up flash */
