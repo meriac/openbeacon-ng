@@ -73,6 +73,7 @@ typedef struct
 extern uint8_t flash_setup_logging(uint32_t uid);
 extern uint16_t flash_log(uint16_t len, uint8_t *data);
 extern void flash_log_write_trigger(void);
+extern void flash_log_write(uint8_t flush_buf);
 extern void flash_log_status(void);
 extern void flash_log_dump(void);
 

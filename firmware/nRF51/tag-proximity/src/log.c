@@ -93,9 +93,9 @@ static void block_init(void)
 }
 
 
-static uint8_t flash_log_block_write(uint8_t *buf)
+static uint8_t flash_log_block_write(uint16_t block_addr, uint8_t *buf)
 {
-	uint16_t page_addr = current_block * BLOCK_PAGES;
+	uint16_t page_addr = block_addr * BLOCK_PAGES;
 	uint8_t i;
 
 	flash_wakeup();
@@ -125,7 +125,58 @@ static uint8_t flash_log_block_write(uint8_t *buf)
 }
 
 
-static uint8_t flash_log_write(void)
+static void flash_log_block_commit(void)
+{
+	uint8_t err;
+
+	/* get timestamp */
+	LogBlock.env.epoch = get_time();
+
+	/* compute CRC, ignoring signature and CRC fields */
+	LogBlock.env.crc = crc32( ((void *) &LogBlock) + 8, sizeof(LogBlock) - 8);
+
+	/* write block */
+	err = flash_log_block_write(current_block, (uint8_t *) &LogBlock );
+	if (err)
+		flash_error_count++;
+
+	current_block++;
+	/* depending on configuration,
+	   wrap around or stop logging on flash full */
+	if (current_block > FLASH_LOG_LAST_BLOCK)
+	{
+		log_wrap_count++;
+#if LOG_WRAPAROUND
+		current_block = FLASH_LOG_FIRST_BLOCK;
+#else
+		log_running = 0;
+#endif
+	}
+
+	/* if a write error occurred, try writing into next block */
+	if (err && log_running)
+	{
+		if ( flash_log_block_write(current_block, (uint8_t *) &LogBlock ) )
+			flash_error_count++;
+
+		current_block++;
+		if (current_block > FLASH_LOG_LAST_BLOCK)
+		{
+			log_wrap_count++;
+#if LOG_WRAPAROUND
+			current_block = FLASH_LOG_FIRST_BLOCK;
+#else
+			log_running = 0;
+#endif
+		}
+	}
+
+	/* clean up block for next use */
+	block_init();
+}
+
+
+void flash_log_write(uint8_t flush_buf)
 {
 	uint8_t *my_head = buf_head;
 	uint16_t chunk_size;
@@ -154,39 +205,11 @@ static uint8_t flash_log_write(void)
 			buf_tail = buffer;
 	}
 
-	/* if block buffer is full, write block to flash memory */
-	if ( LogBlock.env.len == LOG_BLOCK_DATA_SIZE )
-	{
-		/* get timestamp */
-		LogBlock.env.epoch = get_time();
-
-		/* compute CRC, ignoring signature and CRC fields */
-		LogBlock.env.crc = crc32( ((void *) &LogBlock) + 8, sizeof(LogBlock) - 8);
-
-		/* write block */
-		if ( flash_log_block_write( (uint8_t *) &LogBlock ) )
-			flash_error_count++;
-
-		current_block++;
-		/* depending on configuration,
-		   wrap around or stop logging on flash full */
-		if (current_block > FLASH_LOG_LAST_BLOCK)
-		{
-			log_wrap_count++;
-#if LOG_WRAPAROUND
-			current_block = FLASH_LOG_FIRST_BLOCK;
-#else
-			log_running = 0;
-#endif
-		}
-
-		/* clean up block for next use */
-		block_init();
-	}
-
-	return 0;
+	/* if block buffer is full, or if we are flushing the ring buffer,
+	   commit block to flash memory */
+	if ( LogBlock.env.len == LOG_BLOCK_DATA_SIZE || flush_buf )
+		flash_log_block_commit();
 }
-
 
 
 void flash_log_write_trigger(void)
@@ -194,7 +217,7 @@ void flash_log_write_trigger(void)
 	uint8_t *my_head = buf_head;
 
 	if ( log_running && (BUF_LEN(my_head,buf_tail) >= BUF_LEN_THRES) )
-		flash_log_write();
+		flash_log_write(0);
 }
 
 
