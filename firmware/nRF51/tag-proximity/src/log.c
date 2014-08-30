@@ -37,10 +37,6 @@ static uint8_t flash_signature[] = PROGRAM_VERSION;
 static uint8_t buffer[BUF_SIZE];
 static uint8_t *buf_head, *buf_tail;
 
-static uint16_t current_page; /* FIXME */
-static uint16_t current_block;
-static uint16_t flash_error_count = 0;
-
 #define BUF_LEN(HEAD_PTR,TAIL_PTR)			\
 	(										\
 	((HEAD_PTR) >= (TAIL_PTR)) ?			\
@@ -50,7 +46,15 @@ static uint16_t flash_error_count = 0;
 
 /* block buffer */
 static TLogBlock LogBlock ALIGN4;
+static uint16_t current_block;
 static uint16_t seq = 1;
+
+/* logging status */
+static uint16_t flash_error_count = 0;
+static uint8_t log_running = 0;
+static uint16_t log_wrap_count = 0;
+static uint16_t log_buffer_overrun_count = 0;
+
 
 /* Heatshrink encoder */
 // static heatshrink_encoder hse;
@@ -60,16 +64,20 @@ uint16_t flash_log(uint16_t len, uint8_t *data)
 {
 	uint8_t *my_tail = buf_tail;
 
+	/* check for buffer overflow */
+	if ( BUF_SIZE - BUF_LEN(buf_head,my_tail) <= len )
+	{
+		log_buffer_overrun_count++;
+		return 0;
+	}
+
+	/* copy to ring buffer */
 	while (len--)
 	{
 		*buf_head++ = *data++;
 
 		if (buf_head - buffer == BUF_SIZE)
 			buf_head = buffer;
-
-		/* bail out on buffer overflow -- LOG THIS */
-		if (buf_head == my_tail)
-			break;
 	}
 
 	return len;
@@ -111,12 +119,7 @@ static uint8_t flash_log_block_write(uint8_t *buf)
 	flash_sleep_deep();
 
 	if (i < BLOCK_PAGES)
-	{
-		flash_error_count++;
 		return 1;
-	}
-
-	current_block++;
 
 	return 0;
 }
@@ -127,13 +130,17 @@ static uint8_t flash_log_write(void)
 	uint8_t *my_head = buf_head;
 	uint16_t chunk_size;
 
+	/* proceed until there is data in the ring buffer
+	   and there is space in the block buffer */
 	while ( (BUF_LEN(my_head,buf_tail) > 0) && (LogBlock.env.len < LOG_BLOCK_DATA_SIZE) )
 	{
+		/* set the size of the next chunk to copy */
 		if (buf_tail < my_head)
 			chunk_size = my_head - buf_tail;
 		else
 			chunk_size = buffer + BUF_SIZE - buf_tail;
 
+		/* trim it according to available space in block buffer */
 		if (chunk_size > (LOG_BLOCK_DATA_SIZE - LogBlock.env.len) )
 			chunk_size = LOG_BLOCK_DATA_SIZE - LogBlock.env.len;
 
@@ -157,7 +164,21 @@ static uint8_t flash_log_write(void)
 		LogBlock.env.crc = crc32( ((void *) &LogBlock) + 8, sizeof(LogBlock) - 8);
 
 		/* write block */
-		flash_log_block_write( (uint8_t *) &LogBlock );
+		if ( flash_log_block_write( (uint8_t *) &LogBlock ) )
+			flash_error_count++;
+
+		current_block++;
+		/* depending on configuration,
+		   wrap around or stop logging on flash full */
+		if (current_block > FLASH_LOG_LAST_BLOCK)
+		{
+			log_wrap_count++;
+#ifdef LOG_WRAPAROUND
+			current_block = FLASH_LOG_FIRST_BLOCK;
+#else
+			log_running = 0;
+#endif
+		}
 
 		/* clean up block for next use */
 		block_init();
@@ -172,14 +193,22 @@ void flash_log_write_trigger(void)
 {
 	uint8_t *my_head = buf_head;
 
-	if ( BUF_LEN(my_head,buf_tail) >= BUF_LEN_THRES )
+	if ( log_running && (BUF_LEN(my_head,buf_tail) >= BUF_LEN_THRES) )
 		flash_log_write();
 }
 
 
 void flash_log_status(void)
 {
-	debug_printf("head: %i, tail: %i, block: %i, errors: %i\n\r", buf_head - buffer, buf_tail - buffer, current_block, flash_error_count);	
+	debug_printf(
+		"\n\rflash log status: running %i, wrapped %i, block: %i, head: %i, tail: %i, errors: %i, overruns %i\n\r",
+		log_running,
+		log_wrap_count,
+		current_block,
+		buf_head - buffer, buf_tail - buffer,
+		flash_error_count,
+		log_buffer_overrun_count
+		);
 }
 
 
@@ -295,7 +324,6 @@ uint8_t flash_setup_logging(uint32_t uid)
 	/* init ring buffer */
 	buf_head = buffer;
 	buf_tail = buffer;
-	current_page = 0; /* FIXME */
 
 	/* init block buffer */
 	block_init();
@@ -346,6 +374,7 @@ uint8_t flash_setup_logging(uint32_t uid)
 	flash_sleep_deep();
 
 	current_block = block_addr;
+	log_running = 1;
 	debug_printf("\n\rLogging starts at block %i\n\r", current_block);
 
 	return 0;

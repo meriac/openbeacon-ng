@@ -39,7 +39,9 @@
 
 #define FLASH_LOG_CONFIG_PAGE	0
 #define FLASH_LOG_FIRST_BLOCK	1
-#define FLASH_LOG_LAST_BLOCK	511 /* 1 Mb flash chip */ 
+#define FLASH_LOG_LAST_BLOCK	511 /* 1 Mb flash chip */
+
+#define LOG_WRAPAROUND			0 /* wrap when flash is full? */
 
 #define BLOCK_SIGNATURE 0x0BEBAC00
 
