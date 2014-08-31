@@ -390,13 +390,13 @@ uint8_t flash_setup_logging(uint32_t uid)
 			break;
 	}
 
+	current_block = block_addr;
+	flash_sleep_deep();
+
 	/* return error if no block is available */
 	if (block_addr > FLASH_LOG_LAST_BLOCK)
 		return 1;
 
-	flash_sleep_deep();
-
-	current_block = block_addr;
 	log_running = 1;
 	debug_printf("\n\rLogging starts at block %i\n\r", current_block);
 
