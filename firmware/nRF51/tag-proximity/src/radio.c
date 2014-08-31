@@ -265,9 +265,6 @@ static void radio_on_prox_packet(uint16_t delta_t)
 
 		slot++;
 	}
-
-	/* log to flash */
-	flash_log(sizeof(g_pkt_tracker), (uint8_t *) &g_pkt_tracker);
 }
 
 void RADIO_IRQ_Handler(void)
@@ -333,6 +330,10 @@ void RADIO_IRQ_Handler(void)
 					g_pkt_tracker.epoch = g_time+g_time_offset;
 					g_pkt_tracker.angle = tag_angle();
 					g_pkt_tracker.voltage = adc_bat();
+
+					/* log sightings to flash */
+					if (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_SIGHTING)
+						flash_log(sizeof(g_pkt_tracker) - CONFIG_SIGNATURE_SIZE, (uint8_t *) &g_pkt_tracker);
 
 					/* measure encryption time */
 					ticks = NRF_RTC0->COUNTER;
