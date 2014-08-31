@@ -473,9 +473,9 @@ uint8_t flash_setup_logging(uint32_t uid)
 	block_init();
 	LogBlock.env.signature = BLOCK_SIGNATURE;
 	LogBlock.env.log_version = 1;
-	LogBlock.env.compressed = 0;
+	LogBlock.env.compressed = FLASH_LOG_COMPRESSION;
 	LogBlock.env.uid = uid;
-	
+
 	/* wake up flash */
 	flash_wakeup();
 
