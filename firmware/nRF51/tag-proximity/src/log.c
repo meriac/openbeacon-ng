@@ -55,10 +55,10 @@ static uint8_t log_running = 0;
 static uint16_t log_wrap_count = 0;
 static uint16_t log_buffer_overrun_count = 0;
 
-
+#if FLASH_LOG_COMPRESSION
 /* Heatshrink encoder */
-// static heatshrink_encoder hse;
-
+static heatshrink_encoder hse;
+#endif
 
 uint16_t flash_log(uint16_t len, uint8_t *data)
 {
@@ -176,6 +176,124 @@ static void flash_log_block_commit(void)
 }
 
 
+#if FLASH_LOG_COMPRESSION
+
+void flash_log_write(uint8_t flush_buf)
+{
+	uint8_t *my_head = buf_head;
+	uint8_t *tail_copy = buf_tail;
+	uint16_t chunk_size;
+
+    HSE_sink_res sres = 0;
+    HSE_poll_res pres = 0;
+    HSE_finish_res fres = 0;
+    size_t sink_sz;
+    size_t poll_sz;
+
+	/* proceed until there is data in the ring buffer
+	   and there is space in the block buffer */
+	while (	(BUF_LEN(my_head,buf_tail) > 0) &&
+			(LOG_BLOCK_DATA_SIZE - LogBlock.env.len > COMPRESS_CHUNK_SIZE) )
+	{
+		/* set the size of the next _contiguous_ chunk to compress */
+		if (buf_tail < my_head)
+			chunk_size = my_head - buf_tail;
+		else
+			chunk_size = buffer + BUF_SIZE - buf_tail;
+
+		/* trim it down to the compression chunk size */
+		if (chunk_size > COMPRESS_CHUNK_SIZE )
+			chunk_size = COMPRESS_CHUNK_SIZE;
+
+		//debug_printf("ring buffer: %i, block buffer: %i\n\r", BUF_LEN(my_head,buf_tail), LogBlock.env.len);
+		//debug_printf("chunk size: %i\n\r", chunk_size);
+
+		/* feed it to the encoder */
+		sres = heatshrink_encoder_sink(&hse, buf_tail, chunk_size, &sink_sz);
+		//debug_printf("sres, sink_sz: %i, %i\n\r", sres, sink_sz);
+		if (sres < 0)
+			break;
+
+		/* pull out the compressed stream */
+		do {
+            pres = heatshrink_encoder_poll(
+            	&hse,
+            	LogBlock.data + LogBlock.env.len,
+            	LOG_BLOCK_DATA_SIZE - LogBlock.env.len,
+            	&poll_sz);
+
+            LogBlock.env.len += poll_sz;
+        	//debug_printf("pres: %i, allowed: %i, poll_sz: %i\n\r", pres, LOG_BLOCK_DATA_SIZE - LogBlock.env.len, poll_sz);
+        } while (pres == HSER_POLL_MORE);
+
+        if (pres < 0)
+        	break;
+
+		/* advance tail of ring buffer */
+		buf_tail += sink_sz;
+		if (buf_tail >= buffer+BUF_SIZE)
+			buf_tail -= BUF_SIZE;
+	}
+
+	/* on error, bail out and revert buffer tail to original position */
+	if (pres < 0 || sres < 0)
+	{
+		//debug_printf("bailing out\n\r");
+		buf_tail = tail_copy;
+		return;
+	}
+
+	/* if block buffer is almost full, or if we are flushing the ring buffer,
+	   commit compressed data to flash memory */
+	if ( (LOG_BLOCK_DATA_SIZE - LogBlock.env.len < COMPRESS_CHUNK_SIZE ) || flush_buf )
+		{
+		/* signal encoder that we are done */
+		fres = heatshrink_encoder_finish(&hse);
+		//debug_printf("fres: %i\n\r", fres);
+
+		/* on error, bail out and revert buffer tail to original position */
+		if (fres < 0)
+		{
+			//debug_printf("bailing out\n\r");
+			buf_tail = tail_copy;
+			return;
+		}
+
+		/* if necessary, pull out remaining compressed data */
+		if (fres == HSER_FINISH_MORE)
+		{
+			//debug_printf("pulling out left data\n\r");
+			do {
+    			pres = heatshrink_encoder_poll(
+    				&hse,
+        			LogBlock.data + LogBlock.env.len,
+            		LOG_BLOCK_DATA_SIZE - LogBlock.env.len,
+            		&poll_sz);
+
+    			/* update block length */
+        		LogBlock.env.len += poll_sz;
+        		//debug_printf("pres: %i, allowed: %i, poll_sz: %i\n\r", pres, LOG_BLOCK_DATA_SIZE - LogBlock.env.len, poll_sz);
+    		} while (pres == HSER_POLL_MORE);
+    	}
+
+		/* on error, bail out and revert buffer tail to original position */
+    	if (pres < 0)
+		{
+			//debug_printf("bailing out\n\r");
+			buf_tail = tail_copy;
+			return;
+		}
+
+	/* reset encoder */
+	heatshrink_encoder_reset(&hse);
+
+	/* commit block to flash */
+	flash_log_block_commit();
+	}
+}
+
+#else
+
 void flash_log_write(uint8_t flush_buf)
 {
 	uint8_t *my_head = buf_head;
@@ -211,6 +329,8 @@ void flash_log_write(uint8_t flush_buf)
 		flash_log_block_commit();
 }
 
+#endif /* FLASH_LOG_COMPRESSION */
+
 
 void flash_log_write_trigger(void)
 {
@@ -224,10 +344,11 @@ void flash_log_write_trigger(void)
 void flash_log_status(void)
 {
 	debug_printf(
-		"\n\rflash log status: running %i, wrapped %i, block: %i, head: %i, tail: %i, errors: %i, overruns %i\n\r",
+		"\n\rflash log status: running %i, wrapped %i, block: %i, block len: %i, head: %i, tail: %i, errors: %i, overruns %i\n\r",
 		log_running,
 		log_wrap_count,
 		current_block,
+		LogBlock.env.len,
 		buf_head - buffer, buf_tail - buffer,
 		flash_error_count,
 		log_buffer_overrun_count
@@ -396,6 +517,11 @@ uint8_t flash_setup_logging(uint32_t uid)
 	/* return error if no block is available */
 	if (block_addr > FLASH_LOG_LAST_BLOCK)
 		return 1;
+
+#if FLASH_LOG_COMPRESSION
+	/* initialize data compressor */
+	heatshrink_encoder_reset(&hse);
+#endif
 
 	log_running = 1;
 	debug_printf("\n\rLogging starts at block %i\n\r", current_block);

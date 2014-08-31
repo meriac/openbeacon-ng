@@ -28,22 +28,21 @@
 #include <flash.h>
 
 /* RAM ring buffer */
+#define BUF_SIZE				4096
+#define BUF_LEN_THRES			(BUF_SIZE / 3 * 2)
 
-#define BUF_SIZE			4096
-#define BUF_LEN_THRES		(BUF_SIZE / 3 * 2)
-
+/* compression */
+#define	FLASH_LOG_COMPRESSION	1
+#define COMPRESS_CHUNK_SIZE		256
 
 /* flash storage */
-
 #define BLOCK_PAGES				8
-
 #define FLASH_LOG_CONFIG_PAGE	0
 #define FLASH_LOG_FIRST_BLOCK	1
 #define FLASH_LOG_LAST_BLOCK	511 /* 1 Mb flash chip */
-
 #define LOG_WRAPAROUND			0 /* wrap when flash is full? */
+#define BLOCK_SIGNATURE			0x0BEBAC00
 
-#define BLOCK_SIGNATURE 0x0BEBAC00
 
 /* 24-byte block envelope */
 typedef struct {
@@ -61,6 +60,7 @@ typedef struct {
 
 /* 8 flash pages (8 * 264 = 2122 bytes): 24-byte envelope + 2088 bytes of log data */
 #define LOG_BLOCK_DATA_SIZE (AT45D_PAGE_SIZE * BLOCK_PAGES - sizeof(TLogBlockEnvelope))
+
 typedef struct
 {
 	TLogBlockEnvelope env;
