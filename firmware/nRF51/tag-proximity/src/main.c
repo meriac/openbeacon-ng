@@ -82,8 +82,7 @@ void main_entry(void)
 	if(flash_init())
 		halt(2);
 
-	if ( flash_setup_logging(tag_id) )
-		halt(2);
+	flash_setup_logging(tag_id);
 
 	/* initialize accelerometer */
 	if(acc_init())
