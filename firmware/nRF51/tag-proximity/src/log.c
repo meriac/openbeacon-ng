@@ -54,11 +54,13 @@ static uint16_t flash_error_count = 0;
 static uint8_t log_running = 0;
 static uint16_t log_wrap_count = 0;
 static uint16_t log_buffer_overrun_count = 0;
+static uint16_t log_compression_error = 0;
 
 #if FLASH_LOG_COMPRESSION
 /* Heatshrink encoder */
 static heatshrink_encoder hse;
 #endif
+
 
 uint16_t flash_log(uint16_t len, uint8_t *data)
 {
@@ -239,13 +241,14 @@ void flash_log_write(uint8_t flush_buf)
 	if (pres < 0 || sres < 0)
 	{
 		//debug_printf("bailing out\n\r");
+		log_compression_error++;
 		buf_tail = tail_copy;
 		return;
 	}
 
 	/* if block buffer is almost full, or if we are flushing the ring buffer,
-	   commit compressed data to flash memory */
-	if ( (LOG_BLOCK_DATA_SIZE - LogBlock.env.len < COMPRESS_CHUNK_SIZE ) || flush_buf )
+	   flush the encoder and commit compressed data to flash memory */
+	if ( (LOG_BLOCK_DATA_SIZE - LogBlock.env.len <= COMPRESS_CHUNK_SIZE ) || flush_buf )
 		{
 		/* signal encoder that we are done */
 		fres = heatshrink_encoder_finish(&hse);
@@ -255,6 +258,7 @@ void flash_log_write(uint8_t flush_buf)
 		if (fres < 0)
 		{
 			//debug_printf("bailing out\n\r");
+			log_compression_error++;
 			buf_tail = tail_copy;
 			return;
 		}
@@ -280,15 +284,16 @@ void flash_log_write(uint8_t flush_buf)
     	if (pres < 0)
 		{
 			//debug_printf("bailing out\n\r");
+			log_compression_error++;
 			buf_tail = tail_copy;
 			return;
 		}
 
-	/* reset encoder */
-	heatshrink_encoder_reset(&hse);
+		/* reset encoder */
+		heatshrink_encoder_reset(&hse);
 
-	/* commit block to flash */
-	flash_log_block_commit();
+		/* commit block to flash */
+		flash_log_block_commit();
 	}
 }
 
@@ -344,14 +349,15 @@ void flash_log_write_trigger(void)
 void flash_log_status(void)
 {
 	debug_printf(
-		"\n\rflash log status: running %i, wrapped %i, block: %i, block len: %i, head: %i, tail: %i, errors: %i, overruns %i\n\r",
+		"\n\rflash log status:\n\rrunning %i, wrapped %i, block: %i, block len: %i, head: %i, tail: %i, errors: %i, overruns: %i, compression: %i\n\r",
 		log_running,
 		log_wrap_count,
 		current_block,
 		LogBlock.env.len,
 		buf_head - buffer, buf_tail - buffer,
 		flash_error_count,
-		log_buffer_overrun_count
+		log_buffer_overrun_count,
+		log_compression_error
 		);
 }
 

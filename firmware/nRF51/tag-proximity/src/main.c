@@ -105,6 +105,7 @@ void main_entry(void)
 		timer_wait(MILLISECONDS(1000));
 
 		flash_log_write_trigger();
+		//flash_log_status();
 
 		/* dump log data & status upon key press */
 		if(nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
