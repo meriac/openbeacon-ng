@@ -26,9 +26,13 @@
 
 #include <acc.h>
 #include <flash.h>
-#include <log.h>
 #include <radio.h>
 #include <timer.h>
+
+#if CONFIG_FLASH_LOGGING
+#include <log.h>
+#endif
+
 
 static int8_t g_tag_angle;
 
@@ -82,7 +86,9 @@ void main_entry(void)
 	if(flash_init())
 		halt(2);
 
+#if CONFIG_FLASH_LOGGING
 	flash_setup_logging(tag_id);
+#endif
 
 	/* initialize accelerometer */
 	if(acc_init())
@@ -104,6 +110,7 @@ void main_entry(void)
 		acc_magnitude(&g_tag_angle);
 		timer_wait(MILLISECONDS(1000));
 
+#if CONFIG_FLASH_LOGGING
 		flash_log_write_trigger();
 		//flash_log_status();
 
@@ -119,6 +126,7 @@ void main_entry(void)
 
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
 		}
+#endif /* CONFIG_FLASH_LOGGING */
 
 		/* blink every 5 seconds */
 		if(blink<5)

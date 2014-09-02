@@ -29,7 +29,10 @@
 #include <aes.h>
 #include <rng.h>
 #include <timer.h>
+
+#if CONFIG_FLASH_LOGGING 
 #include <log.h>
+#endif
 
 /* set proximity power */
 #define PX_POWER -20
@@ -331,10 +334,12 @@ void RADIO_IRQ_Handler(void)
 					g_pkt_tracker.angle = tag_angle();
 					g_pkt_tracker.voltage = adc_bat();
 
+#if CONFIG_FLASH_LOGGING 
 					/* log sightings to flash */
 					if (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_SIGHTING)
 						flash_log(sizeof(g_pkt_tracker) - CONFIG_SIGNATURE_SIZE, (uint8_t *) &g_pkt_tracker);
-
+#endif /* CONFIG_FLASH_LOGGING */
+					
 					/* measure encryption time */
 					ticks = NRF_RTC0->COUNTER;
 

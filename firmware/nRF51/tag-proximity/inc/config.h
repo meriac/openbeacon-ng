@@ -25,6 +25,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#define CONFIG_FLASH_LOGGING	1
+
 /* every CONFIG_PROX_SPACING-RANDOM(2^CONFIG_PROX_SPACING_RNG_BITS)
  * listen for CONFIG_PROX_LISTEN - all based on LF_FREQUENCY ticks */
 #define CONFIG_PROX_SPACING_RNG_BITS 9
