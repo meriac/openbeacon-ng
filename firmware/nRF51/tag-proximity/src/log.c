@@ -281,6 +281,13 @@ void flash_log_write(uint8_t flush_buf)
 
     			/* update block length */
         		LogBlock.env.len += poll_sz;
+        		if (LogBlock.env.len >= LOG_BLOCK_DATA_SIZE)
+        		{
+					//debug_printf("bailing out\n\r");
+					log_compression_error++;
+					buf_tail = tail_copy;
+					return;
+        		}
         		//debug_printf("pres: %i, allowed: %i, poll_sz: %i\n\r", pres, LOG_BLOCK_DATA_SIZE - LogBlock.env.len, poll_sz);
     		} while (pres == HSER_POLL_MORE);
     	}
