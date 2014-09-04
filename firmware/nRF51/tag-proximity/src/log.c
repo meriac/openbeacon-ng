@@ -23,6 +23,7 @@
 */
 
 #include <openbeacon.h>
+#include <main.h> 
 #include <log.h>
 #include <heatshrink_encoder.h> 
 #include <flash.h>
@@ -502,18 +503,15 @@ uint8_t flash_setup_logging(uint32_t uid)
 	/* wake up flash */
 	flash_wakeup();
 
-	/* if we get here with the key pressed,
-	   and it's still pressed after 0.1s,
+	/* if we get here with the key pressed
+	   and we release it after more than 1 second,
 	   then erase the entire flash memory */
-	if (nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
+	if (nrf_gpio_pin_read(CONFIG_SWITCH_PIN) && blink_wait_release() > 1000)
 	{
-		timer_wait(MILLISECONDS(100));
-		if (nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
-		{
-			debug_printf("\n\rERASING FLASH\n\r");
-			flash_erase_chip();
-			flash_wait_ready(1);
-		}
+		blink_fast(5);
+		debug_printf("\n\rERASING FLASH\n\r");
+		flash_erase_chip();
+		flash_wait_ready(1);
 	}
 
 	/* erase block 0 */
@@ -551,5 +549,4 @@ uint8_t flash_setup_logging(uint32_t uid)
 
 	return 0;
 }
-
 

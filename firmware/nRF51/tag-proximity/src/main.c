@@ -22,8 +22,8 @@
  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-#include <openbeacon.h>
 
+#include <openbeacon.h>
 #include <acc.h>
 #include <flash.h>
 #include <radio.h>
@@ -33,8 +33,9 @@
 #include <log.h>
 #endif
 
-
+uint8_t hibernate = 1;
 static int8_t g_tag_angle;
+
 
 int8_t tag_angle(void)
 {
@@ -52,6 +53,34 @@ void blink(uint8_t times)
 	}
 }
 
+void blink_fast(uint8_t times)
+{
+	while(times--)
+	{
+		nrf_gpio_pin_set(CONFIG_LED_PIN);
+		timer_wait(MILLISECONDS(10));
+		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		timer_wait(MILLISECONDS(90));
+	}
+}
+
+uint16_t blink_wait_release(void) {
+	uint16_t counter = 0;
+	const uint8_t delta_t = 10;
+
+	nrf_gpio_pin_set(CONFIG_LED_PIN);
+	timer_wait(MILLISECONDS(10));
+	nrf_gpio_pin_clear(CONFIG_LED_PIN);
+
+	while (nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
+	{
+		timer_wait(MILLISECONDS(delta_t));
+		counter++;
+	}
+
+	return counter * delta_t;
+}
+
 void halt(uint8_t times)
 {
 	while(TRUE)
@@ -63,11 +92,13 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
-	uint8_t blink;
 	uint32_t tag_id;
+	uint8_t blink_counter = 0;
+	uint16_t keypress_duration;
 
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
+	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
 	/* enabled input pin */
 	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_NOPULL);
@@ -100,39 +131,52 @@ void main_entry(void)
 	radio_init(tag_id);
 
 	/* enter main loop */
-	blink = 0;
-	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
 	while(TRUE)
 	{
-		/* get tag angle once per second */
-		acc_magnitude(&g_tag_angle);
-		timer_wait(MILLISECONDS(1000));
+		if (!hibernate)
+		{
+			/* get tag angle once per second */
+			acc_magnitude(&g_tag_angle);
 
+			/* trigger flash write */
 #if CONFIG_FLASH_LOGGING
-		flash_log_write_trigger();
-		//flash_log_status();
+			flash_log_write_trigger();
+			//flash_log_status();
+#endif
+		}
 
-		/* dump log data & status upon key press */
+		/* key press */
 		if(nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
 		{
-			nrf_gpio_pin_set(CONFIG_LED_PIN);
-			timer_wait(MILLISECONDS(100));
+			keypress_duration = blink_wait_release();
 
-			flash_log_flush(); /* flush log buffer to flash */
-			flash_log_dump();
-			flash_log_status();
-
-			nrf_gpio_pin_clear(CONFIG_LED_PIN);
-		}
+			/* long key press while tag is hibernating triggers log dump */
+			if (hibernate && (keypress_duration > 2000))
+			{
+				blink_fast(10);
+#if CONFIG_FLASH_LOGGING
+				/* dump log data & status to serial */
+				flash_log_dump();
+				flash_log_status();
 #endif /* CONFIG_FLASH_LOGGING */
+			} else if (keypress_duration > 500)
+			{
+			/* short key press toggle hibernation */
+				hibernate ^= 1;
+				blink_fast(hibernate ? 3 : 6);
+				debug_printf("\n\rhibernate -> %i", hibernate);
+			}
+		}
 
-		/* blink every 5 seconds */
-		if(blink<5)
-			blink++;
+		timer_wait(MILLISECONDS(1000));
+
+		/* blink every 5 seconds, unless hibernating */
+		if( ((!hibernate) && blink_counter<5) || (hibernate && blink_counter<12) )
+			blink_counter++;
 		else
 		{
-			blink = 0;
+			blink_counter = 0;
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 			timer_wait(MILLISECONDS(1));
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);

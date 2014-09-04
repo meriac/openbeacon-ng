@@ -115,13 +115,16 @@ void RTC0_IRQ_Handler(void)
 		/* increment time */
 		g_time++;
 
-		/* schedule tracker TX */
-		if(!g_request_tx)
-			/* wait for random(2^5) slots */
-			g_request_tx = rng(5);
+		if (!hibernate)
+		{
+			/* schedule tracker TX */
+			if(!g_request_tx)
+				/* wait for random(2^5) slots */
+				g_request_tx = rng(5);
 
-		/* measure battery voltage once per second */
-		adc_start();
+			/* measure battery voltage once per second */
+			adc_start();
+		}
 	}
 
 	if(NRF_RTC0->EVENTS_COMPARE[1])
@@ -136,26 +139,29 @@ void RTC0_IRQ_Handler(void)
 			rng(CONFIG_PROX_SPACING_RNG_BITS);
 		NRF_RTC0->CC[1] = NRF_RTC0->COUNTER + delta_t;
 
-		/* start HF crystal oscillator */
-		NRF_CLOCK->TASKS_HFCLKSTART = 1;
-
-		/* listen every CONFIG_PROX_LISTEN_RATIO slots */
-		g_listen_ratio++;
-		if(g_listen_ratio<CONFIG_PROX_LISTEN_RATIO)
-			g_nrf_state = NRF_STATE_TX_PROX;
-		else
+		if (!hibernate)
 		{
-			g_listen_ratio = 0;
-			g_nrf_state = NRF_STATE_RX_PROX;
+			/* start HF crystal oscillator */
+			NRF_CLOCK->TASKS_HFCLKSTART = 1;
 
-			/* only start DC/DC converter for
-			 * RX & higher battery voltages */
-			if(adc_bat()>=NRF_DCDC_STARTUP_VOLTAGE)
+			/* listen every CONFIG_PROX_LISTEN_RATIO slots */
+			g_listen_ratio++;
+			if(g_listen_ratio<CONFIG_PROX_LISTEN_RATIO)
+				g_nrf_state = NRF_STATE_TX_PROX;
+			else
 			{
-				/* start DC-DC converter */
-				NRF_POWER->DCDCEN = (
-					(POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos)
-				);
+				g_listen_ratio = 0;
+				g_nrf_state = NRF_STATE_RX_PROX;
+
+				/* only start DC/DC converter for
+			 	* RX & higher battery voltages */
+				if(adc_bat()>=NRF_DCDC_STARTUP_VOLTAGE)
+				{
+					/* start DC-DC converter */
+					NRF_POWER->DCDCEN = (
+						(POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos)
+					);
+				}
 			}
 		}
 	}

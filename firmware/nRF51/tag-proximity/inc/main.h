@@ -25,7 +25,11 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+extern uint8_t hibernate;
+
 extern void blink(uint8_t times);
+extern void blink_fast(uint8_t times);
+extern uint16_t blink_wait_release(void);
 extern void halt(uint8_t times);
 extern int8_t tag_angle(void);
 
