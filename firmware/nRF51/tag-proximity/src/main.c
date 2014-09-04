@@ -120,7 +120,7 @@ void main_entry(void)
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 			timer_wait(MILLISECONDS(100));
 
-			flash_log_write(1); /* flush log buffer to flash */
+			flash_log_flush(); /* flush log buffer to flash */
 			flash_log_dump();
 			flash_log_status();
 

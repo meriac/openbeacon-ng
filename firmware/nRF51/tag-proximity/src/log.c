@@ -131,6 +131,10 @@ static void flash_log_block_commit(void)
 {
 	uint8_t err;
 
+	/* if block is empty, ignore it */
+	if (LogBlock.env.len == 0)
+		return;
+
 	/* get timestamp */
 	LogBlock.env.epoch = get_time();
 
@@ -343,6 +347,19 @@ void flash_log_write_trigger(void)
 
 	if ( log_running && (BUF_LEN(my_head,buf_tail) >= BUF_LEN_THRES) )
 		flash_log_write(0);
+}
+
+
+void flash_log_flush(void)
+{
+	uint8_t *my_head = buf_head;
+
+	/* flush ring buffer */
+	while (BUF_LEN(my_head,buf_tail) > 0)
+		flash_log_write(0);
+
+	/* flush block buffer */
+	flash_log_write(1);
 }
 
 
