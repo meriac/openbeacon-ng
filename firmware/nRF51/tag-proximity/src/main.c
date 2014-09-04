@@ -68,7 +68,6 @@ void main_entry(void)
 
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
-	nrf_gpio_pin_set(CONFIG_LED_PIN);
 
 	/* enabled input pin */
 	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_NOPULL);
