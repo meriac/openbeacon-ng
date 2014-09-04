@@ -204,7 +204,7 @@ void POWER_CLOCK_IRQ_Handler(void)
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
 		/* update proximity time */
-		g_pkt_prox.p.prox.epoch = g_time+g_time_offset;
+		g_pkt_prox.p.prox.epoch = g_time;
 		/* adjust transmitted time by time
 		 * it takes to encrypt the packet */
 		ticks = NRF_RTC0->COUNTER;
@@ -330,7 +330,7 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.p.status.px_power = (int16_t)((PX_POWER*100)+0.5);
 						g_pkt_tracker.p.status.ticks = NRF_RTC0->COUNTER + g_ticks_offset + g_pkt_tracker_ticks;
 					}
-					g_pkt_tracker.epoch = g_time+g_time_offset;
+					g_pkt_tracker.epoch = g_time;
 					g_pkt_tracker.angle = tag_angle();
 					g_pkt_tracker.voltage = adc_bat();
 
