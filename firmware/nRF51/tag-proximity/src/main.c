@@ -154,8 +154,9 @@ void main_entry(void)
 			/* long key press while tag is hibernating triggers log dump */
 			if (hibernate && (keypress_duration > 2000))
 			{
-				blink_fast(10);
 #if CONFIG_FLASH_LOGGING
+				blink_fast(10);
+
 				/* dump log data & status to serial */
 				flash_log_dump();
 				flash_log_status();
@@ -164,6 +165,11 @@ void main_entry(void)
 			{
 			/* short key press toggle hibernation */
 				hibernate ^= 1;
+
+				/* if hibernating, flush log buffers to flash */
+				if (hibernate)
+					flash_log_flush();
+
 				blink_fast(hibernate ? 3 : 6);
 				debug_printf("\n\rhibernate -> %i", hibernate);
 			}
