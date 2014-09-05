@@ -283,7 +283,7 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 					cal = (tag->tag_id == tag1) ? prox->tag1_calrx : prox->tag2_calrx;
 					/* calculate distance in mm */
 					prox_slot->distance =
-						(exp10((cal - prox_slot->power)/20.0)/
+						(__exp10((cal - prox_slot->power)/20.0)/
 						(41.88*(2400+CONFIG_PROX_CHANNEL)))*1000000;
 				}
 				else
