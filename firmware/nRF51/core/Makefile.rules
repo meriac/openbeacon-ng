@@ -4,6 +4,7 @@ LD=$(CROSS)ld
 OBJCOPY=$(CROSS)objcopy
 OBJDUMP=$(CROSS)objdump
 AR=$(CROSS)ar
+NM=$(CROSS)nm
 LDSCRIPT=$(CORE)linker/$(CPU).ld
 SEGGER=/opt/SEGGER/JLink
 JLINK=$(SEGGER)/JLinkExe
