@@ -131,6 +131,7 @@ void main_entry(void)
 	radio_init(tag_id);
 
 	/* enter main loop */
+	blink_fast(5);
 
 	while(TRUE)
 	{
