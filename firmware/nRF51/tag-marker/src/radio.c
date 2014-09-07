@@ -36,7 +36,7 @@ static uint8_t g_pkt_tracker_enc[sizeof(g_pkt_tracker)] ALIGN4;
 #define NRF_MAC_SIZE 5UL
 #define NRF_TRACKER_SIZE sizeof(g_pkt_tracker)
 
-#define RADIO_PKTS_PER_SEC 32
+#define RADIO_PKTS_PER_SEC 10
 
 #define RADIO_TRACKER_TXADDRESS 1
 #define RADIO_TRACKER_TXPOWER (RADIO_TXPOWER_TXPOWER_Neg16dBm << RADIO_TXPOWER_TXPOWER_Pos)
