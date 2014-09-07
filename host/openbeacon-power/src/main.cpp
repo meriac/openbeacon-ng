@@ -197,7 +197,7 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgMarker &mark
 			if( delta<0.5 )
 				tag_count++;
 		}
-		fprintf(stdout,"{\"tag\":%04u, \"reader\":%04u, \"power\":%02u},\n", tag_id, reader_id, tag_count);
+		fprintf(stdout,"{\"tag\":%u, \"reader\":%u, \"power\":%u}\n", tag_id, reader_id, tag_count);
 		fflush(stdout);
 	}
 }
