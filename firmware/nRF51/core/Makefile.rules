@@ -7,7 +7,7 @@ AR=$(CROSS)ar
 NM=$(CROSS)nm
 LDSCRIPT=$(CORE)linker/$(CPU).ld
 SEGGER=/opt/SEGGER/JLink
-JLINK=$(SEGGER)/JLinkExe -if SWD
+JLINK=$(SEGGER)/JLinkExe
 
 # determine program version
 PROGRAM_VERSION:=$(shell git describe --tags --abbrev=4 --dirty 2>/dev/null | sed s/^v//)
