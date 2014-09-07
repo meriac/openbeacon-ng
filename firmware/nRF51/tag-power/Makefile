@@ -1,4 +1,4 @@
-TARGET=tag-marker
+TARGET=tag-power
 ARCH=nrf5
 CPU=$(ARCH)1822
 DEBUG=-g
