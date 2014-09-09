@@ -88,7 +88,6 @@ typedef union
 typedef struct
 {
 	TBeaconNgProxPayload p;
-	uint8_t proto;
 	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgProx;
 

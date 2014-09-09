@@ -249,10 +249,6 @@ static void radio_on_prox_packet(uint16_t delta_t)
 	int i;
 	TBeaconNgSighting *slot;
 
-	/* ignore unknown protocols */
-	if(g_pkt_prox_rx.proto != RFBPROTO_BEACON_NG_PROX)
-		return;
-
 	/* ignore replayed packets from myself */
 	if(g_pkt_prox_rx.p.prox.uid == g_pkt_prox.p.prox.uid)
 		return;
@@ -467,7 +463,6 @@ void radio_init(uint32_t uid)
 
 	/* initialize proximity packet */
 	memset(&g_pkt_prox, 0, sizeof(g_pkt_prox));
-	g_pkt_prox.proto = RFBPROTO_BEACON_NG_PROX;
 	g_pkt_prox.p.prox.uid = uid;
 
 	/* initialize tracker packet */
