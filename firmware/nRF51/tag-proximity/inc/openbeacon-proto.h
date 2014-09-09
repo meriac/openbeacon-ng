@@ -44,27 +44,27 @@ typedef struct
 	int16_t tx_loss;
 	int16_t px_power;
 	uint16_t ticks;
+	int8_t angle;
+	uint8_t voltage;
 } PACKED TBeaconNgStatus;
 
 typedef struct
 {
-	int8_t rx_power;
 	uint32_t uid;
+	int8_t tx_power;
+	int8_t rx_power;
 } PACKED TBeaconNgSighting;
 
 typedef union
 {
 	TBeaconNgStatus status;
 	TBeaconNgSighting sighting[CONFIG_SIGHTING_SLOTS];
-	uint8_t raw[15];
+	uint8_t raw[18];
 } PACKED TBeaconNgPayload;
 
 typedef struct
 {
 	uint8_t proto;
-	int8_t tx_power;
-	int8_t angle;
-	uint8_t voltage;
 	uint32_t uid;
 	uint32_t epoch;
 	TBeaconNgPayload p;
@@ -76,12 +76,13 @@ typedef struct
 	uint32_t uid;
 	uint32_t epoch;
 	uint16_t ticks;
+	int8_t tx_power;
 } PACKED TBeaconNgProxAnnounce;
 
 typedef union
 {
 	TBeaconNgProxAnnounce prox;
-	uint8_t raw[10];
+	uint8_t raw[11];
 } PACKED TBeaconNgProxPayload;
 
 typedef struct

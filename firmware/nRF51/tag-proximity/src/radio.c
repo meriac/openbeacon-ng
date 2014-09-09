@@ -34,10 +34,6 @@
 #include <log.h>
 #endif
 
-/* set proximity power */
-#define PX_POWER -20
-#define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Neg20dBm
-
 #define RXTX_BASELOSS -4.0
 #define BALUN_INSERT_LOSS -2.25
 #define BALUN_RETURN_LOSS -10.0
@@ -45,12 +41,22 @@
 #define RX_LOSS ((RXTX_BASELOSS/2.0)+BALUN_RETURN_LOSS+ANTENNA_GAIN)
 #define TX_LOSS ((RXTX_BASELOSS/2.0)+BALUN_INSERT_LOSS+ANTENNA_GAIN)
 
+/* proximity power sequence */
+static uint32_t prox_txpower_sequence[] = {
+	RADIO_TXPOWER_TXPOWER_Neg20dBm,
+	RADIO_TXPOWER_TXPOWER_Neg20dBm,
+	RADIO_TXPOWER_TXPOWER_Neg20dBm,
+	RADIO_TXPOWER_TXPOWER_Neg12dBm
+};
+#define PROX_TXPOWER_SEQUENCE_LENGTH (sizeof(prox_txpower_sequence) / sizeof(uint32_t))
+
 static volatile uint32_t g_time, g_time_offset, g_pkt_tracker_ticks;
 static volatile uint16_t g_ticks_offset;
 static volatile uint8_t g_request_tx;
 static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
 static int8_t g_rssi;
+static uint32_t prox_tx_counter;
 
 static TBeaconNgProx g_pkt_prox ALIGN4;
 static uint8_t g_pkt_prox_enc[sizeof(g_pkt_prox)] ALIGN4;
@@ -85,7 +91,7 @@ static uint8_t g_pkt_tracker_enc[sizeof(g_pkt_tracker)] ALIGN4;
 		(NRF_TRACKER_SIZE             << RADIO_PCNF1_MAXLEN_Pos)
 
 #define RADIO_PROX_TXADDRESS 0
-#define RADIO_PROX_TXPOWER (PX_POWER_VALUE << RADIO_TXPOWER_TXPOWER_Pos)
+#define RADIO_PROX_TXPOWER(PX_POWER_VALUE) ((PX_POWER_VALUE) << RADIO_TXPOWER_TXPOWER_Pos)
 #define RADIO_PROX_PCNF1 \
 		(RADIO_PCNF1_WHITEEN_Enabled  << RADIO_PCNF1_WHITEEN_Pos) |\
 		(RADIO_PCNF1_ENDIAN_Big       << RADIO_PCNF1_ENDIAN_Pos)  |\
@@ -209,6 +215,12 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
+		/* record proximity TX power */
+		NRF_RADIO->TXPOWER = RADIO_PROX_TXPOWER(prox_txpower_sequence[prox_tx_counter % PROX_TXPOWER_SEQUENCE_LENGTH]);
+		g_pkt_prox.p.prox.tx_power =
+			(int8_t) (prox_txpower_sequence[prox_tx_counter % PROX_TXPOWER_SEQUENCE_LENGTH] & 0xFF);
+		prox_tx_counter++;
+
 		/* update proximity time */
 		g_pkt_prox.p.prox.epoch = g_time;
 		/* adjust transmitted time by time
@@ -260,14 +272,22 @@ static void radio_on_prox_packet(uint16_t delta_t)
 	slot = g_pkt_tracker.p.sighting;
 	for(i=0; i<CONFIG_SIGHTING_SLOTS; i++)
 	{
-		/* ignore older readings */
-		if(slot->uid==g_pkt_prox_rx.p.prox.uid)
+		/* a tag we have already seen */
+		if (slot->uid == g_pkt_prox_rx.p.prox.uid) {
+			/* overwrite older reading with higher TX power */
+			if ( g_pkt_prox_rx.p.prox.tx_power < slot->tx_power )
+			{
+				slot->tx_power = g_pkt_prox_rx.p.prox.tx_power;
+				slot->rx_power = g_rssi;
+			}
 			break;
+		}
 
 		/* use first free entry */
-		if(!slot->uid)
+		if (!slot->uid)
 		{
 			slot->uid = g_pkt_prox_rx.p.prox.uid;
+			slot->tx_power = g_pkt_prox_rx.p.prox.tx_power;
 			slot->rx_power = g_rssi;
 			break;
 		}
@@ -333,13 +353,12 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.proto = RFBPROTO_BEACON_NG_STATUS;
 						g_pkt_tracker.p.status.rx_loss = (int16_t)((RX_LOSS*100)+0.5);
 						g_pkt_tracker.p.status.tx_loss = (int16_t)((TX_LOSS*100)+0.5);
-						g_pkt_tracker.p.status.px_power = (int16_t)((PX_POWER*100)+0.5);
 						g_pkt_tracker.p.status.ticks = NRF_RTC0->COUNTER + g_ticks_offset + g_pkt_tracker_ticks;
+						g_pkt_tracker.p.status.angle = tag_angle();
+						g_pkt_tracker.p.status.voltage = adc_bat();
 					}
 					g_pkt_tracker.epoch = g_time;
-					g_pkt_tracker.angle = tag_angle();
-					g_pkt_tracker.voltage = adc_bat();
-
+					
 #if CONFIG_FLASH_LOGGING 
 					/* log sightings to flash */
 					if (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_SIGHTING)
@@ -381,7 +400,6 @@ void RADIO_IRQ_Handler(void)
 
 				/* reconfigure radio back to proximity */
 				NRF_RADIO->FREQUENCY = CONFIG_PROX_CHANNEL;
-				NRF_RADIO->TXPOWER = RADIO_PROX_TXPOWER;
 				NRF_RADIO->TXADDRESS = RADIO_PROX_TXADDRESS;
 				NRF_RADIO->PCNF1 = RADIO_PROX_PCNF1;
 
@@ -445,6 +463,7 @@ void radio_init(uint32_t uid)
 	g_nrf_state = 0;
 	g_request_tx = 0;
 	g_rssi = 0;
+	prox_tx_counter = 0;
 
 	/* initialize proximity packet */
 	memset(&g_pkt_prox, 0, sizeof(g_pkt_prox));
@@ -453,7 +472,6 @@ void radio_init(uint32_t uid)
 
 	/* initialize tracker packet */
 	memset(&g_pkt_tracker, 0, sizeof(g_pkt_tracker));
-	g_pkt_tracker.tx_power = 4;
 	g_pkt_tracker.uid = uid;
 
 	/* start random number genrator */
@@ -466,7 +484,6 @@ void radio_init(uint32_t uid)
 	/* setup default radio settings for proximity mode */
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_2Mbit << RADIO_MODE_MODE_Pos;
 	NRF_RADIO->FREQUENCY = CONFIG_PROX_CHANNEL;
-	NRF_RADIO->TXPOWER = RADIO_PROX_TXPOWER;
 	NRF_RADIO->TXADDRESS = RADIO_PROX_TXADDRESS;
 	NRF_RADIO->PCNF1 = RADIO_PROX_PCNF1;
 	/* generic radio setup */
