@@ -46,6 +46,7 @@ static uint32_t prox_txpower_sequence[] = {
 	RADIO_TXPOWER_TXPOWER_Neg20dBm,
 	RADIO_TXPOWER_TXPOWER_Neg20dBm,
 	RADIO_TXPOWER_TXPOWER_Neg20dBm,
+	RADIO_TXPOWER_TXPOWER_Neg20dBm,
 	RADIO_TXPOWER_TXPOWER_Neg12dBm
 };
 #define PROX_TXPOWER_SEQUENCE_LENGTH (sizeof(prox_txpower_sequence) / sizeof(uint32_t))
@@ -56,7 +57,7 @@ static volatile uint8_t g_request_tx;
 static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
 static int8_t g_rssi;
-static uint32_t prox_tx_counter;
+static uint8_t prox_txpower_index;
 
 static TBeaconNgProx g_pkt_prox ALIGN4;
 static uint8_t g_pkt_prox_enc[sizeof(g_pkt_prox)] ALIGN4;
@@ -215,11 +216,12 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
-		/* record proximity TX power */
-		NRF_RADIO->TXPOWER = RADIO_PROX_TXPOWER(prox_txpower_sequence[prox_tx_counter % PROX_TXPOWER_SEQUENCE_LENGTH]);
+		/* set & record proximity TX power */
+		NRF_RADIO->TXPOWER = RADIO_PROX_TXPOWER(prox_txpower_sequence[prox_txpower_index]);
 		g_pkt_prox.p.prox.tx_power =
-			(int8_t) (prox_txpower_sequence[prox_tx_counter % PROX_TXPOWER_SEQUENCE_LENGTH] & 0xFF);
-		prox_tx_counter++;
+			(int8_t) (prox_txpower_sequence[prox_txpower_index] & 0xFF);
+		if (++prox_txpower_index == PROX_TXPOWER_SEQUENCE_LENGTH)
+			prox_txpower_index = 0;
 
 		/* update proximity time */
 		g_pkt_prox.p.prox.epoch = g_time;
@@ -459,7 +461,7 @@ void radio_init(uint32_t uid)
 	g_nrf_state = 0;
 	g_request_tx = 0;
 	g_rssi = 0;
-	prox_tx_counter = 0;
+	prox_txpower_index = 0;
 
 	/* initialize proximity packet */
 	memset(&g_pkt_prox, 0, sizeof(g_pkt_prox));
