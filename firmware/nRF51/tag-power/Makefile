@@ -1,4 +1,4 @@
-TARGET=tag-proximity
+TARGET=tag-power
 ARCH=nrf5
 CPU=$(ARCH)1822
 DEBUG=-g
@@ -21,8 +21,6 @@ APP_SRC= \
   src/adc.c \
   src/aes.c \
   src/flash.c \
-  src/log.c \
-  src/heatshrink_encoder.c \
   src/radio.c \
   src/timer.c \
   src/main.c
@@ -37,8 +35,8 @@ publish: clean $(TARGET).bin
 app_clean:
 	find src -name '*.o' -exec rm \{\} \;
 
-key:
-	printf "static const TAES g_default_key = {\n\t`od -v -t x1 -N 16 /dev/urandom | grep 0000000 | sed 's/^[0 ]* /0x/g' | sed 's/  */, 0x/g'`\n};\n" > $(CUSTOM_KEY)
+custom_key:
+	echo -e "static const uint32_t xxtea_key[XXTEA_BLOCK_COUNT] = {\n\t`od -v -t x4 -N 16 /dev/urandom | grep 0000000 | sed 's/^0\+ /0x/g' |  sed 's/ /, 0x/g'`\n};\n" > $(CUSTOM_KEY)
 
 clean_all: clean
 	rm -f README $(CUSTOM_KEY)
@@ -46,11 +44,5 @@ clean_all: clean
 indent:
 	find src inc -iname '*.[ch]' -exec indent -c81 -i4 -cli4 -bli0 -ts 4 \{\} \;
 	rm -f src/*.[ch]~ inc/*.[ch]~
-
-set_time: $(TARGET).elf
-	G_TIME_ADDR=`$(NM) -C $(TARGET).elf | awk '{if ($$3 == "g_time") print $$1;}'`; \
-	CTIME=`date +%s`; \
-	CTIME_HEX=`printf "%x\n" $$CTIME`; \
-	echo "si 1\n" "device $(CPU)\n" w4 $$G_TIME_ADDR $$CTIME_HEX "\nexit" | $(JLINK)
 
 include ../core/Makefile.rules
