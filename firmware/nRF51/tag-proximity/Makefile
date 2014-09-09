@@ -35,8 +35,8 @@ publish: clean $(TARGET).bin
 app_clean:
 	find src -name '*.o' -exec rm \{\} \;
 
-custom_key:
-	echo -e "static const uint32_t xxtea_key[XXTEA_BLOCK_COUNT] = {\n\t`od -v -t x4 -N 16 /dev/urandom | grep 0000000 | sed 's/^0\+ /0x/g' |  sed 's/ /, 0x/g'`\n};\n" > $(CUSTOM_KEY)
+key:
+	printf "static const TAES g_default_key = {\n\t`od -v -t x1 -N 16 /dev/urandom | grep 0000000 | sed 's/^[0 ]* /0x/g' | sed 's/  */, 0x/g'`\n};\n" > $(CUSTOM_KEY)
 
 clean_all: clean
 	rm -f README $(CUSTOM_KEY)
