@@ -3,6 +3,7 @@
  * OpenBeacon.org - OnAir protocol specification and definition
  *
  * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Modified by Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ****************************************************************************
 

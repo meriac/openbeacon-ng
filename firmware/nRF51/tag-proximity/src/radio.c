@@ -3,6 +3,7 @@
  * OpenBeacon.org - nRF51 2.4GHz Radio Routines
  *
  * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Modified by Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ***************************************************************
 
@@ -200,8 +201,11 @@ void RTC0_IRQ_Handler(void)
 			NRF_RADIO->TASKS_DISABLE = 1;
 			/* disable DC-DC converter */
 			NRF_POWER->DCDCEN = 0;
+
+#ifdef  PROXIMITY_BLINK
 			/* disable LED */
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+#endif/*PROXIMITY_BLINK*/
 		}
 	}
 }
