@@ -48,6 +48,8 @@ typedef struct
 	uint16_t acc_y;
 	uint16_t acc_z;
 	uint8_t voltage;
+	uint8_t logging;
+	uint16_t flash_log_free_blocks;
 } PACKED TBeaconNgStatus;
 
 typedef struct

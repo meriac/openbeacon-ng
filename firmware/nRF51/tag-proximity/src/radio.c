@@ -361,6 +361,10 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.p.status.acc_y = tag_acc(1);
 						g_pkt_tracker.p.status.acc_z = tag_acc(2);
 						g_pkt_tracker.p.status.voltage = adc_bat();
+#if CONFIG_FLASH_LOGGING 
+						g_pkt_tracker.p.status.logging = flash_log_running();
+						g_pkt_tracker.p.status.flash_log_free_blocks = flash_log_free_blocks();
+#endif /* CONFIG_FLASH_LOGGING */
 					}
 					g_pkt_tracker.epoch = g_time;
 					

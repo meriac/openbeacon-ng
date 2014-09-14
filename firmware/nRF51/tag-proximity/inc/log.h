@@ -76,5 +76,7 @@ extern void flash_log_write_trigger(void);
 extern void flash_log_flush(void);
 extern void flash_log_status(void);
 extern void flash_log_dump(void);
+extern uint8_t flash_log_running(void);
+extern uint16_t flash_log_free_blocks(void);
 
 #endif /*__LOG_H__*/

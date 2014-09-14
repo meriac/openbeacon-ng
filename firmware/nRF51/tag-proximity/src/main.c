@@ -162,9 +162,11 @@ void main_entry(void)
 			/* short key press toggle hibernation */
 				hibernate ^= 1;
 
+#if CONFIG_FLASH_LOGGING
 				/* if hibernating, flush log buffers to flash */
 				if (hibernate)
 					flash_log_flush();
+#endif /* CONFIG_FLASH_LOGGING */
 
 				blink_fast(hibernate ? 3 : 6);
 				debug_printf("\n\rhibernate -> %i", hibernate);

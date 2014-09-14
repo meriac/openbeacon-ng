@@ -491,6 +491,18 @@ void flash_log_dump(void)
 }
 
 
+uint16_t flash_log_free_blocks(void)
+{
+	return FLASH_LOG_LAST_BLOCK - current_block + 1;
+}
+
+
+uint8_t flash_log_running(void)
+{
+	return log_running;
+}
+
+
 uint8_t flash_setup_logging(uint32_t uid)
 {
 	uint8_t log_page[AT45D_PAGE_SIZE];
