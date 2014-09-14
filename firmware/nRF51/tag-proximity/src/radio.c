@@ -30,6 +30,7 @@
 #include <aes.h>
 #include <rng.h>
 #include <timer.h>
+#include <acc.h>
 
 #if CONFIG_FLASH_LOGGING 
 #include <log.h>
@@ -356,7 +357,9 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.p.status.rx_loss = (int16_t)((RX_LOSS*100)+0.5);
 						g_pkt_tracker.p.status.tx_loss = (int16_t)((TX_LOSS*100)+0.5);
 						g_pkt_tracker.p.status.ticks = NRF_RTC0->COUNTER + g_ticks_offset + g_pkt_tracker_ticks;
-						g_pkt_tracker.p.status.angle = tag_angle();
+						g_pkt_tracker.p.status.acc_x = tag_acc(0);
+						g_pkt_tracker.p.status.acc_y = tag_acc(1);
+						g_pkt_tracker.p.status.acc_z = tag_acc(2);
 						g_pkt_tracker.p.status.voltage = adc_bat();
 					}
 					g_pkt_tracker.epoch = g_time;

@@ -3,6 +3,7 @@
  * OpenBeacon.org - nRF51 Main Entry
  *
  * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Modified by Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ***************************************************************
 
@@ -34,13 +35,7 @@
 #endif
 
 uint8_t hibernate = 1;
-static int8_t g_tag_angle;
 
-
-int8_t tag_angle(void)
-{
-	return g_tag_angle;
-}
 
 void blink(uint8_t times)
 {
@@ -138,7 +133,7 @@ void main_entry(void)
 		if (!hibernate)
 		{
 			/* get tag angle once per second */
-			acc_magnitude(&g_tag_angle);
+			acc_sample();
 
 			/* trigger flash write */
 #if CONFIG_FLASH_LOGGING

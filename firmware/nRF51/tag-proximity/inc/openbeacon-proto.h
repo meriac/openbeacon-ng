@@ -43,9 +43,10 @@ typedef struct
 {
 	int16_t rx_loss;
 	int16_t tx_loss;
-	int16_t px_power;
 	uint16_t ticks;
-	int8_t angle;
+	uint16_t acc_x;
+	uint16_t acc_y;
+	uint16_t acc_z;
 	uint8_t voltage;
 } PACKED TBeaconNgStatus;
 
