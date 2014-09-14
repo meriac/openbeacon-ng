@@ -32,7 +32,7 @@
 #include <timer.h>
 #include <acc.h>
 
-#if CONFIG_FLASH_LOGGING 
+#if CONFIG_FLASH_LOGGING
 #include <log.h>
 #endif
 
@@ -60,6 +60,10 @@ static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
 static int8_t g_rssi;
 static uint8_t prox_txpower_index;
+
+static uint32_t g_time_status_reported, g_time_status_logged;
+#define STATUS_FORCE_REPORT_PERIOD	300
+#define STATUS_FORCE_LOG_PERIOD		900
 
 static TBeaconNgProx g_pkt_prox ALIGN4;
 static uint8_t g_pkt_prox_enc[sizeof(g_pkt_prox)] ALIGN4;
@@ -348,10 +352,15 @@ void RADIO_IRQ_Handler(void)
 					NRF_RADIO->TXADDRESS = RADIO_TRACKER_TXADDRESS;
 					NRF_RADIO->PCNF1 = RADIO_TRACKER_PCNF1;
 
-					/* update tracker packet */
-					if(g_pkt_tracker.p.sighting[0].uid)
-						g_pkt_tracker.proto = RFBPROTO_BEACON_NG_SIGHTING;
-					else
+					/* set protocol and epoch */
+					g_pkt_tracker.proto = RFBPROTO_BEACON_NG_SIGHTING;
+					g_pkt_tracker.epoch = g_time;
+
+					/* if the tracker packet contains no sightings,
+					   or if we have not reported status for too long,
+					   prepare a status packet */
+					if( (!g_pkt_tracker.p.sighting[0].uid) ||
+						 (g_time - g_time_status_reported > STATUS_FORCE_REPORT_PERIOD) )
 					{
 						g_pkt_tracker.proto = RFBPROTO_BEACON_NG_STATUS;
 						g_pkt_tracker.p.status.rx_loss = (int16_t)((RX_LOSS*100)+0.5);
@@ -361,17 +370,25 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.p.status.acc_y = tag_acc(1);
 						g_pkt_tracker.p.status.acc_z = tag_acc(2);
 						g_pkt_tracker.p.status.voltage = adc_bat();
-#if CONFIG_FLASH_LOGGING 
+#if CONFIG_FLASH_LOGGING
 						g_pkt_tracker.p.status.logging = flash_log_running();
 						g_pkt_tracker.p.status.flash_log_free_blocks = flash_log_free_blocks();
 #endif /* CONFIG_FLASH_LOGGING */
+						g_time_status_reported = g_time;
 					}
-					g_pkt_tracker.epoch = g_time;
 					
-#if CONFIG_FLASH_LOGGING 
-					/* log sightings to flash */
-					if (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_SIGHTING)
+#if CONFIG_FLASH_LOGGING
+					/* log sightings to flash,
+					   and log status if long enough time has elapsed */
+					if ( (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_SIGHTING) ||
+						 (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_STATUS &&
+						  g_time - g_time_status_logged > STATUS_FORCE_LOG_PERIOD) )
+					{
 						flash_log(sizeof(g_pkt_tracker) - CONFIG_SIGNATURE_SIZE, (uint8_t *) &g_pkt_tracker);
+
+						if (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_STATUS)
+							g_time_status_logged = g_time;
+					}
 #endif /* CONFIG_FLASH_LOGGING */
 					
 					/* measure encryption time */
