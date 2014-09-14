@@ -493,7 +493,13 @@ void flash_log_dump(void)
 
 uint16_t flash_log_free_blocks(void)
 {
+#if LOG_WRAPAROUND
+	/* if we wrap around on flash full,
+	   always report total number of log blocks */
+	return FLASH_LOG_LAST_BLOCK;
+#else
 	return FLASH_LOG_LAST_BLOCK - current_block + 1;
+#endif
 }
 
 
