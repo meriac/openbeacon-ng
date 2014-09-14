@@ -201,7 +201,7 @@ uint16_t flash_wait_ready(uint8_t wait_interval_ms)
 			break;
 
 		if (wait_interval_ms)
-			timer_wait(MILLISECONDS(wait_interval_ms));
+			timer_wait(wait_interval_ms * MILLISECONDS(1));
 	}
 
 	SPI_SET_NCS;
@@ -228,7 +228,7 @@ uint16_t flash_wait_status(uint8_t wait_interval_ms)
 			break;
 
 		if (wait_interval_ms)
-			timer_wait(MILLISECONDS(wait_interval_ms));
+			timer_wait(wait_interval_ms * MILLISECONDS(1));
 	} while (1);
 
 	SPI_SET_NCS;

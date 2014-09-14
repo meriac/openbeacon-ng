@@ -59,9 +59,10 @@ void blink_fast(uint8_t times)
 	}
 }
 
+#define WAIT_RELEASE_MS 10
+
 uint16_t blink_wait_release(void) {
 	uint16_t counter = 0;
-	const uint8_t delta_t = 10;
 
 	nrf_gpio_pin_set(CONFIG_LED_PIN);
 	timer_wait(MILLISECONDS(10));
@@ -69,11 +70,11 @@ uint16_t blink_wait_release(void) {
 
 	while (nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
 	{
-		timer_wait(MILLISECONDS(delta_t));
+		timer_wait(MILLISECONDS(WAIT_RELEASE_MS));
 		counter++;
 	}
 
-	return counter * delta_t;
+	return counter * WAIT_RELEASE_MS;
 }
 
 void halt(uint8_t times)
