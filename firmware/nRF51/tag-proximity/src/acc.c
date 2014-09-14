@@ -147,5 +147,8 @@ uint8_t acc_init(void)
 	for(i=0; i<ACC_INIT_COUNT; i++)
 		acc_write(g_acc_init[i][0], g_acc_init[i][1]);
 
+	/* make first measurement */
+	acc_sample();
+
 	return 0;
 }
