@@ -42,11 +42,16 @@
 	state[i + 2] ^= x ^ aes_xtime (t[2] ^ t[3]); \
 	state[i + 3] ^= x ^ aes_xtime (t[3] ^ t[0]);
 
-/* derieved keys */
+/* crypto key */
+#ifdef  CUSTOM_ENCRYPTION_KEYS
+#	include "custom-encryption-keys.h"
+#else /*CUSTOM_ENCRYPTION_KEY*/
 static const TAES g_default_key = {
 	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
 	0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
 };
+#endif/*CUSTOM_ENCRYPTION_KEYS*/
+
 static TCryptoEngine g_signature, g_encrypt;
 
 static const uint8_t g_sbox[256] = {
