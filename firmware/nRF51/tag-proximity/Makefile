@@ -51,6 +51,6 @@ set_time: $(TARGET).elf
 	G_TIME_ADDR=`$(NM) -C $(TARGET).elf | awk '{if ($$3 == "g_time") print $$1;}'`; \
 	CTIME=`date +%s`; \
 	CTIME_HEX=`printf "%x\n" $$CTIME`; \
-	echo "si 1\n" "device $(CPU)\n" w4 $$G_TIME_ADDR $$CTIME_HEX "\nexit" | $(JLINK)
+	echo w4 $$G_TIME_ADDR $$CTIME_HEX "\n" exit | $(JLINK)
 
 include ../core/Makefile.rules
