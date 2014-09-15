@@ -44,9 +44,9 @@ typedef struct
 	int16_t rx_loss;
 	int16_t tx_loss;
 	uint16_t ticks;
-	uint16_t acc_x;
-	uint16_t acc_y;
-	uint16_t acc_z;
+	int16_t acc_x;
+	int16_t acc_y;
+	int16_t acc_z;
 	uint8_t voltage;
 	uint8_t logging;
 	uint16_t flash_log_free_blocks;

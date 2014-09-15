@@ -38,7 +38,7 @@ static const uint8_t g_acc_init[][2] = {
 #define ACC_INIT_COUNT ((int)(sizeof(g_acc_init)/sizeof(g_acc_init[0])))
 
 /* most recent acceleration measurement */
-static uint16_t acc[3];
+static int16_t acc[3];
 
 
 void acc_write(uint8_t cmd, uint8_t data)
@@ -98,7 +98,7 @@ void acc_sample(void)
 }
 
 
-uint16_t tag_acc(uint8_t axis)
+int16_t tag_acc(uint8_t axis)
 {
 	return acc[axis];
 }

@@ -74,6 +74,6 @@ extern uint8_t acc_init(void);
 extern void acc_write(uint8_t cmd, uint8_t data);
 extern void acc_read(uint8_t cmd, uint8_t len, uint8_t *data);
 extern void acc_sample(void);
-extern uint16_t tag_acc(uint8_t axis);
+extern int16_t tag_acc(uint8_t axis);
 
 #endif/*__ACC_H__*/
