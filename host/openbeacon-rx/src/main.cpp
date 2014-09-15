@@ -52,8 +52,6 @@
 typedef struct
 {
 	uint32_t tag_id, epoch;
-	float voltage;
-	int angle;
 	bool button, calibrated;
 	double last_seen;
 	uint32_t last_reader_id;
@@ -458,13 +456,11 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 
 	if(g_first)
 		fprintf(g_out,"  \"tag\":[");
-	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i,\"angle\":%i,\"voltage\":%1.1f}",
+	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i}",
 		g_first ? "":",",
 		tag->tag_id,
 		tag->tag_id,
-		delta,
-		tag->angle,
-		tag->voltage
+		delta
 	);
 
 	g_first = false;
