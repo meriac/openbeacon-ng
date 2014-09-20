@@ -35,6 +35,7 @@
 #endif
 
 uint8_t hibernate = 1;
+uint8_t error_flags = 0;
 
 
 void blink(uint8_t times)

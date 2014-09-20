@@ -71,6 +71,7 @@ uint16_t flash_log(uint16_t len, uint8_t *data)
 	if ( BUF_SIZE - BUF_LEN(buf_head,my_tail) <= len )
 	{
 		log_buffer_overrun_count++;
+		error_flags |= ERROR_LOG_BUF_OVERRUN;
 		return 0;
 	}
 
@@ -144,8 +145,10 @@ static void flash_log_block_commit(void)
 
 	/* write block */
 	err = flash_log_block_write(current_block, (uint8_t *) &LogBlock );
-	if (err)
+	if (err) {
 		flash_error_count++;
+		error_flags |= ERROR_FLASH_WRITE;
+	}
 
 	current_block++;
 	/* depending on configuration,
@@ -164,7 +167,10 @@ static void flash_log_block_commit(void)
 	if (err && log_running)
 	{
 		if ( flash_log_block_write(current_block, (uint8_t *) &LogBlock ) )
+		{
 			flash_error_count++;
+			error_flags |= ERROR_FLASH_WRITE;
+		}
 
 		current_block++;
 		if (current_block > FLASH_LOG_LAST_BLOCK)
@@ -174,6 +180,7 @@ static void flash_log_block_commit(void)
 			current_block = FLASH_LOG_FIRST_BLOCK;
 #else
 			log_running = 0;
+			error_flags |= ERROR_FLASH_FULL;
 #endif
 		}
 	}
@@ -247,6 +254,7 @@ void flash_log_write(uint8_t flush_buf)
 	{
 		//debug_printf("bailing out\n\r");
 		log_compression_error++;
+		error_flags |= ERROR_LOG_COMPRESS;
 		buf_tail = tail_copy;
 		return;
 	}
@@ -264,6 +272,7 @@ void flash_log_write(uint8_t flush_buf)
 		{
 			//debug_printf("bailing out\n\r");
 			log_compression_error++;
+			error_flags |= ERROR_LOG_COMPRESS;
 			buf_tail = tail_copy;
 			return;
 		}
@@ -285,6 +294,7 @@ void flash_log_write(uint8_t flush_buf)
         		{
 					//debug_printf("bailing out\n\r");
 					log_compression_error++;
+					error_flags |= ERROR_LOG_COMPRESS;
 					buf_tail = tail_copy;
 					return;
         		}
@@ -297,6 +307,7 @@ void flash_log_write(uint8_t flush_buf)
 		{
 			//debug_printf("bailing out\n\r");
 			log_compression_error++;
+			error_flags |= ERROR_LOG_COMPRESS;
 			buf_tail = tail_copy;
 			return;
 		}

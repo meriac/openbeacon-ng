@@ -374,6 +374,9 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.p.status.logging = flash_log_running();
 						g_pkt_tracker.p.status.flash_log_free_blocks = flash_log_free_blocks();
 #endif /* CONFIG_FLASH_LOGGING */
+						g_pkt_tracker.p.status.error = error_flags;
+
+						error_flags = 0;
 						g_time_status_reported = g_time;
 					}
 					
