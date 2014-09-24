@@ -123,24 +123,6 @@ do {														\
 } while (0);
 
 
-/* report flash size */
-static const uint8_t g_flash_id[] = {0x1f, 0x00, 0x00, 0x01, 0x00};
-#define MEGABYTE(x) (x*1024UL*1024UL)
-static uint8_t g_flash_size;
-
-uint32_t flash_size(void)
-{
-	switch(g_flash_size)
-	{
-		case 0x25:
-			return MEGABYTE(1);
-		case 0x28:
-			return MEGABYTE(8);
-		default:
-			return 0;
-	}
-}
-
 
 static void flash_cmd_read(uint8_t cmd, uint8_t len, uint8_t *data)
 {
@@ -532,6 +514,16 @@ void flash_rewrite_page_through_buffer(uint8_t bufnum, uint16_t page_addr)
 }
 
 
+static uint16_t flash_num_pages;
+
+uint16_t flash_get_num_pages(void)
+{
+	return flash_num_pages;
+}
+
+
+static const uint8_t g_flash_id[] = {0x1f, 0x00, 0x00, 0x01, 0x00};
+
 uint8_t flash_init(void)
 {
 	uint8_t data[5];
@@ -573,8 +565,19 @@ uint8_t flash_init(void)
 	/* check for flash */
 	flash_cmd_read(AT45D_CMD_IDENT, sizeof(data), data);
 
-	/* remember flash size */
-	g_flash_size = data[1];
+	/* set number of flash pages */
+	switch (data[1])
+	{
+		case 0x25:	/* 8 Mbit chip */
+			flash_num_pages = 1 << 12;
+			break;
+		case 0x28:	/* 64 Mbit chip */
+			flash_num_pages = 1 << 15;
+			break;
+		default:
+			return 1;
+	}
+
 	/* reset size for ID comparison */
 	data[1] = 0;
 	/* compare wildcard ID */

@@ -38,8 +38,6 @@
 #define AT45D_STATUS_EPE		0x20		/* byte 2 */
 
 
-extern uint32_t flash_size(void);
-
 extern uint16_t flash_status(void);
 extern uint16_t flash_wait_ready(uint8_t wait_interval_ms);
 extern uint16_t flash_wait_status(uint8_t wait_interval_ms);
@@ -68,5 +66,6 @@ extern void flash_read_page(uint16_t page_addr, uint16_t byte_offset, uint16_t l
 extern uint8_t flash_compare_page_to_buffer(uint8_t bufnum, uint16_t page_addr);
 
 extern uint8_t flash_init(void);
+extern uint16_t flash_get_num_pages(void);
 
 #endif/*__FLASH_H__*/

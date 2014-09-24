@@ -48,6 +48,7 @@ static uint8_t *buf_head, *buf_tail;
 /* block buffer */
 static TLogBlock LogBlock ALIGN4;
 static uint16_t current_block;
+static uint16_t flash_log_last_block;
 static uint16_t seq = 1;
 
 /* logging status */
@@ -153,7 +154,7 @@ static void flash_log_block_commit(void)
 	current_block++;
 	/* depending on configuration,
 	   wrap around or stop logging on flash full */
-	if (current_block > FLASH_LOG_LAST_BLOCK)
+	if (current_block > flash_log_last_block)
 	{
 		log_wrap_count++;
 #if LOG_WRAPAROUND
@@ -173,7 +174,7 @@ static void flash_log_block_commit(void)
 		}
 
 		current_block++;
-		if (current_block > FLASH_LOG_LAST_BLOCK)
+		if (current_block > flash_log_last_block)
 		{
 			log_wrap_count++;
 #if LOG_WRAPAROUND
@@ -479,7 +480,7 @@ void flash_log_dump(void)
 
 	flash_wakeup();
 
-	for (block_addr=FLASH_LOG_FIRST_BLOCK; block_addr <= FLASH_LOG_LAST_BLOCK; block_addr++)
+	for (block_addr=FLASH_LOG_FIRST_BLOCK; block_addr <= flash_log_last_block; block_addr++)
 	{
 		page_addr = block_addr*BLOCK_PAGES;
 		flash_read_page(page_addr++, 0, AT45D_PAGE_SIZE, log_page);
@@ -507,9 +508,9 @@ uint16_t flash_log_free_blocks(void)
 #if LOG_WRAPAROUND
 	/* if we wrap around on flash full,
 	   always report total number of log blocks */
-	return FLASH_LOG_LAST_BLOCK;
+	return flash_log_last_block;
 #else
-	return FLASH_LOG_LAST_BLOCK - current_block + 1;
+	return flash_log_last_block - current_block + 1;
 #endif
 }
 
@@ -559,7 +560,7 @@ uint8_t flash_setup_logging(uint32_t uid)
 	flash_wait_ready(1);
 	
 	/* find first non-signed block */
-	for (block_addr=FLASH_LOG_FIRST_BLOCK; block_addr<=FLASH_LOG_LAST_BLOCK; block_addr++)
+	for (block_addr=FLASH_LOG_FIRST_BLOCK; block_addr<=flash_log_last_block; block_addr++)
 	{
 		// debug_printf("\n\rchecking block %i\n\r", block_addr);
 		flash_read_page(block_addr*BLOCK_PAGES, 0, 4, log_page);
@@ -571,8 +572,10 @@ uint8_t flash_setup_logging(uint32_t uid)
 	current_block = block_addr;
 	flash_sleep_deep();
 
+	flash_log_last_block = flash_get_num_pages() / 8 - 1;
+
 	/* return error if no block is available */
-	if (block_addr > FLASH_LOG_LAST_BLOCK)
+	if (block_addr > flash_log_last_block)
 		return 1;
 
 #if FLASH_LOG_COMPRESSION
@@ -581,7 +584,7 @@ uint8_t flash_setup_logging(uint32_t uid)
 #endif
 
 	log_running = 1;
-	debug_printf("\n\rLogging starts at block %i\n\r", current_block);
+	debug_printf("\n\rLogging starts at block %i of %i\n\r", current_block, flash_log_last_block);
 
 	return 0;
 }
