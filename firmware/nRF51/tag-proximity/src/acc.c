@@ -98,7 +98,7 @@ void acc_sample(void)
 }
 
 
-int16_t tag_acc(uint8_t axis)
+inline int16_t tag_acc(uint8_t axis)
 {
 	return acc[axis];
 }

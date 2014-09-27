@@ -186,6 +186,15 @@ void main_entry(void)
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 			timer_wait(MILLISECONDS(1));
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+
+			/* double blink if epoch time is invalid */
+			if (get_time() < VALID_EPOCH_THRES) {
+				timer_wait(MILLISECONDS(100));
+
+				nrf_gpio_pin_set(CONFIG_LED_PIN);
+				timer_wait(MILLISECONDS(1));
+				nrf_gpio_pin_clear(CONFIG_LED_PIN);
+			}
 		}
 	}
 }

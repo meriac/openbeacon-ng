@@ -61,8 +61,6 @@ static uint8_t g_nrf_state;
 static int8_t g_rssi;
 static uint8_t prox_txpower_index;
 
-#define VALID_EPOCH_THRES 1411633853
-
 static uint32_t g_time_status_reported, g_time_status_logged;
 #define STATUS_FORCE_REPORT_PERIOD	300
 #define STATUS_FORCE_LOG_PERIOD		900
@@ -109,7 +107,7 @@ static uint8_t g_pkt_tracker_enc[sizeof(g_pkt_tracker)] ALIGN4;
 		(NRF_PROX_SIZE                << RADIO_PCNF1_MAXLEN_Pos)
 
 
-uint32_t get_time(void)
+inline uint32_t get_time(void)
 {
 	return g_time;
 }
@@ -369,7 +367,7 @@ void RADIO_IRQ_Handler(void)
 					   or if we have not reported status for too long,
 					   prepare a status packet */
 					if( (!g_pkt_tracker.p.sighting[0].uid) ||
-						 (g_time - g_time_status_reported > STATUS_FORCE_REPORT_PERIOD) )
+						 (g_time - g_time_status_reported >= STATUS_FORCE_REPORT_PERIOD) )
 					{
 						g_pkt_tracker.proto = RFBPROTO_BEACON_NG_STATUS;
 						g_pkt_tracker.p.status.rx_loss = (int16_t)((RX_LOSS*100)+0.5);
@@ -398,7 +396,7 @@ void RADIO_IRQ_Handler(void)
 					   and log status if long enough time has elapsed */
 					if ( (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_SIGHTING) ||
 						 (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_STATUS &&
-						  g_time - g_time_status_logged > STATUS_FORCE_LOG_PERIOD) )
+						  g_time - g_time_status_logged >= STATUS_FORCE_LOG_PERIOD) )
 					{
 						flash_log(sizeof(g_pkt_tracker) - CONFIG_SIGNATURE_SIZE, (uint8_t *) &g_pkt_tracker);
 

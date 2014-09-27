@@ -27,6 +27,9 @@
 
 #include <openbeacon-proto.h>
 
+/* arbitrary epoch time threshold, used to check to epoch time validity */
+#define VALID_EPOCH_THRES 1411633853
+
 extern void radio_init(uint32_t uid);
 extern uint32_t get_time(void);
 
