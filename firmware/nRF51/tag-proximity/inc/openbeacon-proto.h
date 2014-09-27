@@ -43,6 +43,7 @@
 #define ERROR_LOG_BUF_OVERRUN	(1 << 1)
 #define ERROR_LOG_COMPRESS		(1 << 2)
 #define ERROR_FLASH_FULL		(1 << 3)
+#define ERROR_TIME_RESET		(1 << 4)
 
 
 typedef struct

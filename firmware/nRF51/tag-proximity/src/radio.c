@@ -376,7 +376,11 @@ void RADIO_IRQ_Handler(void)
 #endif /* CONFIG_FLASH_LOGGING */
 						g_pkt_tracker.p.status.error = error_flags;
 
+/* if we do not log to flash, reset error flags here.
+   otherwise only reset when we log a status packet to flash */
+#if !CONFIG_FLASH_LOGGING
 						error_flags = 0;
+#endif
 						g_time_status_reported = g_time;
 					}
 					
@@ -390,7 +394,12 @@ void RADIO_IRQ_Handler(void)
 						flash_log(sizeof(g_pkt_tracker) - CONFIG_SIGNATURE_SIZE, (uint8_t *) &g_pkt_tracker);
 
 						if (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_STATUS)
+						{
 							g_time_status_logged = g_time;
+#if CONFIG_FLASH_LOGGING
+							error_flags = 0;
+#endif
+						}
 					}
 #endif /* CONFIG_FLASH_LOGGING */
 					
