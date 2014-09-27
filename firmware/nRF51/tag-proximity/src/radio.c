@@ -61,6 +61,8 @@ static uint8_t g_nrf_state;
 static int8_t g_rssi;
 static uint8_t prox_txpower_index;
 
+#define VALID_EPOCH_THRES 1411633853
+
 static uint32_t g_time_status_reported, g_time_status_logged;
 #define STATUS_FORCE_REPORT_PERIOD	300
 #define STATUS_FORCE_LOG_PERIOD		900
@@ -264,7 +266,14 @@ static void radio_on_prox_packet(uint16_t delta_t)
 	if(g_pkt_prox_rx.p.prox.uid == g_pkt_prox.p.prox.uid)
 		return;
 
-	/* adjust epoch time if needed */
+	/* if we lack a valid epoch time, get it from proximity packet */
+	if ( g_time < VALID_EPOCH_THRES && g_pkt_prox_rx.p.prox.epoch > VALID_EPOCH_THRES )
+	{
+		g_time = g_pkt_prox_rx.p.prox.epoch;
+		error_flags |= ERROR_TIME_RESET;
+	}
+
+	/* maintain epoch time offset */
 	if(g_pkt_prox_rx.p.prox.epoch > (g_time+g_time_offset))
 	{
 		g_time_offset = g_pkt_prox_rx.p.prox.epoch - g_time;
