@@ -558,6 +558,9 @@ uint8_t flash_setup_logging(uint32_t uid)
 	/* sign page 0 with PROGRAM_VERSION string */
 	flash_write_page_through_buffer(1, 0, 0, sizeof(flash_signature), 0, flash_signature);
 	flash_wait_ready(1);
+
+	/* set index of last block */
+	flash_log_last_block = flash_get_num_pages() / BLOCK_PAGES - 1;
 	
 	/* find first non-signed block */
 	for (block_addr=FLASH_LOG_FIRST_BLOCK; block_addr<=flash_log_last_block; block_addr++)
@@ -571,8 +574,6 @@ uint8_t flash_setup_logging(uint32_t uid)
 
 	current_block = block_addr;
 	flash_sleep_deep();
-
-	flash_log_last_block = flash_get_num_pages() / 8 - 1;
 
 	/* return error if no block is available */
 	if (block_addr > flash_log_last_block)
