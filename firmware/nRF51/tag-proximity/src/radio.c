@@ -48,8 +48,8 @@ static uint32_t prox_txpower_sequence[] = {
 	RADIO_TXPOWER_TXPOWER_Neg20dBm,
 	RADIO_TXPOWER_TXPOWER_Neg20dBm,
 	RADIO_TXPOWER_TXPOWER_Neg20dBm,
-	RADIO_TXPOWER_TXPOWER_Neg20dBm,
-	RADIO_TXPOWER_TXPOWER_Neg12dBm
+	RADIO_TXPOWER_TXPOWER_Neg12dBm,
+	RADIO_TXPOWER_TXPOWER_Neg4dBm
 };
 #define PROX_TXPOWER_SEQUENCE_LENGTH (sizeof(prox_txpower_sequence) / sizeof(uint32_t))
 
@@ -188,7 +188,7 @@ void RTC0_IRQ_Handler(void)
 		/* stop HF clock */
 		NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 
-#ifdef  PROXIMITY_BLINK
+#if PROXIMITY_BLINK
 		if(g_nrf_state == NRF_STATE_RX_PROX_BLINK)
 		{
 			g_nrf_state = NRF_STATE_IDLE;
@@ -198,7 +198,7 @@ void RTC0_IRQ_Handler(void)
 			NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + MILLISECONDS(1);
 		}
 		else
-#endif/*PROXIMITY_BLINK*/
+#endif /*PROXIMITY_BLINK*/
 		{
 			/* set next state */
 			g_nrf_state = NRF_STATE_IDLE;
@@ -207,13 +207,14 @@ void RTC0_IRQ_Handler(void)
 			/* disable DC-DC converter */
 			NRF_POWER->DCDCEN = 0;
 
-#ifdef  PROXIMITY_BLINK
+#if PROXIMITY_BLINK
 			/* disable LED */
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
-#endif/*PROXIMITY_BLINK*/
+#endif /*PROXIMITY_BLINK*/
 		}
 	}
 }
+
 
 void POWER_CLOCK_IRQ_Handler(void)
 {
@@ -255,6 +256,7 @@ void POWER_CLOCK_IRQ_Handler(void)
 	}
 }
 
+
 static void radio_on_prox_packet(uint16_t delta_t)
 {
 	int i;
@@ -264,12 +266,14 @@ static void radio_on_prox_packet(uint16_t delta_t)
 	if(g_pkt_prox_rx.p.prox.uid == g_pkt_prox.p.prox.uid)
 		return;
 
+#if PROXIMITY_TIME
 	/* if we lack a valid epoch time, get it from proximity packet */
 	if ( g_time < VALID_EPOCH_THRES && g_pkt_prox_rx.p.prox.epoch > VALID_EPOCH_THRES )
 	{
 		g_time = g_pkt_prox_rx.p.prox.epoch;
-		error_flags |= ERROR_TIME_RESET;
+		status_flags |= ERROR_TIME_RESET;
 	}
+#endif /* PROXIMITY_TIME */
 
 	/* maintain epoch time offset */
 	if(g_pkt_prox_rx.p.prox.epoch > (g_time+g_time_offset))
@@ -309,6 +313,7 @@ static void radio_on_prox_packet(uint16_t delta_t)
 		slot++;
 	}
 }
+
 
 void RADIO_IRQ_Handler(void)
 {
@@ -381,12 +386,12 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.p.status.logging = flash_log_running();
 						g_pkt_tracker.p.status.flash_log_free_blocks = flash_log_free_blocks();
 #endif /* CONFIG_FLASH_LOGGING */
-						g_pkt_tracker.p.status.error = error_flags;
+						g_pkt_tracker.p.status.flags = status_flags;
 
-/* if we do not log to flash, reset error flags here.
+/* if we do not log to flash, reset status flags here.
    otherwise only reset when we log a status packet to flash */
 #if !CONFIG_FLASH_LOGGING
-						error_flags = 0;
+						status_flags = 0;
 #endif
 						g_time_status_reported = g_time;
 					}
@@ -403,7 +408,7 @@ void RADIO_IRQ_Handler(void)
 						if (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_STATUS)
 						{
 							g_time_status_logged = g_time;
-							error_flags = 0;
+							status_flags = 0;
 						}
 					}
 #endif /* CONFIG_FLASH_LOGGING */
@@ -495,6 +500,7 @@ void RADIO_IRQ_Handler(void)
 		NRF_RADIO->TASKS_RSSISTOP = 1;
 	}
 }
+
 
 void radio_init(uint32_t uid)
 {

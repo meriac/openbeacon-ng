@@ -35,7 +35,7 @@
 #endif
 
 uint8_t hibernate = 1;
-uint8_t error_flags = 0;
+uint8_t status_flags = 0;
 
 
 void blink(uint8_t times)
@@ -126,6 +126,9 @@ void main_entry(void)
 		tag_id,
 		CONFIG_TRACKER_CHANNEL);
 	radio_init(tag_id);
+
+	/* set boot flag */
+	status_flags |= FLAG_BOOT;
 
 	/* enter main loop */
 	blink_fast(5);

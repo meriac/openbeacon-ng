@@ -27,7 +27,7 @@
 #define __MAIN_H__
 
 extern uint8_t hibernate;
-extern uint8_t error_flags;
+extern uint8_t status_flags;
 
 extern void blink(uint8_t times);
 extern void blink_fast(uint8_t times);

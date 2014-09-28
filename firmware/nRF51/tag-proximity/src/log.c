@@ -72,7 +72,7 @@ uint16_t flash_log(uint16_t len, uint8_t *data)
 	if ( BUF_SIZE - BUF_LEN(buf_head,my_tail) <= len )
 	{
 		log_buffer_overrun_count++;
-		error_flags |= ERROR_LOG_BUF_OVERRUN;
+		status_flags |= ERROR_LOG_BUF_OVERRUN;
 		return 0;
 	}
 
@@ -148,7 +148,7 @@ static void flash_log_block_commit(void)
 	err = flash_log_block_write(current_block, (uint8_t *) &LogBlock );
 	if (err) {
 		flash_error_count++;
-		error_flags |= ERROR_FLASH_WRITE;
+		status_flags |= ERROR_FLASH_WRITE;
 	}
 
 	current_block++;
@@ -170,7 +170,7 @@ static void flash_log_block_commit(void)
 		if ( flash_log_block_write(current_block, (uint8_t *) &LogBlock ) )
 		{
 			flash_error_count++;
-			error_flags |= ERROR_FLASH_WRITE;
+			status_flags |= ERROR_FLASH_WRITE;
 		}
 
 		current_block++;
@@ -181,7 +181,7 @@ static void flash_log_block_commit(void)
 			current_block = FLASH_LOG_FIRST_BLOCK;
 #else
 			log_running = 0;
-			error_flags |= ERROR_FLASH_FULL;
+			status_flags |= ERROR_FLASH_FULL;
 #endif
 		}
 	}
@@ -220,12 +220,8 @@ void flash_log_write(uint8_t flush_buf)
 		if (chunk_size > COMPRESS_CHUNK_SIZE )
 			chunk_size = COMPRESS_CHUNK_SIZE;
 
-		//debug_printf("ring buffer: %i, block buffer: %i\n\r", BUF_LEN(my_head,buf_tail), LogBlock.env.len);
-		//debug_printf("chunk size: %i\n\r", chunk_size);
-
 		/* feed it to the encoder */
 		sres = heatshrink_encoder_sink(&hse, buf_tail, chunk_size, &sink_sz);
-		//debug_printf("sres, sink_sz: %i, %i\n\r", sres, sink_sz);
 		if (sres < 0)
 			break;
 
@@ -238,7 +234,6 @@ void flash_log_write(uint8_t flush_buf)
             	&poll_sz);
 
             LogBlock.env.len += poll_sz;
-        	//debug_printf("pres: %i, allowed: %i, poll_sz: %i\n\r", pres, LOG_BLOCK_DATA_SIZE - LogBlock.env.len, poll_sz);
         } while (pres == HSER_POLL_MORE);
 
         if (pres < 0)
@@ -253,9 +248,8 @@ void flash_log_write(uint8_t flush_buf)
 	/* on error, bail out and revert buffer tail to original position */
 	if (pres < 0 || sres < 0)
 	{
-		//debug_printf("bailing out\n\r");
 		log_compression_error++;
-		error_flags |= ERROR_LOG_COMPRESS;
+		status_flags |= ERROR_LOG_COMPRESS;
 		buf_tail = tail_copy;
 		return;
 	}
@@ -266,14 +260,12 @@ void flash_log_write(uint8_t flush_buf)
 		{
 		/* signal encoder that we are done */
 		fres = heatshrink_encoder_finish(&hse);
-		//debug_printf("fres: %i\n\r", fres);
 
 		/* on error, bail out and revert buffer tail to original position */
 		if (fres < 0)
 		{
-			//debug_printf("bailing out\n\r");
 			log_compression_error++;
-			error_flags |= ERROR_LOG_COMPRESS;
+			status_flags |= ERROR_LOG_COMPRESS;
 			buf_tail = tail_copy;
 			return;
 		}
@@ -281,7 +273,6 @@ void flash_log_write(uint8_t flush_buf)
 		/* if necessary, pull out remaining compressed data */
 		if (fres == HSER_FINISH_MORE)
 		{
-			//debug_printf("pulling out left data\n\r");
 			do {
     			pres = heatshrink_encoder_poll(
     				&hse,
@@ -293,22 +284,19 @@ void flash_log_write(uint8_t flush_buf)
         		LogBlock.env.len += poll_sz;
         		if (LogBlock.env.len >= LOG_BLOCK_DATA_SIZE)
         		{
-					//debug_printf("bailing out\n\r");
 					log_compression_error++;
-					error_flags |= ERROR_LOG_COMPRESS;
+					status_flags |= ERROR_LOG_COMPRESS;
 					buf_tail = tail_copy;
 					return;
         		}
-        		//debug_printf("pres: %i, allowed: %i, poll_sz: %i\n\r", pres, LOG_BLOCK_DATA_SIZE - LogBlock.env.len, poll_sz);
     		} while (pres == HSER_POLL_MORE);
     	}
 
 		/* on error, bail out and revert buffer tail to original position */
     	if (pres < 0)
 		{
-			//debug_printf("bailing out\n\r");
 			log_compression_error++;
-			error_flags |= ERROR_LOG_COMPRESS;
+			status_flags |= ERROR_LOG_COMPRESS;
 			buf_tail = tail_copy;
 			return;
 		}
