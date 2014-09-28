@@ -403,9 +403,7 @@ void RADIO_IRQ_Handler(void)
 						if (g_pkt_tracker.proto == RFBPROTO_BEACON_NG_STATUS)
 						{
 							g_time_status_logged = g_time;
-#if CONFIG_FLASH_LOGGING
 							error_flags = 0;
-#endif
 						}
 					}
 #endif /* CONFIG_FLASH_LOGGING */
@@ -455,7 +453,7 @@ void RADIO_IRQ_Handler(void)
 
 				/* confirm tracker transmission */
 				memset(&g_pkt_tracker.p, 0, sizeof(g_pkt_tracker.p));
-				g_request_tx = FALSE;
+				g_request_tx = 0;
 				break;
 			}
 		}
