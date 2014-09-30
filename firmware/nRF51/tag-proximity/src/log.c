@@ -464,10 +464,16 @@ void flash_log_dump(void)
 	uint8_t log_page[AT45D_PAGE_SIZE];
 	uint16_t block_addr, page_addr;
 
-	debug_printf("\n\r\n\rbegin-base64 0644 %08X.dat\n\r", LogBlock.env.uid);
-
 	flash_wakeup();
 
+	/* read and print flash chip signature */
+	flash_read_page(FLASH_LOG_CONFIG_PAGE, 0, AT45D_PAGE_SIZE, log_page);
+	log_page[AT45D_PAGE_SIZE-1] = 0;
+	debug_printf("\n\r\n\rversion: %s", log_page);
+
+	debug_printf("\n\r\n\rbegin-base64 0644 %08X.dat\n\r", LogBlock.env.uid);
+
+	/* loop over blocks and dump them, stopping at the first invalid signature */
 	for (block_addr=FLASH_LOG_FIRST_BLOCK; block_addr <= flash_log_last_block; block_addr++)
 	{
 		page_addr = block_addr*BLOCK_PAGES;
@@ -539,12 +545,12 @@ uint8_t flash_setup_logging(uint32_t uid)
 		flash_wait_ready(1);
 	}
 
-	/* erase block 0 */
-	flash_erase_block(0);
+	/* erase block of configuration page */
+	flash_erase_block(FLASH_LOG_CONFIG_PAGE);
 	flash_wait_ready(1);
 
-	/* sign page 0 with PROGRAM_VERSION string */
-	flash_write_page_through_buffer(1, 0, 0, sizeof(flash_signature), 0, flash_signature);
+	/* sign page FLASH_LOG_CONFIG_PAGE with PROGRAM_VERSION string */
+	flash_write_page_through_buffer(1, FLASH_LOG_CONFIG_PAGE, 0, sizeof(flash_signature), 0, flash_signature);
 	flash_wait_ready(1);
 
 	/* set index of last block */
