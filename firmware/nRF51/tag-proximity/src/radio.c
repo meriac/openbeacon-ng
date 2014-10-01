@@ -60,6 +60,7 @@ static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
 static int8_t g_rssi;
 static uint8_t prox_txpower_index;
+static uint8_t payload_received;
 
 static uint32_t g_time_status_reported, g_time_status_logged;
 #define STATUS_FORCE_REPORT_PERIOD	300
@@ -331,15 +332,22 @@ void RADIO_IRQ_Handler(void)
 			{
 				/* set next state */
 				g_nrf_state = NRF_STATE_RX_PROX_PACKET;
+
 				/* reset rssi measurement */
 				g_rssi = 0;
+
+				/* reset payload received flag */
+				payload_received = 0;
+
 				/* set first packet pointer */
 				NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox_rx_enc;
+
 				/* start listening */
 				NRF_RADIO->TASKS_RXEN = 1;
 
 				/* retrigger listening stop */
 				NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + CONFIG_PROX_LISTEN;
+
 				break;
 			}
 
@@ -471,6 +479,7 @@ void RADIO_IRQ_Handler(void)
 
 		/* received packet */
 		if(	(g_nrf_state == NRF_STATE_RX_PROX_PACKET) && 
+			payload_received &&
 			(NRF_RADIO->CRCSTATUS == 1) )
 		{
 			/* measure decryption time */
@@ -498,6 +507,14 @@ void RADIO_IRQ_Handler(void)
 
 		/* disable RSSI measurement */
 		NRF_RADIO->TASKS_RSSISTOP = 1;
+	}
+
+	if (NRF_RADIO->EVENTS_PAYLOAD)
+	{
+		payload_received = 1;
+
+		/* acknowledge event */
+		NRF_RADIO->EVENTS_PAYLOAD = 0;
 	}
 }
 
@@ -552,7 +569,8 @@ void radio_init(uint32_t uid)
 	NRF_RADIO->INTENSET = (
 		(RADIO_INTENSET_RSSIEND_Enabled         << RADIO_INTENSET_RSSIEND_Pos)  |
 		(RADIO_INTENSET_DISABLED_Enabled        << RADIO_INTENSET_DISABLED_Pos) |
-		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)
+		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)      |
+		(RADIO_INTENSET_PAYLOAD_Enabled         << RADIO_INTENSET_PAYLOAD_Pos)
 	);
 	NVIC_SetPriority(RADIO_IRQn, IRQ_PRIORITY_RADIO);
 	NVIC_EnableIRQ(RADIO_IRQn);
