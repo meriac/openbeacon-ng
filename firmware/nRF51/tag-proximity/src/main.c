@@ -34,7 +34,7 @@
 #include <log.h>
 #endif
 
-uint8_t hibernate = 1;
+uint8_t hibernate = 0;
 uint8_t status_flags = 0;
 
 

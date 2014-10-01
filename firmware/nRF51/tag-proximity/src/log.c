@@ -543,6 +543,8 @@ uint8_t flash_setup_logging(uint32_t uid)
 		debug_printf("\n\rERASING FLASH\n\r");
 		flash_erase_chip();
 		flash_wait_ready(1);
+
+		hibernate = 1;
 	}
 
 	/* erase block of configuration page */
