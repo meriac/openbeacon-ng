@@ -62,9 +62,13 @@ static int8_t g_rssi;
 static uint8_t prox_txpower_index;
 static uint8_t payload_received;
 
-static uint32_t g_time_status_reported, g_time_status_logged;
 #define STATUS_FORCE_REPORT_PERIOD	300
+static uint32_t g_time_status_reported;
+
+#if CONFIG_FLASH_LOGGING
 #define STATUS_FORCE_LOG_PERIOD		900
+static uint32_t g_time_status_logged;
+#endif
 
 static TBeaconNgProx g_pkt_prox ALIGN4;
 static uint8_t g_pkt_prox_enc[sizeof(g_pkt_prox)] ALIGN4;
