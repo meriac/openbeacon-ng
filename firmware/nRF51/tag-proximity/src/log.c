@@ -509,7 +509,7 @@ uint16_t flash_log_free_blocks(void)
 }
 
 
-uint8_t flash_log_running(void)
+inline uint8_t flash_log_running(void)
 {
 	return log_running;
 }
