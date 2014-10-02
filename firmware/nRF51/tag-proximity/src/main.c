@@ -36,8 +36,6 @@
 
 uint8_t hibernate = 0;
 uint8_t status_flags = 0;
-uint8_t boot_count;
-uint32_t reset_reason;
 
 
 void blink(uint8_t times)
@@ -95,28 +93,11 @@ void main_entry(void)
 	uint8_t blink_counter = 0;
 	uint16_t keypress_duration;
 
-	/* record reset reason */
-	reset_reason = NRF_POWER->RESETREAS;
-	NRF_POWER->RESETREAS = 0;
-
-	/* if reset was externally triggered, boot into hibernation mode */
-	if ( (reset_reason & POWER_RESETREAS_RESETPIN_Msk) ||
-		 (reset_reason & POWER_RESETREAS_SREQ_Msk) )
-		hibernate = 1;
-
-	/* get/update boot counter -- register is retained
-	   across resets as long as the device is powered */
-	boot_count = NRF_POWER->GPREGRET;
-	NRF_POWER->GPREGRET = boot_count+1;
-
-	/* set boot flag */
-	status_flags |= FLAG_BOOT;
-
-	/* enable LED output */
+	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
-	/* enabled button input pin */
+	/* enabled input pin */
 	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_NOPULL);
 
 	/* initialize UART */
@@ -145,6 +126,9 @@ void main_entry(void)
 		tag_id,
 		CONFIG_TRACKER_CHANNEL);
 	radio_init(tag_id);
+
+	/* set boot flag */
+	status_flags |= FLAG_BOOT;
 
 	/* enter main loop */
 	blink_fast(5);
