@@ -40,11 +40,12 @@
 #define RFBPROTO_BEACON_NG_PROX     32
 
 #define FLAG_BOOT               (1 << 0)
-#define ERROR_FLASH_WRITE       (1 << 1)
-#define ERROR_LOG_BUF_OVERRUN   (1 << 2)
-#define ERROR_LOG_COMPRESS      (1 << 3)
-#define ERROR_FLASH_FULL        (1 << 4)
-#define ERROR_TIME_RESET        (1 << 5)
+#define FLAG_TIME_RESET         (1 << 1)
+#define FLAG_LOG_STOPPED        (1 << 2)
+#define ERROR_FLASH_WRITE       (1 << 3)
+#define ERROR_LOG_BUF_OVERRUN   (1 << 4)
+#define ERROR_LOG_COMPRESS      (1 << 5)
+#define ERROR_FLASH_FULL        (1 << 6)
 
 
 typedef struct
@@ -56,9 +57,10 @@ typedef struct
 	int16_t acc_y;
 	int16_t acc_z;
 	uint8_t voltage;
-	uint8_t logging;
-	uint16_t flash_log_free_blocks;
 	uint8_t	flags;
+	uint16_t flash_log_free_blocks;
+	uint8_t boot_count;
+	uint8_t info;
 } PACKED TBeaconNgStatus;
 
 typedef struct
