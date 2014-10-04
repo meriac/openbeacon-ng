@@ -14,7 +14,6 @@ avatar: images/logo.png
 #
 # Flags below are optional
 #
-github_repo: meriac/openbeacon-ng
 github_url: https://github.com/meriac/openbeacon-ng
 
 # Includes an icon in the footer for each username you enter
@@ -23,7 +22,7 @@ footer-links:
   email: 
   facebook: 
   flickr: 
-  github: :site.github_repo
+  github: meriac/openbeacon-ng
   instagram: 
   linkedin: milosch/en
   flattr: OpenBeacon
