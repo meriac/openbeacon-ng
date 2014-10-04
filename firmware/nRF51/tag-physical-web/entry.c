@@ -24,8 +24,8 @@ void entry(void)
 		/* get tag angle from 3D accelerator */
 		acc_magnitude(&tag_angle);
 
-		/* blink once every two seconds */
-		timer_wait_ms(2000);
+		/* blink once every three seconds */
+		timer_wait_ms(3000);
 		pin_set(CONFIG_LED_PIN);
 		timer_wait_ms(1);
 		pin_clear(CONFIG_LED_PIN);
