@@ -15,8 +15,8 @@ void entry(void)
 
 	/* set advertisment packet */
 	radio_advertise(&g_beacon_pkt, sizeof(g_beacon_pkt));
-	/* run advertisement in background every 900ms */
-	radio_interval_ms(900);
+	/* run advertisement in background every 995ms */
+	radio_interval_ms(995);
 
 	/* infinite foreground loop */
 	while(TRUE)
