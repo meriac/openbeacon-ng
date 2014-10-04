@@ -6,7 +6,7 @@ static const uint8_t g_beacon_pkt[] = {
 	 3,0x03, 0xD8, 0xFE,
 	/* 0x16: Service Data - 'http://get.OpenBeacon.org' */
 	21,0x16, 0xD8, 0xFE, 0x00, 0x20,
-		PROTO_HTTP,'g','e','t','.','O','p','e','n','B','e','a','c','o','n',DOT_ORG
+	   PROTO_HTTP,'g','e','t','.','O','p','e','n','B','e','a','c','o','n',DOT_ORG
 };
 
 void entry(void)
