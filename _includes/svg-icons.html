@@ -1,6 +1,5 @@
           {% if site.footer-links.flattr %}<a href="https://flattr.com/submit/auto?user_id={{ site.footer-links.flattr }}&url={{ site.url | cgi_escape }}&hidden=1&title={{ page.title | cgi_escape }}">{% include svg-icons/flattr.html %}</a>{% endif %}
           {% if site.footer-links.twitter %}<a href="https://twitter.com/share?text={{ page.title | cgi_escape }}+%40{{ site.footer-links.twitter }}&url={{ site.url | cgi_escape }}{{ page.url | cgi_escape }}{% if page.social_tags %}&hashtags={{ page.social_tags | cgi_escape }}{% endif %}">{% include svg-icons/twitter.html %}</a>{% endif %}
-          {% if site.footer-links.email %}<a href="mailto:{{ site.footer-links.email }}">{% include svg-icons/email.html %}</a>{% endif %}
           {% if site.footer-links.dribbble %}<a href="http://dribbble.com/{{ site.footer-links.dribbble }}">{% include svg-icons/dribbble.html %}</a>{% endif %}
           {% if site.footer-links.facebook %}<a href="http://facebook.com/{{ site.footer-links.facebook }}">{% include svg-icons/facebook.html %}</a>{% endif %}
           {% if site.footer-links.flickr %}<a href="http://flickr.com/{{ site.footer-links.flickr }}">{% include svg-icons/flickr.html %}</a>{% endif %}
@@ -10,3 +9,4 @@
           {% if site.footer-links.stackoverflow %}<a href="http://stackoverflow.com/{{ site.footer-links.stackoverflow }}">{% include svg-icons/stackoverflow.html %}</a>{% endif %}
           {% if site.footer-links.rss %}<a href="{{ site.baseurl }}/feed.xml">{% include svg-icons/rss.html %}</a>{% endif %}
           {% if site.footer-links.github %}<a href="https://github.com/{{ site.footer-links.github }}">{% include svg-icons/github.html %}</a>{% endif %}
+          {% if site.footer-links.email %}<a href="mailto:{{ site.footer-links.email }}?subject={{ page.title | cgi_escape }}">{% include svg-icons/email.html %}</a>{% endif %}
