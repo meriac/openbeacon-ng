@@ -27,7 +27,7 @@ footer-links:
   linkedin: OpenBeacon.org
   flattr: OpenBeacon
   pinterest: 
-  rss: # just type anything here for a working RSS icon, make sure you set the "url" above!
+  rss: enable
   twitter: FoolsDelight
   stackoverflow: # your stackoverflow profile, e.g. "users/50476/bart-kiers"
 
