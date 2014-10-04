@@ -25,7 +25,7 @@ publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 
 app_clean:
-	find lib/src -name '*.o' -exec rm \{\} \;
+	find . -name '*.o' -exec rm \{\} \;
 
 clean_all: clean
 	rm -f README $(CUSTOM_KEY)
