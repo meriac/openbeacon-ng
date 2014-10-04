@@ -72,6 +72,8 @@
 extern uint8_t acc_init(void);
 extern void acc_write(uint8_t cmd, uint8_t data);
 extern void acc_read(uint8_t cmd, uint8_t len, uint8_t *data);
+
+extern void acc_get(int16_t* acc, uint32_t size);
 extern uint16_t acc_magnitude(int8_t* angle);
 
 #endif/*__ACC_H__*/

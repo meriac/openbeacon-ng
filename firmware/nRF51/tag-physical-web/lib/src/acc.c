@@ -98,15 +98,25 @@ void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 	nrf_gpio_pin_set(CONFIG_ACC_nCS);
 }
 
-uint16_t acc_magnitude(int8_t* angle)
+void acc_get(int16_t* acc, uint32_t size)
 {
-	int16_t acc[3], a, alpha;
+	/* read up to 3 channels */
+	if(size>6)
+		size=6;
 
 	/* briefly turn on accelerometer */
 	acc_write(ACC_REG_CTRL_REG1, 0x97);
 	timer_wait(MILLISECONDS(2));
-	acc_read(ACC_REG_OUT_X, sizeof(acc), (uint8_t*)&acc);
+	acc_read(ACC_REG_OUT_X, size, (uint8_t*)acc);
 	acc_write(ACC_REG_CTRL_REG1, 0x00);
+}
+
+uint16_t acc_magnitude(int8_t* angle)
+{
+	int16_t acc[3], a, alpha;
+
+	/* read acceleration values */
+	acc_get(acc, sizeof(acc));
 
 	/* get acceleration vector magnitude */
 	a =  sqrt32(
