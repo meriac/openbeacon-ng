@@ -34,6 +34,7 @@
 #define BLE_ADDRESS 0x8E89BED6UL
 #define BLE_PREFIX_SIZE 9
 #define BLE_POSTFIX (BLE_PREFIX_SIZE+2)
+#define BLE_PAYLOAD_LEN 27
 
 typedef struct {
 	uint8_t channel;
@@ -44,20 +45,9 @@ static int g_advertisment_index;
 static uint32_t g_uid;
 static uint32_t g_sequence_counter;
 
-static const uint8_t g_advertisment_pdu[] = {
-	/* Our name */
-	  15, 0x08, 'O','p','e','n','B','e','a','c','o','n',' ','T','a','g'
-};
-
-static const uint8_t g_ibeacon_pkt[] = {
-	/* iBeacon packet */
-	  26, 0xFF, 0x4C, 0x00, 0x02, 0x15,
-	      0x3B, 0x0C, 0x44, 0xC6, 0x55, 0xA8, 0xF9, 0x55,
-	      0x32, 0xEB, 0x6A, 0xB2, 0x65, 0x42, 0xFE, 0x1A,
-	      0x00, 0x00,
-	      0x00, 0x00,
-	      0xC5
-};
+static const uint8_t* g_beacon_pkt;
+static uint8_t g_beacon_pkt_len;
+static uint32_t g_beacon_pkt_interval;
 
 static uint8_t g_pkt_buffer[64];
 
@@ -73,22 +63,32 @@ void RTC0_IRQ_Handler(void)
 	/* run every second */
 	if(NRF_RTC0->EVENTS_COMPARE[0])
 	{
-		/* increment sequence counter once per second */
-		g_sequence_counter++;
-
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[0] = 0;
 
 		/* re-trigger timer */
 		NRF_RTC0->CC[0]+= MILLISECONDS(1000);
 
+		/* start ADC conversion */
+		adc_start();
+	}
+
+	/* run every g_beacon_pkt_interval */
+	if(NRF_RTC0->EVENTS_COMPARE[1])
+	{
+		/* increment sequence counter once per second */
+		g_sequence_counter++;
+
+		/* acknowledge event */
+		NRF_RTC0->EVENTS_COMPARE[1] = 0;
+
+		/* re-trigger timer */
+		NRF_RTC0->CC[1]+= g_beacon_pkt_interval;
+
 		g_advertisment_index = 0;
 
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
-
-		/* start ADC conversion */
-		adc_start();
 
 		/* only start DC/DC converter for
 		 * RX & higher battery voltages */
@@ -102,7 +102,7 @@ void RTC0_IRQ_Handler(void)
 	}
 }
 
-void radio_send_advertisment(void)
+static void radio_send_advertisment(void)
 {
 	const TMapping *map;
 
@@ -129,23 +129,14 @@ void radio_send_advertisment(void)
 	g_pkt_buffer[9] = 0x01;
 	g_pkt_buffer[10]= 0x04;
 
-	/* advertise name every 4 transmissions */
-	if((g_sequence_counter & 3)==0)
-	{
-		/* append BLE tag name */
-		g_pkt_buffer[ 1]= BLE_PREFIX_SIZE+sizeof(g_advertisment_pdu);
-		memcpy(&g_pkt_buffer[BLE_POSTFIX], &g_advertisment_pdu, sizeof(g_advertisment_pdu));
-	}
-	/* advertise guid */
-	else
-	{
-		/* append iBeacon GUID */
-		g_pkt_buffer[ 1]= BLE_PREFIX_SIZE+sizeof(g_ibeacon_pkt);
-		memcpy(&g_pkt_buffer[BLE_POSTFIX], &g_ibeacon_pkt, sizeof(g_ibeacon_pkt));
-		/* set angle & battery voltage as minor */
-		g_pkt_buffer[BLE_POSTFIX+sizeof(g_ibeacon_pkt)-3] = tag_angle();
-		g_pkt_buffer[BLE_POSTFIX+sizeof(g_ibeacon_pkt)-2] = adc_bat();
-	}
+	/* append beacon packet */
+	g_pkt_buffer[1]= BLE_PREFIX_SIZE+g_beacon_pkt_len;
+	if(g_beacon_pkt_len)
+		memcpy(
+			&g_pkt_buffer[BLE_POSTFIX],
+			g_beacon_pkt,
+			g_beacon_pkt_len
+		);
 
 	/* set packet pointer */
 	NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_buffer;
@@ -198,10 +189,41 @@ void RADIO_IRQ_Handler(void)
 	}
 }
 
+void radio_interval(uint32_t milliseconds)
+{
+	if(!milliseconds)
+		g_beacon_pkt_interval = 0;
+	else
+		g_beacon_pkt_interval = (milliseconds<50) ? 50 : milliseconds;
+}
+
+int radio_advertise(const void* packet, uint32_t len)
+{
+	/* filter long packets arguments */
+	if(len>BLE_PAYLOAD_LEN)
+		len = BLE_PAYLOAD_LEN;
+
+	/* ensure safe update by disabling IRQs */
+	__disable_irq();
+	{
+		/* remember settings */
+		g_beacon_pkt = len ? (uint8_t*) packet : NULL;
+		g_beacon_pkt_len = len;
+	}
+	__enable_irq();
+
+	return len;
+}
+
 void radio_init(uint32_t uid)
 {
 	/* remember uid */
 	g_uid = uid;
+
+	/* reset default advertisment packet */
+	g_beacon_pkt = NULL;
+	g_beacon_pkt_len = 0;
+	g_beacon_pkt_interval = MILLISECONDS(1000);
 
 	/* reset sequence counter */
 	g_sequence_counter = 0;
@@ -251,8 +273,10 @@ void radio_init(uint32_t uid)
 	NRF_RTC0->COUNTER = 0;
 	NRF_RTC0->PRESCALER = 0;
 	NRF_RTC0->CC[0] = LF_FREQUENCY;
+	NRF_RTC0->CC[1] = LF_FREQUENCY*2;
 	NRF_RTC0->INTENSET = (
-		(RTC_INTENSET_COMPARE0_Enabled   << RTC_INTENSET_COMPARE0_Pos)
+		(RTC_INTENSET_COMPARE0_Enabled   << RTC_INTENSET_COMPARE0_Pos) |
+		(RTC_INTENSET_COMPARE1_Enabled   << RTC_INTENSET_COMPARE1_Pos)
 	);
 	NVIC_SetPriority(RTC0_IRQn, IRQ_PRIORITY_RTC0);
 	NVIC_EnableIRQ(RTC0_IRQn);

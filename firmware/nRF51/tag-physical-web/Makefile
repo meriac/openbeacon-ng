@@ -7,7 +7,7 @@ OPTIM=-Os -mword-relocations
 APP_CFLAGS=-Ilib/inc -std=gnu99 -fgnu89-inline -D__USE_CMSIS
 APP_LDFLAGS=-lm
 
-APP_SRC=
+APP_SRC=entry.c
 
 LIB_SRC= \
   lib/src/acc.c \
