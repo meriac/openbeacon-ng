@@ -1,4 +1,9 @@
-# OS generated files #
-######################
+_site
 .DS_Store
-.DS_Store?
+.jekyll
+.bundle
+.sass-cache
+Gemfile
+Gemfile.lock
+node_modules
+package.json

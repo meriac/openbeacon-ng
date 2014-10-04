@@ -1,0 +1,2 @@
+Sitemap: http://get.openbeacon.org/sitemap.xml
+User-agent: *
