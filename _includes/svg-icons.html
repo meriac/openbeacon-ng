@@ -9,4 +9,4 @@
           {% if site.footer-links.stackoverflow %}<a href="http://stackoverflow.com/{{ site.footer-links.stackoverflow }}">{% include svg-icons/stackoverflow.html %}</a>{% endif %}
           {% if site.footer-links.rss %}<a href="{{ site.baseurl }}/feed.xml">{% include svg-icons/rss.html %}</a>{% endif %}
           {% if site.footer-links.github %}<a href="https://github.com/{{ site.footer-links.github }}">{% include svg-icons/github.html %}</a>{% endif %}
-          {% if site.footer-links.email %}<a href="mailto:{{ site.footer-links.email }}?subject={{ page.title | cgi_escape }}">{% include svg-icons/email.html %}</a>{% endif %}
+          {% if site.footer-links.email %}<a href="mailto:{{ site.footer-links.email }}?subject={{ page.title | uri_escape }}">{% include svg-icons/email.html %}</a>{% endif %}
