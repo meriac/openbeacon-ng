@@ -240,6 +240,14 @@ Full-Width Styles
   padding: 50px 10px 30px 10px;
 }
 
+#project_logo {
+  display: block;
+  position: absolute;
+  top: 60px;
+  right: 5px;
+  margin: 0;
+}
+
 #project_title {
   margin: 0;
   color: #fff;

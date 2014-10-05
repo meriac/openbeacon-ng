@@ -6,7 +6,7 @@
 name: OpenBeacon.org
 
 # Short bio or description (displayed in the header)
-description: Bluetooth Low Energy & Active 2.4 GHz RFID tracking
+description: Bluetooth LE & Active 2.4 GHz RFID tracking
 
 # URL of your avatar or profile pic (you could use your GitHub profile pic)
 avatar: images/logo.png
@@ -46,6 +46,9 @@ url: http://get.openbeacon.org
 # and NOT your User repository (http://yourusername.github.io)
 # then add in the baseurl here, like this: "/repository-name"
 baseurl: ""
+
+kramdown:
+  input: GFM
 
 #
 # !! You don't need to change any of the configuration flags below !!
