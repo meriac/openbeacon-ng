@@ -9,19 +9,8 @@ audio:not([controls]) { display: none; }
 
 html { font-size: 100%; overflow-y: scroll; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
 body { margin: 0; font-size: 13px; line-height: 1.231; }
-body, button, input, select, textarea {
-  font-family: sans-serif;
-  color: #222;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-h1, h2, h3, h4, h5, h6 {
-  margin: 10px 0;
-  font-weight: 700;
-  font-family:  'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
-  letter-spacing: -1px;
-  -webkit-font-smoothing: antialiased;
-}
+body, button, input, select, textarea { font-family: font-family: 'Roboto Slab', serif; color: #222; }
+
 ::-moz-selection { background: #fe57a1; color: #fff; text-shadow: none; }
 ::selection { background: #fe57a1; color: #fff; text-shadow: none; }
 
@@ -79,7 +68,7 @@ td { vertical-align: top; }
     Author: Jonathan Verrecchia
    =================================================== */
 
-body{ font:16px/24px Helvetica, Helvetica Neue, Arial, sans-serif; }
+body{ font:16px/24px 'Roboto Slab', serif; }
 
 .wrapper{
 	width:90%;
@@ -120,6 +109,11 @@ nav a{
 	text-align:center;
 	text-decoration:none;
 	font-weight:bold;
+
+	border-top-left-radius:15px;
+	border-top-right-radius:15px;
+	border-bottom-right-radius:15px;
+	border-bottom-left-radius:15px;
 }
 
 nav a:hover, nav a:visited{
@@ -178,27 +172,30 @@ nav a:hover{
 /* ====================
     INTERMEDIATE: Menu
    ==================== */
-	
+
 	nav a{
 		float:left;
 		width:27%;
 		margin:0 1.7%;
 		padding:25px 2%;
 		margin-bottom:0;
+
+		border-bottom-right-radius:0;
+		border-bottom-left-radius:0;
 	}
-	
+
 	nav li:first-child a{ margin-left:0;  }
 	nav li:last-child  a{ margin-right:0; }
-	
+
 /* ========================
     INTERMEDIATE: IE Fixes
    ======================== */
 
 	nav ul li{
 		display:inline;
-	}	
+	}
 	.oldie nav a{
-		margin:0 0.7%;		
+		margin:0 0.7%;
 	}
 }
 
@@ -220,21 +217,13 @@ nav a:hover{
    ============ */
 
 	#title{
-		position: absolute;
-	}
-
-	#title_sub{
-		position: absolute;
-		top: 1.5em;
-	}
-
-	#title_logo{
+		margin-top:10px;
 		float:left;
 	}
 
 	nav{
 		float:right;
-		width:38%;
+		width:45%;
 	}
 
 /* ============
@@ -243,12 +232,12 @@ nav a:hover{
 
 	#main article{
 		float:left;
-		width:57%;
+		width:52%;
 	}
-		
+
 	#main aside{
 		float:right;
-		width:28%;
+		width:35%;
 	}
 }
 
@@ -277,6 +266,6 @@ nav a:hover{
   tr, img { page-break-inside: avoid; }
   img { max-width: 100% !important; }
   @page { margin: 0.5cm; }
-  p, h2, h3, h4, h5, h6 { orphans: 3; widows: 3; }
-     h2, h3, h4, h5, h6 { page-break-after: avoid; }
+  p, h2, h3 { orphans: 3; widows: 3; }
+  h2, h3 { page-break-after: avoid; }
 }

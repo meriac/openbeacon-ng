@@ -14,7 +14,8 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 
 	<link rel="stylesheet" href="/css/style.css">
-    <link type="application/atom+xml" rel="alternate" href="/feed.xml" />
+	<link type="application/atom+xml" rel="alternate" href="/feed.xml" />
+	<link href="http://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet" type="text/css" />
 
 	<script src="/js/libs/modernizr-2.0.6.min.js"></script>
 </head>
@@ -22,22 +23,20 @@
 
 	<div id="header-container">
 		<header class="wrapper clearfix">
-			<h1 id="title">{{ site.name }}</h2>
-			<h2 id="title_sub">{{ site.description }}</h2>
+			<a id="title" href="/">{% include logo.html %}</a>
 			<nav>
 				<ul>
-					<li><h2><a href="/hardware/">Hardware</a></h2></li>
-					<li><h2><a id="forkme_banner" href="{{ site.github_url }}">Sources</a></h2></li>
-					<li><h2><a href="/about/">About</a></h2></li>
+					<li><a href="/hardware/"><h2>Device</h2></a></li>
+					<li><a id="forkme_banner" href="{{ site.github_url }}"><h2>Source</h2></a></li>
+					<li><a href="/about/"><h2>About</h2></a></li>
 				</ul>
 			</nav>
 		</header>
 	</div>
+
 	<div id="main-container">
 		<div id="main" class="wrapper clearfix">
-			<article>
-				{{ content }}
-			</article>
+{{ content }}
 		</div>
 	</div>
 
