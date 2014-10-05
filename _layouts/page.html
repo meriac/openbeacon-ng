@@ -2,11 +2,10 @@
 layout: default
 ---
 
-<article class="page">
+<div class="posts">
+	<h2>{{ page.title }}</h2>
 
-  <h2>{{ page.title }}</h2>
-
-  <div class="entry">
-    {{ content }}
-  </div>
-</article>
+	<section>
+		{{ content }}
+	</section>
+</div>
