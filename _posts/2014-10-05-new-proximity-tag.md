@@ -4,9 +4,9 @@ title: New Proximity Tag with 3D Accelerometer
 tags: physical-web
 ---
 
-## A. Overview
+### A. Overview
 
-## B. Hardware
+### B. Hardware
 
-## C. Software
+### C. Software
 

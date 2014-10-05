@@ -1,50 +1,51 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-    <meta name="author" content="{{ site.name }}" />
-    <meta name="description" content="{{ site.description }}" />
+	<title>{% if page.title %}{{ page.title }} – {% endif %}{{ site.name }} – {{ site.description }}</title>
+	<meta name="author" content="{{ site.name }}" />
+	<meta name="description" content="{{ site.description }}" />
 
-    <title>{% if page.title %}{{ page.title }} – {% endif %}{{ site.name }} – {{ site.description }}</title>
+	<meta name="viewport" content="width=device-width,initial-scale=1">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="/stylesheets/stylesheet.css" />
+	<link rel="stylesheet" href="/css/style.css">
     <link type="application/atom+xml" rel="alternate" href="/feed.xml" />
-  </head>
 
-  <body>
+	<script src="/js/libs/modernizr-2.0.6.min.js"></script>
+</head>
+<body>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="{{ site.github_url }}">View on GitHub</a>
+	<div id="header-container">
+		<header class="wrapper clearfix">
+			<h1 id="title">{{ site.name }}</h2></br>
+			<h2 id="title_sub">{{ site.description }}</h2>
+			<nav>
+				<ul>
+					<li><a href="/hardware/">Hardware</a></li>
+					<li><a id="forkme_banner" href="{{ site.github_url }}">Sources</a></li>
+					<li><a href="/about/">About</a></li>
+				</ul>
+			</nav>
+		</header>
+	</div>
+	<div id="main-container">
+		<div id="main" class="wrapper clearfix">
+			<article>
+				{{ content }}
+			</article>
+		</div>
+	</div>
 
-          <a id="project_logo" href="/">{% include logo-text.html %}</a>
-          <h1 id="project_title">{{ site.name }}</h1>
-          <h2 id="project_tagline">{{ site.description }}</h2>
+	<div id="footer-container">
+		<footer class="wrapper">
+			{% include svg-icons.html %}
+		</footer>
+	</div>
 
-          <section id="downloads">
-            <a class="zip_download_link" href="{{ site.github_url }}/archive/master.zip">Download this project as a .zip file</a>
-            <a class="tar_download_link" href="{{ site.github_url }}/archive/master.tar.gz">Download this project as a tar.gz file</a>
-          </section>
-        </header>
-    </div>
-
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-      {{ content }}
-      </section>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        {% include svg-icons.html %}
-        <p class="copyright">page design by <a href="https://github.com/jasoncostello">Jason Costello</a></p>
-      </footer>
-    </div>
-
-    {% include analytics.html %}
-  </body>
+</body>
 </html>
