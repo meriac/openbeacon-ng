@@ -20,6 +20,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   font-family:  'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
   letter-spacing: -1px;
+  -webkit-font-smoothing: antialiased;
 }
 ::-moz-selection { background: #fe57a1; color: #fff; text-shadow: none; }
 ::selection { background: #fe57a1; color: #fff; text-shadow: none; }
@@ -101,8 +102,8 @@ body{ font:16px/24px Helvetica, Helvetica Neue, Arial, sans-serif; }
 
 #title{ color:white; }
 
-::-moz-selection { background: #f16529; color: #fff; text-shadow: none; }
-::selection      { background: #f16529; color: #fff; text-shadow: none; }
+::-moz-selection { background: #808080; color: #fff; text-shadow: none; }
+::selection      { background: #808080; color: #fff; text-shadow: none; }
 
 /* ==============
     MOBILE: Menu
