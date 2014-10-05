@@ -193,7 +193,7 @@ void RTC0_IRQ_Handler(void)
 		/* stop HF clock */
 		NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 
-#if PROXIMITY_BLINK
+#if CONFIG_PROXIMITY_BLINK
 		if(g_nrf_state == NRF_STATE_RX_PROX_BLINK)
 		{
 			g_nrf_state = NRF_STATE_IDLE;
@@ -203,7 +203,7 @@ void RTC0_IRQ_Handler(void)
 			NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + MILLISECONDS(1);
 		}
 		else
-#endif /*PROXIMITY_BLINK*/
+#endif /* CONFIG_PROXIMITY_BLINK */
 		{
 			/* set next state */
 			g_nrf_state = NRF_STATE_IDLE;
@@ -212,10 +212,10 @@ void RTC0_IRQ_Handler(void)
 			/* disable DC-DC converter */
 			NRF_POWER->DCDCEN = 0;
 
-#if PROXIMITY_BLINK
+#if CONFIG_PROXIMITY_BLINK
 			/* disable LED */
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
-#endif /*PROXIMITY_BLINK*/
+#endif /* CONFIG_PROXIMITY_BLINK */
 		}
 	}
 }
@@ -271,14 +271,14 @@ static void radio_on_prox_packet(uint16_t delta_t)
 	if(g_pkt_prox_rx.p.prox.uid == g_pkt_prox.p.prox.uid)
 		return;
 
-#if PROXIMITY_TIME
+#if CONFIG_EPOCH_PROXIMITY
 	/* if we lack a valid epoch time, get it from proximity packet */
 	if ( g_time < VALID_EPOCH_THRES && g_pkt_prox_rx.p.prox.epoch > VALID_EPOCH_THRES )
 	{
 		g_time = g_pkt_prox_rx.p.prox.epoch;
 		status_flags |= FLAG_TIME_RESET;
 	}
-#endif /* PROXIMITY_TIME */
+#endif /* CONFIG_EPOCH_PROXIMITY */
 
 	/* maintain epoch time offset */
 	if(g_pkt_prox_rx.p.prox.epoch > (g_time+g_time_offset))

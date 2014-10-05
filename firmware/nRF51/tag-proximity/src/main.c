@@ -206,6 +206,7 @@ void main_entry(void)
 			timer_wait(MILLISECONDS(1));
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
+#if CONFIG_EPOCH_INVALID_BLINK
 			/* double blink if epoch time is invalid */
 			if (get_time() < VALID_EPOCH_THRES) {
 				timer_wait(MILLISECONDS(100));
@@ -214,6 +215,7 @@ void main_entry(void)
 				timer_wait(MILLISECONDS(1));
 				nrf_gpio_pin_clear(CONFIG_LED_PIN);
 			}
+#endif /* CONFIG_EPOCH_INVALID_BLINK */
 		}
 	}
 }
