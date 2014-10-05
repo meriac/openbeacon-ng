@@ -41,7 +41,7 @@
 
 #define FLAG_BOOT               (1 << 0)
 #define FLAG_TIME_RESET         (1 << 1)
-#define FLAG_HIBERNATE			(1 << 2)
+#define FLAG_SLEEP              (1 << 2)
 #define FLAG_LOG_STOPPED        (1 << 3)
 #define ERROR_FLASH_WRITE       (1 << 4)
 #define ERROR_LOG_BUF_OVERRUN   (1 << 5)

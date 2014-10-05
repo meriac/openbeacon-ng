@@ -24,6 +24,7 @@
 
 */
 #include <openbeacon.h>
+#include <main.h>
 #include <acc.h>
 #include <timer.h>
 
@@ -39,6 +40,19 @@ static const uint8_t g_acc_init[][2] = {
 
 /* most recent acceleration measurement */
 static int16_t acc[3];
+
+#if CONFIG_ACCEL_SLEEP
+#define ACC_BUFFER_LEN   10
+#define ACC_DELTA_THRES  100000L
+#define ACC_SLEEP_THRES  300
+
+static int16_t acc_buffer[ACC_BUFFER_LEN][3];
+static int32_t acc_avg[3];
+static uint8_t acc_buffer_index;
+static uint8_t acc_buffer_full;
+static uint16_t sleep_counter;
+static uint8_t moving;
+#endif /* CONFIG_ACCEL_SLEEP */
 
 
 void acc_write(uint8_t cmd, uint8_t data)
@@ -88,6 +102,55 @@ void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 }
 
 
+#if CONFIG_ACCEL_SLEEP
+static void acc_process_sample(void)
+{
+	int16_t acc_delta;
+    uint32_t acc_delta_norm = 0;
+    uint8_t i, j;
+
+	if (acc_buffer_full)
+	{
+		acc_delta_norm = 0;
+
+		for (i=0; i<3; i++)
+		{
+			acc_avg[i] = 0;
+			for (j=0; j<ACC_BUFFER_LEN; j++)
+				acc_avg[i] += acc_buffer[j][i];
+			acc_avg[i] /= ACC_BUFFER_LEN;
+
+			acc_delta = acc[i] - acc_avg[i];
+			acc_delta_norm += acc_delta * acc_delta;
+		}
+
+		if (acc_delta_norm < ACC_DELTA_THRES)
+ 		{
+			moving = 0;
+			if (!sleep && ++sleep_counter > ACC_SLEEP_THRES)
+				sleep = 1;
+		} else {
+			moving = 1;
+			sleep = 0;
+			sleep_counter = 0;
+			acc_buffer_index = 0;
+			acc_buffer_full = 0;
+		} 
+	}
+
+	for (i=0; i<3; i++)
+		acc_buffer[acc_buffer_index][i] = acc[i];
+
+	acc_buffer_index++;
+	if (acc_buffer_index == ACC_BUFFER_LEN)
+		acc_buffer_index = 0;
+
+	if (!acc_buffer_full && !acc_buffer_index)
+		acc_buffer_full = 1;
+}
+#endif /* CONFIG_ACCEL_SLEEP */
+
+
 void acc_sample(void)
 {
 	/* briefly turn on accelerometer */
@@ -95,10 +158,14 @@ void acc_sample(void)
 	timer_wait(MILLISECONDS(2));
 	acc_read(ACC_REG_OUT_X, sizeof(acc), (uint8_t*)&acc);
 	acc_write(ACC_REG_CTRL_REG1, 0x00);
+
+#if CONFIG_ACCEL_SLEEP
+	acc_process_sample();
+#endif
 }
 
 
-inline int16_t tag_acc(uint8_t axis)
+inline int16_t acc_get(uint8_t axis)
 {
 	return acc[axis];
 }
@@ -146,6 +213,14 @@ uint8_t acc_init(void)
 	/* initialize accelerometer */
 	for(i=0; i<ACC_INIT_COUNT; i++)
 		acc_write(g_acc_init[i][0], g_acc_init[i][1]);
+
+#if CONFIG_ACCEL_SLEEP
+	acc_buffer_index = 0;
+	acc_buffer_full = 0;
+	moving = 1;
+	sleep = 0;
+	sleep_counter = 0;
+#endif /* CONFIG_ACCEL_SLEEP */
 
 	/* make first measurement */
 	acc_sample();

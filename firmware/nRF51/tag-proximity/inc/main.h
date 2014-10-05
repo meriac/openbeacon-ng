@@ -31,6 +31,10 @@ extern uint8_t status_flags;
 extern uint8_t boot_count;
 extern uint32_t reset_reason;
 
+#if CONFIG_ACCEL_SLEEP
+extern uint8_t sleep;
+#endif
+
 extern void blink(uint8_t times);
 extern void blink_fast(uint8_t times);
 extern uint16_t blink_wait_release(void);
