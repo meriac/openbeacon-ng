@@ -17,7 +17,15 @@
 	<link type="application/atom+xml" rel="alternate" href="/feed.xml" />
 	<link href="http://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet" type="text/css" />
 
+	<script src="/js/libs/xregexp-min.js"></script>
 	<script src="/js/libs/modernizr-2.0.6.min.js"></script>
+
+	<!-- Load Syntax Highlighter -->
+	<link type="text/css" rel="stylesheet" href="/js/libs/syntax/styles/shCoreDefault.css"/>
+	<script type="text/javascript" src="/js/libs/syntax/shCore.js"></script>
+	<script type="text/javascript" src="/js/libs/syntax/shBrushCpp.js"></script>
+	<script type="text/javascript">SyntaxHighlighter.all()</script>
+
 </head>
 <body>
 
@@ -26,8 +34,8 @@
 			<a id="title" href="/">{% include logo.html %}</a>
 			<nav>
 				<ul>
-					<li><a href="/hardware/"><h2>Device</h2></a></li>
-					<li><a id="forkme_banner" href="{{ site.github_url }}"><h2>Source</h2></a></li>
+					<li><a href="/device/"><h2>Device</h2></a></li>
+					<li><a href="/source/"><h2>Source</h2></a></li>
 					<li><a href="/about/"><h2>About</h2></a></li>
 				</ul>
 			</nav>
@@ -36,7 +44,7 @@
 
 	<div id="main-container">
 		<div id="main" class="wrapper clearfix">
-{{ content }}
+			{{ content }}
 		</div>
 	</div>
 

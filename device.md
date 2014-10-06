@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Hardware Design
-permalink: /hardware/
+permalink: /device/
 ---
 
 ### Tag Design

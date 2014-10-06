@@ -5,25 +5,26 @@ social_tags: physical-web,BLE
 ---
 <article>
 	<header>
-		<h1>article header h1</h1>
-		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec.</p>
+		<h1>{{ page.title }}</h1>
 	</header>
 
-	{% for post in site.posts %}
 	<section>
-		<h2><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></h2>
-		<p>{{ post.content | truncatewords:40}}</p>
-		<a href="{{ site.baseurl }}{{ post.url }}" class="read-more">Read More</a>
+		{% capture index_main %}{% include index_main.md %}{% endcapture %}
+		{{ index_main | markdownify }}
 	</section>
-	{% endfor %}
 
 	<footer>
-		<h2>article footer h2</h2>
-		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor.</p>
+		<h2>Further information</h2>
+		<ul>
+		{% for post in site.posts %}
+			<li><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>
+		{% endfor %}
+		</ul>
 	</footer>
+
 </article>
 
 <aside>
-	<h2>article footer h2</h2>
-	<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor.</p>
+	{% capture index_aside %}{% include index_aside.md %}{% endcapture %}
+	{{ index_aside | markdownify }}
 </aside>
