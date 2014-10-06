@@ -117,10 +117,22 @@ body{ font:16px/24px 'Roboto Slab', serif; }
     MOBILE: Menu
    ============== */
 
+#backbtn a{
+	display:inline;
+	padding:8px 25px;
+	margin-bottom:1em;
+	margin-top:1em;
+	float:right;
+	width:6em;
+}
+
 nav a{
 	display:block;
-	margin-bottom:10px;
 	padding:15px 0;
+	margin-bottom:10px;
+}
+
+nav a,#backbtn a{
 
 	background:#303030;
 	color:white;
@@ -227,6 +239,7 @@ nav a:hover{
 
 	.syntaxhighlighter,
 	.box3d,
+	#backbtn a,
 	#header-container,
 	#main aside{
 		-webkit-box-shadow:3px 10px 10px #aaa;
@@ -291,3 +304,5 @@ nav a:hover{
   p, h2, h3 { orphans: 3; widows: 3; }
   h2, h3 { page-break-after: avoid; }
 }
+
+</style>

@@ -58,6 +58,14 @@
 		</header>
 	</div>
 
+	<div id="backbtn" class="wrapper">
+{% if page.nobackbtn %}
+		<a id="nobackbtn" class="button">main page</a>
+{% else %}
+		<a href="/" class="button">&lt; go back</a>
+{% endif %}
+	</div>
+
 	<div id="main-container">
 		<div id="main" class="wrapper clearfix">
 			{{ content }}
