@@ -15,5 +15,5 @@ Get our [hardware design files](/device.html#download) to build your own [physic
 Grab your [OpenBeacon tag](/device.html#download) and [reflash it](/source#reflash) with the [latest source code](/source#github). The firmware just sits there and continuously transmits the URL [http://get.OpenBeacon.org](http://get.OpenBeacon.org). There is so much [so much more your can do](http://www.openbeacon.org) with OpenBeacon.
 
 <script type="syntaxhighlighter" class="brush: c"><![CDATA[
-{% include tag-physical-web-entry.c %}
+{% include src/tag-physical-web-entry.c %}
 ]]></script>
