@@ -1,2 +1,9 @@
-## Helo Aside
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor.
+## Bluetooth LE Proximity Tag
+
+Proximity tags enable the automated detection of human interaction with things and other humans. Once two tags detect each other in close proximity, a packet is sent to the server with the strongest signal strength.
+
+<iframe src="//player.vimeo.com/video/108047361" width="360" height="200" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+<iframe src="https://www.flickr.com/photos/foolsdelight/15431773586/in/set-72157648419814442/player/" width="360" height="200" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
+
+Above you can see the <a href="http://www.sociopatterns.org/2009/09/live-social-semantics/">Live Social Semantics</a> installation with OpenBeacon tags. The intro music is from the song "<a href="https://soundcloud.com/geraintluff/dreamer?in=geraintluff/sets/sky-full-of-songs">Dreamer</a>" by <a href="http://geraintluff.co.uk/">Geraint Luff</a>. You can support his music <a href="http://geraintluff.co.uk/buy/">here</a>.
+See <a href="http://www.sociopatterns.org/publications/">SocioPatterns.org</a> for more information about the deployment.
