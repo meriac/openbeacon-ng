@@ -76,12 +76,18 @@ body{ font:16px/24px 'Roboto Slab', serif; }
 }
 
 /* ===================
-    ALL: Orange Theme
+    ALL: Dark Theme
    =================== */
 
-#header-container{ border-bottom: 20px solid #202020; }
-#footer-container{ border-top:    20px solid #202020; }
-#main aside      { border-top:    20px solid #202020; }
+	#header-container{
+		border-bottom: 20px solid #202020;
+	}
+
+	#footer-container,
+	#main aside,
+	.syntaxhighlighter{
+		border-top:    20px solid #202020;
+	}
 
 #header-container,
 #footer-container,
