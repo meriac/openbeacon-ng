@@ -63,6 +63,18 @@ td { vertical-align: top; }
 
 
 /* ===================================================
+    "Fork on github" CSS
+    see https://github.com/simonwhitaker/github-fork-ribbon-css
+    Author: Simon Whitaker
+   =================================================== */
+	.github-fork-ribbon{
+		background-color: #0090ff;
+	}
+	.github-fork-ribbon a{
+		color: white;
+	}
+
+/* ===================================================
     Initializr styles
     http://verekia.com/initializr/responsive-template
     Author: Jonathan Verrecchia
