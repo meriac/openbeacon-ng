@@ -9,7 +9,7 @@ Our code is hosted on [github.com](https://github.com/meriac/openbeacon-ng). Sof
 
 ### Compiling the Tag Firmware ###
 
-For compiling the firmware source you need to get the [source code](https://github.com/meriac/openbeacon-ng):
+For compiling anf flashing the firmware source you need to get the [source code](https://github.com/meriac/openbeacon-ng):
 <script type="syntaxhighlighter" class="brush: bash">
 git clone https://github.com/meriac/openbeacon-ng
 cd openbeacon-ng/firmware/nRF51/tag-physical-web
