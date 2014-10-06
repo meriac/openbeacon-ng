@@ -13,7 +13,7 @@ We are giving away 42 [tags](/device.html#download) for free. To ensure that onl
 
 Please make sure to include your email address in the postcard so we can ask you for your address. We will take the nicest postcards and publish them here - all published postcards get a tag. If your postcard is really nice, we'll send out more than 42 tags :-). Only the postcards which we'll select to we put on website will get a tag.
 
-For every one else - please wait a few days so we can sort out online ordering for the tags. Any kind of support for our project is highly appreciated.
+For every one else - please wait a few days so we can sort out [online ordering](/device.html) for the tags. Any kind of support for our project is highly appreciated.
 
 ## Future Plans ##
 Join the development! Get our [hardware design files](/device.html#download) to build your own [physical web](https://google.github.io/physical-web/) tags.
