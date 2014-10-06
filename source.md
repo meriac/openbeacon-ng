@@ -9,5 +9,5 @@ permalink: /source/
 
 ## Firmware Source Code ##
 <script type="syntaxhighlighter" class="brush: c"><![CDATA[
-	{% include tag-physical-web-entry.c %}
+{% include tag-physical-web-entry.c %}
 ]]></script>
