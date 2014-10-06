@@ -1,0 +1,16 @@
+---
+layout: page
+title: About the OpenBeacon project
+permalink: /about.html
+---
+<article>
+	<section>
+		{% capture about_main %}{% include about_main.md %}{% endcapture %}
+		{{ about_main | markdownify }}
+	</section>
+</article>
+
+<aside>
+	{% capture about_aside %}{% include about_aside.md %}{% endcapture %}
+	{{ about_aside | markdownify }}
+</aside>
