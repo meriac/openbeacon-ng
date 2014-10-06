@@ -29,7 +29,7 @@
 #define CONFIG_FLASH_LOGGING        1
 
 /* accelerometer-based sleep */
-#define CONFIG_ACCEL_SLEEP          1
+#define CONFIG_ACCEL_SLEEP          0
 
 /* blink on receiving a proximity packet */
 #define CONFIG_PROXIMITY_BLINK      0
