@@ -206,11 +206,12 @@ nav a:hover{
     WIDE: CSS3 Effects
    ==================== */
 
+	.syntaxhighlighter,
 	#header-container,
 	#main aside{
-		-webkit-box-shadow:0 5px 10px #aaa;
-		   -moz-box-shadow:0 5px 10px #aaa;
-		        box-shadow:0 5px 10px #aaa;
+		-webkit-box-shadow:3px 10px 10px #aaa;
+		   -moz-box-shadow:3px 10px 10px #aaa;
+		        box-shadow:3px 10px 10px #aaa;
 	}
 
 /* ============

@@ -30,6 +30,7 @@
 						'jmp_buf mbstate_t _off_t _onexit_t _PNH ptrdiff_t _purecall_handler ' +
 						'sig_atomic_t size_t _stat __stat64 _stati64 terminate_function ' +
 						'time_t __time64_t _timeb __timeb64 tm uintptr_t _utimbuf ' +
+						'uint8_t uint16_t uint32_t int8_t int16_t int32_t' +
 						'va_list wchar_t wctrans_t wctype_t wint_t signed';
 
 		var keywords =	'alignas alignof auto break case catch class const constexpr decltype __finally __exception __try ' +
@@ -39,7 +40,7 @@
 						'mutable naked namespace new noinline noreturn nothrow noexcept nullptr ' +
 						'ref register reinterpret_cast return selectany ' +
 						'sizeof static static_cast static_assert struct switch template this ' +
-						'thread thread_local throw true false try typedef typeid typename union ' +
+						'thread thread_local throw true TRUE false FALSE try typedef typeid typename union ' +
 						'using uuid virtual void volatile whcar_t while';
 					
 		var functions =	'assert isalnum isalpha iscntrl isdigit isgraph islower isprint' +
@@ -57,7 +58,9 @@
 						'wcstombs wctomb memchr memcmp memcpy memmove memset strcat strchr ' +
 						'strcmp strcoll strcpy strcspn strerror strlen strncat strncmp ' +
 						'strncpy strpbrk strrchr strspn strstr strtok strxfrm asctime ' +
-						'clock ctime difftime gmtime localtime mktime strftime time';
+						'clock ctime difftime gmtime localtime mktime strftime time ' +
+						'acc_magnitude timer_wait timer_wait_ms pin_set pin_clear ' +
+						'radio_advertise radio_interval radio_interval_ms';
 
 		this.regexList = [
 			{ regex: SyntaxHighlighter.regexLib.singleLineCComments,	css: 'comments' },			// one line comments
