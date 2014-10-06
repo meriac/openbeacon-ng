@@ -59,11 +59,7 @@
 	</div>
 
 	<div id="backbtn" class="wrapper">
-{% if page.nobackbtn %}
-		<a id="nobackbtn" class="button">main page</a>
-{% else %}
-		<a href="/" class="button">&lt; go back</a>
-{% endif %}
+		<a class="button" {% if page.nobackbtn %}id="nobackbtn">&gt;{% else %}href="/">&lt;{% endif %}&nbsp;main page</a>
 	</div>
 
 	<div id="main-container">
