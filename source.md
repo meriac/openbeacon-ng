@@ -8,7 +8,6 @@ permalink: /source/
 
 
 ## Firmware Source Code ##
-<pre class="brush:c">
-{% capture my_code %}{% include tag-physical-web-entry.c %}{% endcapture %}
-{{ my_code | xml_escape }}
-</pre>
+<script type="syntaxhighlighter" class="brush: c"><![CDATA[
+	{% include tag-physical-web-entry.c %}
+]]></script>
