@@ -4,7 +4,7 @@ We turned our existing nRF51822 base OpenBeacon tag into the ultimate hacking, f
 
 ## Open Hardware for Open Beacons!
 
-Till end of November we are giving away 42 tags for free. To ensure that only people that actually care get a free tag, please send a **hand written postcard** with a real stamp to:
+Till end of November we are giving away 42 tags for free. To ensure that only people who actually care get a free tag, please send a **hand written postcard** with a real stamp to:
 
 > Milosch & Brita Meriac
 > 1 Neath Farm Court
@@ -32,7 +32,7 @@ To wet your appetite, please have a look into our [proximity detection firmware]
 - 3D accelerometer code for angular detection
 - true random generation and 8MB flash support
 
-We strongly believe that the future of the Internet of Things can be privacy enabled and can work distributed without selling your soul to large cloud services. Please join us for enabling that vision!
+**We strongly believe that the future of the Internet of Things can be privacy enabled and can work distributed without selling your soul to large cloud services. Please join us for enabling that vision!**
 
 ## Hardware Specification
 - [3D accelerometer](http://www.st.com/web/catalog/sense_power/FM89/SC444/PF250725) for real-time movement detection

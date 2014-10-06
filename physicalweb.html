@@ -1,0 +1,22 @@
+---
+layout: default
+title: Physical Web on OpenBeacon
+social_tags: physical-web,BLE
+redirect_from: "/foo"
+---
+<article>
+	<header>
+		<h1>{{ page.title }}</h1>
+	</header>
+
+	<section>
+		{% capture index_main %}{% include index_main.md %}{% endcapture %}
+		{{ index_main | markdownify }}
+	</section>
+
+</article>
+
+<aside>
+	{% capture index_aside %}{% include index_aside.md %}{% endcapture %}
+	{{ index_aside | markdownify }}
+</aside>

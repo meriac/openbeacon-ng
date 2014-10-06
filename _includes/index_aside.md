@@ -15,4 +15,4 @@ Since [we started](#background-information) the [OpenBeacon.org](http://www.open
 <iframe src="https://www.flickr.com/photos/alice_zero/2691454645/in/gallery-foolsdelight-72157648030079277/player/" width="100%" height="212" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
 
 
-See <a href="http://www.sociopatterns.org/publications/">SocioPatterns.org</a> for more information our the deployments.
+See <a href="http://www.sociopatterns.org/publications/">SocioPatterns.org</a> for more information on their deployments.
