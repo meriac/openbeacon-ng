@@ -24,6 +24,7 @@
 
 */
 #include <openbeacon.h>
+#include <openbeacon-proto.h>
 #include <main.h>
 #include <acc.h>
 #include <timer.h>
@@ -51,7 +52,9 @@ static int32_t acc_avg[3];
 static uint8_t acc_buffer_index;
 static uint8_t acc_buffer_full;
 static uint16_t sleep_counter;
-static uint8_t moving;
+
+uint8_t moving = 1;
+uint8_t sleep = 0;
 #endif /* CONFIG_ACCEL_SLEEP */
 
 
@@ -128,7 +131,10 @@ static void acc_process_sample(void)
  		{
 			moving = 0;
 			if (!sleep && ++sleep_counter > ACC_SLEEP_THRES)
+			{
 				sleep = 1;
+				status_flags |= FLAG_SLEEP;
+			}
 		} else {
 			moving = 1;
 			sleep = 0;

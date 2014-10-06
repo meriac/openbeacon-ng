@@ -395,19 +395,15 @@ void RADIO_IRQ_Handler(void)
 						 (g_time - g_time_status_reported >= STATUS_FORCE_REPORT_PERIOD) )
 					{
 						g_pkt_tracker.proto = RFBPROTO_BEACON_NG_STATUS;
-						
+
+						g_pkt_tracker.p.status.ticks = NRF_RTC0->COUNTER + g_ticks_offset + g_pkt_tracker_ticks;						
 						g_pkt_tracker.p.status.rx_loss = (int16_t)((RX_LOSS*100)+0.5);
 						g_pkt_tracker.p.status.tx_loss = (int16_t)((TX_LOSS*100)+0.5);
-						g_pkt_tracker.p.status.ticks = NRF_RTC0->COUNTER + g_ticks_offset + g_pkt_tracker_ticks;
 						g_pkt_tracker.p.status.acc_x = acc_get(0);
 						g_pkt_tracker.p.status.acc_y = acc_get(1);
 						g_pkt_tracker.p.status.acc_z = acc_get(2);
 						g_pkt_tracker.p.status.voltage = adc_bat();
 						g_pkt_tracker.p.status.boot_count = boot_count;
-
-						g_pkt_tracker.p.status.info = 0;
-						if (status_flags & FLAG_BOOT)
-							g_pkt_tracker.p.status.info = (uint8_t) ( (reset_reason & 0x0F) | ((reset_reason >> 12) & 0x07) );
 
 						g_pkt_tracker.p.status.flags = status_flags;
 
@@ -418,9 +414,17 @@ void RADIO_IRQ_Handler(void)
 #endif /* CONFIG_FLASH_LOGGING */
 
 #if CONFIG_ACCEL_SLEEP
-						if (sleep)
-							g_pkt_tracker.p.status.flags |= FLAG_SLEEP;
+						if (moving)
+							g_pkt_tracker.p.status.flags |= FLAG_MOVING;
 #endif /* CONFIG_ACCEL_SLEEP */
+
+						/* if we have just rebooted, set upper byte of flags to reset reason */
+						if (status_flags & FLAG_BOOT)
+						{
+							g_pkt_tracker.p.status.flags &= 0x00FF;
+							g_pkt_tracker.p.status.flags |=
+							  (uint8_t) ( (reset_reason & 0x0F) | ((reset_reason >> 12) & 0x70) ) << 8;
+						}
 
 #if !CONFIG_FLASH_LOGGING
 /* if we do not log to flash, reset status flags here.

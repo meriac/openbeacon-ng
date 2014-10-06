@@ -70,6 +70,11 @@
 #define ACC_REG_FIFO_SRC_REG      0x2F
 #define ACC_REG_INT1_CFG          0x30
 
+#if CONFIG_ACCEL_SLEEP
+extern uint8_t moving;
+extern uint8_t sleep;
+#endif
+
 extern uint8_t acc_init(void);
 extern void acc_write(uint8_t cmd, uint8_t data);
 extern void acc_read(uint8_t cmd, uint8_t len, uint8_t *data);

@@ -41,27 +41,27 @@
 
 #define FLAG_BOOT               (1 << 0)
 #define FLAG_TIME_RESET         (1 << 1)
-#define FLAG_SLEEP              (1 << 2)
-#define FLAG_LOG_STOPPED        (1 << 3)
-#define ERROR_FLASH_WRITE       (1 << 4)
-#define ERROR_LOG_BUF_OVERRUN   (1 << 5)
-#define ERROR_LOG_COMPRESS      (1 << 6)
-#define ERROR_FLASH_FULL        (1 << 7)
+#define FLAG_LOG_STOPPED        (1 << 2)
+#define FLAG_SLEEP              (1 << 3)
+#define FLAG_MOVING             (1 << 4)
+#define ERROR_FLASH_FULL        (1 << 5)
+#define ERROR_FLASH_WRITE       (1 << 6)
+#define ERROR_LOG_BUF_OVERRUN   (1 << 7)
+#define ERROR_LOG_COMPRESS      (1 << 8)
 
 
 typedef struct
 {
+	uint16_t flags;
+	uint16_t ticks;
+	uint16_t flash_log_free_blocks;
 	int16_t rx_loss;
 	int16_t tx_loss;
-	uint16_t ticks;
 	int16_t acc_x;
 	int16_t acc_y;
 	int16_t acc_z;
 	uint8_t voltage;
-	uint8_t	flags;
-	uint16_t flash_log_free_blocks;
 	uint8_t boot_count;
-	uint8_t info;
 } PACKED TBeaconNgStatus;
 
 typedef struct

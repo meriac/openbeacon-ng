@@ -34,10 +34,6 @@
 #include <log.h>
 #endif
 
-#if CONFIG_ACCEL_SLEEP
-uint8_t sleep = 0;
-#endif
-
 uint8_t hibernate = 0;
 uint8_t status_flags = 0;
 uint8_t boot_count;
