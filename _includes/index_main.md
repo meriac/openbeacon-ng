@@ -19,8 +19,9 @@ For every one else - please wait a few days so we can sort out online ordering f
 Join the development! Get our [hardware design files](/device.html#download) to build your own [physical web](https://google.github.io/physical-web/) tags.
 During the course of this night we'll release all hardware design files for the tag and the 3D printed tag programmer.
 
-Please stay tuned for exciting software in the spirit of our [OpenPCD.org](http://www.openpcd.org/OpenPCD_2_RFID_Reader_for_13.56MHz) RFID hacking project for this new tag to:
+We are considering to do a kickstarter for FCC & CE certification and a nice plastic case. Please [share your thoughts](https://groups.google.com/forum/#!forum/openbeacon) with us.
 
+Please stay tuned for exciting software in the spirit of our [OpenPCD.org](http://www.openpcd.org/OpenPCD_2_RFID_Reader_for_13.56MHz) RFID hacking project for this new tag to:
 - simulate 100s of tags at the same time with different MAC adresse - see how you phones copes :-)
 - sniff & replay beacon packets from other Beacons at random transmit strength: enable privacy in a radius of 30 meters
 - our beaconing firmware is implemented on the bare SoC: no annoying SoftDevice that limits your possibilities
