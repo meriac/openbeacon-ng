@@ -42,7 +42,7 @@
 #define FLAG_BOOT               (1 << 0)
 #define FLAG_TIME_RESET         (1 << 1)
 #define FLAG_LOG_STOPPED        (1 << 2)
-#define FLAG_SLEEP              (1 << 3)
+#define FLAG_WOKEUP             (1 << 3)
 #define FLAG_MOVING             (1 << 4)
 #define ERROR_FLASH_FULL        (1 << 5)
 #define ERROR_FLASH_WRITE       (1 << 6)

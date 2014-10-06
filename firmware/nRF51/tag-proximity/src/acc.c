@@ -131,11 +131,10 @@ static void acc_process_sample(void)
  		{
 			moving = 0;
 			if (!sleep && ++sleep_counter > ACC_SLEEP_THRES)
-			{
 				sleep = 1;
-				status_flags |= FLAG_SLEEP;
-			}
 		} else {
+			if (sleep)
+				status_flags |= FLAG_WOKEUP;
 			moving = 1;
 			sleep = 0;
 			sleep_counter = 0;
