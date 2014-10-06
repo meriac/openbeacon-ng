@@ -14,8 +14,8 @@ body, button, input, select, textarea { font-family: font-family: 'Roboto Slab',
 ::-moz-selection { background: #fe57a1; color: #fff; text-shadow: none; }
 ::selection { background: #fe57a1; color: #fff; text-shadow: none; }
 
-a { color: #00e; }
-a:visited { color: #551a8b; }
+a { color: #14a9ff; }
+a:visited { color: #0070b1; }
 a:hover { color: #06e; }
 a:focus { outline: thin dotted; }
 a:hover, a:active { outline: 0; }
@@ -85,6 +85,7 @@ body{ font:16px/24px 'Roboto Slab', serif; }
 
 	#footer-container,
 	#main aside,
+	.box3d,
 	.syntaxhighlighter{
 		border-top:    20px solid #202020;
 	}
@@ -213,6 +214,7 @@ nav a:hover{
    ==================== */
 
 	.syntaxhighlighter,
+	.box3d,
 	#header-container,
 	#main aside{
 		-webkit-box-shadow:3px 10px 10px #aaa;
