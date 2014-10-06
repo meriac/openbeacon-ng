@@ -74,7 +74,7 @@
   color: #b9bdb6 !important;
 }
 .syntaxhighlighter .comments, .syntaxhighlighter .comments a {
-  color: #878a85 !important;
+  color: #ffaa3e !important;
 }
 .syntaxhighlighter .string, .syntaxhighlighter .string a {
   color: #5ce638 !important;
@@ -92,7 +92,7 @@
   color: #009900 !important;
 }
 .syntaxhighlighter .functions {
-  color: #ffaa3e !important;
+  color: #a7cae5 !important;
 }
 .syntaxhighlighter .constants {
   color: #e0e8ff !important;
