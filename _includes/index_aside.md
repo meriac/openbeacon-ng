@@ -1,6 +1,6 @@
 ## OpenBeacon Proximity Tag
 
-All [hardware design files](/device.html#download) and the [source code](/source#github) is open:
+All [hardware design files](/device.html#download) and the [source code](/source#github) are open:
 
 <iframe src="https://www.flickr.com/photos/foolsdelight/15431773586/in/set-72157648419814442/player/" width="360" height="200" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen oallowfullscreen msallowfullscreen></iframe>
 

@@ -4,14 +4,14 @@ We turned our existing nRF51822 base OpenBeacon tag into the ultimate hacking, f
 
 ## Open Hardware for Open Beacons!
 
-Till end of November we are giving away 42 [tags](/device.html#download) for free. To ensure that only the people that actually care get a free tag, please send a **hand written postcard** with a real stamp to:
+Till end of November we are giving away 42 tags for free. To ensure that only people that actually care get a free tag, please send a **hand written postcard** with a real stamp to:
 
 > Milosch & Brita Meriac
 > 1 Neath Farm Court
 > GB-CB1 3EX Cambridge
 > United Kingdom
 
-Please make sure to include your email address in the postcard so we can ask you for your address. We will take the nicest postcards and publish them here - all published postcards get a tag. If your postcard is exceptionally nice, we'll bend the 42-tag-rule :-). Only the postcards which we'll choose to put on our website will get a free tag.
+Please make sure to include your email address in the postcard so we can ask you for your address. We will take the nicest postcards and publish them here - all published postcards get a free tag. If your postcard is exceptionally nice, we'll bend the 42-tag-rule :-).
 
 For everyone else - please wait a few days so we can sort out [online ordering](/device.html) for the tags. Any kind of support for our project is highly appreciated.
 
