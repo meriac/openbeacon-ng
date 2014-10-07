@@ -4,16 +4,18 @@ The Internet of Things finally has its [official Bluetooth LE URL beacons](https
 
 We turned our existing nRF51822 base OpenBeacon tag into the ultimate hacking, fuzzing and pentesting tool for Bluetooth Low Energy.
 
+We strongly believe that the future of the Internet of Things can be privacy enabled and can work distributed without selling your soul to large cloud services. Please join our project for enabling that vision!
+
 ## Open Hardware for Open Beacons!
 
-Till end of November we are giving away 42 tags for free. To ensure that only people who actually care get a free tag, please send a **hand written postcard** with a real stamp to:
+Till end of November we are giving away 42 tags for free. To ensure that only people who actually care get a free tag, please send a hand written postcard to:
 
 > Milosch & Brita Meriac
 > 1 Neath Farm Court
 > GB-CB1 3EX Cambridge
 > United Kingdom
 
-Please make sure to include your email address in the postcard so we can ask you for your address. We will take the nicest postcards and publish them here - all published postcards get a free tag. If your postcard is exceptionally nice, we'll bend the 42-tag-rule :-).
+Please make sure to include your email address in the postcard so we can ask you for your address. We will take the nicest postcards and publish them here - all published postcards get a free tag. If your postcard is exceptional, we'll bend the 42-tag-rule :-).
 
 For everyone else - please wait a few days so we can sort out [online ordering](/device.html) for the tags. Any kind of support for our project is highly appreciated.
 
@@ -33,8 +35,6 @@ To wet your appetite, please have a look into our [proximity detection firmware]
 - AES encryption and packet signing
 - 3D accelerometer code for angular detection
 - true random generation and 8MB flash support
-
-**We strongly believe that the future of the Internet of Things can be privacy enabled and can work distributed without selling your soul to large cloud services. Please join us for enabling that vision!**
 
 ## Hardware Specification
 - [3D accelerometer](http://www.st.com/web/catalog/sense_power/FM89/SC444/PF250725) for real-time movement detection
