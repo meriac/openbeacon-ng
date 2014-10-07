@@ -4,6 +4,8 @@ title: Bill of Materials
 permalink: bom.html
 ---
 
+This is the bill of materials for our [nRF51822 powered OpenBeacon tag](/device.html).
+
 {:.spreadsheet}
 Designator|Description|Comment|Value|tol.|Qty|Supplier|Supplier Part Number
 BT1|Keystone 3034|Battery Cell Holder|3V||1|Mouser|[534-3034TR](http://uk.mouser.com/Search/Refine.aspx?Keyword=534-3034TR)
@@ -20,7 +22,7 @@ D1|LED|LED blue|20mA||1|Digi-Key|[LNJ937W8CRATR-ND](http://www.digikey.com/produ
 D2|Schottky barrier diode|SC-90A|1A, 30V||1|Digi-Key|[DB2J31700LTR-ND](http://www.digikey.com/product-detail/en/-/DB2J31700LTR-ND)
 L4|Inductor / Spule|10uH|10uH|10%|1|Digi-Key|[587-1714-2-ND](http://www.digikey.com/product-detail/en/-/587-1714-2-ND)
 L5|Inductor / Spule|15nH|15nH|5%|1|Digi-Key|[587-1521-2-ND](http://www.digikey.com/product-detail/en/-/587-1521-2-ND)
-P2|Header, 9-Pin|HDR1X9_round_custom-SMD|||0|only footprint|
+P2|Header, 9-Pin|HDR1X9_round_custom-SMD|||0||only footprint
 P3|Taster|Taktil_PTS252|||1|Digi-Key|[CKN10229TR-ND](http://www.digikey.com/product-detail/en/-/CKN10229TR-ND)
 R1, R2, R3|Resistor|12k|12k|1%|3|Digi-Key|[RHM12.0KCDTR-ND](http://www.digikey.com/product-detail/en/-/RHM12.0KCDTR-ND)
 U1|RF and flash|nRF51822 128kB flash|||1|Mouser|[949-NRF51822-QFAB-R7](http://uk.mouser.com/Search/Refine.aspx?Keyword=949-NRF51822-QFAB-R7)
@@ -30,3 +32,9 @@ U4|ANT-2.54-CHP, 2.45GHz Ultra-Compact Chip Antenna|ANT-2.54-CHP|||1|Mouser|[712
 U5|ST BAL-NRF01D31|BAL-NRF01D3|||1|Digi-Key|[497-13637-2-ND](http://www.digikey.com/product-detail/en/-/497-13637-2-ND)
 X1|ABM8 ceramic crystal|16MHz|16MHz||1|Digi-Key|[644-1182-2-ND](http://www.digikey.com/product-detail/en/-/644-1182-2-ND)
 X2|Crystal|32.768kHz, 12.5pF|32.768kHz, 12.5pF|< 20ppm|1|Digi-Key|[535-10104-2-ND](http://www.digikey.com/product-detail/en/-/535-10104-2-ND)
+
+## Automated BOM URL generation ##
+<script type="syntaxhighlighter" class="brush: bash"><![CDATA[
+cat bom-csv.md | sed 's/|\([^|]*-ND\)$/|[\1](http:\/\/www.digikey.com\/product-detail\/en\/-\/\1)/' > digikey.md 
+cat digikey.md | sed 's/\(|Mouser|\)\([^|]*\)$/\1[\2](http:\/\/uk.mouser.com\/Search\/Refine.aspx?Keyword=\2)/' >> bom.md
+]]></script>
