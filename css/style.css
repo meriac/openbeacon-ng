@@ -102,6 +102,20 @@ body{ font:16px/24px 'Roboto Slab', serif; }
 		border-top:    20px solid #202020;
 	}
 
+	.spreadsheet{
+		margin:0;padding:0;
+		width:100%;
+		border-top: 20px solid #202020;
+	}
+	.spreadsheet tr:nth-child(odd)  { background-color:#ccc; }
+	.spreadsheet tr:nth-child(even) { background-color:white; }
+	.spreadsheet td{
+		vertical-align:middle;
+		text-align:left;
+		padding-left: 1em;
+		padding-right: 1em;
+	}
+
 #header-container,
 #footer-container,
 #main aside{
@@ -123,6 +137,7 @@ body{ font:16px/24px 'Roboto Slab', serif; }
 	margin-bottom:1em;
 	margin-top:1em;
 	float:right;
+	width:6em;
 }
 
 nav a{
@@ -238,6 +253,7 @@ nav a:hover{
 
 	.syntaxhighlighter,
 	.box3d,
+	.spreadsheet,
 	#backbtn a,
 	#header-container,
 	#main aside{

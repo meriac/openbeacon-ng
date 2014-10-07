@@ -60,7 +60,7 @@
 	</div>
 
 	<div id="backbtn" class="wrapper">
-		<a class="button" {% if page.nobackbtn %}id="nobackbtn">&gt;{% else %}href="/">&lt;{% endif %}&nbsp;main page</a>
+		<a class="button" {% if page.nobackbtn %}id="nobackbtn">&gt;&nbsp;main{% else %}onclick="goBack()" href="/">&lt;&nbsp;back{% endif %}</a>
 		<noscript><img src="//www.openbeacon.org/piwik/piwik.php?idsite=2&amp;rec=1" style="border:0" alt="" /></noscript>
 	</div>
 
