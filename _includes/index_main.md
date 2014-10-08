@@ -1,6 +1,6 @@
 [permalink](/physicalweb.html)
 
-The Internet of Things finally has its [official Bluetooth LE URL beacons](https://google.github.io/physical-web/)! We sure could not wait till some official hardware is around, so added support for the [physical web packet protocol](https://github.com/google/physical-web/blob/master/documentation/technical_overview.md) to existing OpenBeacon tags.
+The Internet of Things finally has its [official Bluetooth LE URL beacons](https://google.github.io/physical-web/)! We sure could not wait till some official hardware is around, so we added support for the [physical web packet protocol](https://github.com/google/physical-web/blob/master/documentation/technical_overview.md) to existing OpenBeacon tags.
 
 We turned our existing nRF51822 base OpenBeacon tag into the ultimate hacking, fuzzing and pentesting tool for Bluetooth Low Energy.
 
@@ -8,7 +8,7 @@ We strongly believe that the future of the Internet of Things can be privacy ena
 
 ## Open Hardware for Open Beacons!
 
-Till end of November we are giving away 42 tags for free. To ensure that only people who actually care get a free tag, please send a hand written postcard to:
+We published our [open hardware tag design](/device.html) and are giving away 42 tags for free till end of November. To ensure that only people who actually care get a free tag, please send a hand written postcard to:
 
 > Milosch & Brita Meriac
 > 1 Neath Farm Court
