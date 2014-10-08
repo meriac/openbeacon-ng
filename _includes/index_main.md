@@ -26,11 +26,13 @@ During the course of this night we'll release all hardware design files for the 
 We are considering to do a kickstarter for FCC & CE certification and a nice plastic case. Please [share your thoughts](https://groups.google.com/forum/#!forum/openbeacon) with us.
 
 Please stay tuned for exciting software in the spirit of our [OpenPCD.org](http://www.openpcd.org/OpenPCD_2_RFID_Reader_for_13.56MHz) RFID hacking project for this new tag to:
+
 - simulate 100s of tags at the same time with different MAC adresse - see how you phones copes :-)
 - sniff & replay beacon packets from other Beacons at random transmit strength: enable privacy in a radius of 30 meters
 - our beaconing firmware is implemented on the bare SoC: no annoying SoftDevice that limits your possibilities
 
 To wet your appetite, please have a look into our [proximity detection firmware](https://github.com/meriac/openbeacon-ng/tree/master/firmware/nRF51/tag-proximity) for:
+
 - fully encrypted tag-to-tag interaction
 - AES encryption and packet signing
 - 3D accelerometer code for angular detection
