@@ -31,7 +31,7 @@ Please stay tuned for exciting software in the spirit of our [OpenPCD.org](http:
 - sniff & replay beacon packets from other Beacons at random transmit strength: enable privacy in a radius of 30 meters
 - our beaconing firmware is implemented on the bare SoC: no annoying SoftDevice that limits your possibilities
 
-To wet your appetite, please have a look into our [proximity detection firmware](https://github.com/meriac/openbeacon-ng/tree/master/firmware/nRF51/tag-proximity) for:
+To whet your appetite, please have a look into our [proximity detection firmware](https://github.com/meriac/openbeacon-ng/tree/master/firmware/nRF51/tag-proximity) for:
 
 - fully encrypted tag-to-tag interaction
 - AES encryption and packet signing
