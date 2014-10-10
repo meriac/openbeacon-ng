@@ -109,13 +109,18 @@ microtime (void)
 
 
 void
-print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker *track)
+print_packet(FILE *out, double timestamp, struct sockaddr_in *reader_addr, const TBeaconNgTracker *track)
 {
 	uint32_t t;
 	const TBeaconNgSighting *slot;
 
-	/* show common fields */
-	fprintf(out, "{\"id\":\"%08X\",\"t\":%d,",
+	fprintf(out, "{");
+
+	fprintf(out, "\"reader\": {\"ip\":\"%s\",\"t\":%d},",
+		inet_ntoa(reader_addr->sin_addr),
+		(uint32_t) timestamp);
+
+	fprintf(out, "\"packet\": {\"id\":\"%08X\",\"t\":%d,",
 		track->uid,
 		track->epoch
 	);
@@ -163,12 +168,12 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker *track)
 		}
 	}
 
-	fprintf(out, "}\n\r");
+	fprintf(out, "}}\n\r");
 }
 
 
 static int
-parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
+parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *data, int len)
 {
 	uint32_t t;
 	const TBeaconLogSighting *pkt;
@@ -213,7 +218,7 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 	}
 
 	/* show & process latest packet */
-	print_packet(stdout, reader_id, &track);
+	print_packet(stdout, timestamp, reader_addr, &track);
 
 	return sizeof(TBeaconLogSighting);
 }
@@ -223,7 +228,7 @@ static int
 listen_packets (FILE* out)
 {
 	int sock, size, res;
-	uint32_t reader_id;
+	//uint32_t reader_addr;
 	double timestamp;
 	uint8_t buffer[1500], *pkt;
 	struct sockaddr_in si_me, si_other;
@@ -252,11 +257,11 @@ listen_packets (FILE* out)
 				break;
 
 			pkt = buffer;
-			reader_id = ntohl (si_other.sin_addr.s_addr);
+			//reader_addr = ntohl (si_other.sin_addr.s_addr);
 
 			timestamp = microtime ();
 			while ((res =
-					parse_packet (timestamp, reader_id, pkt, size)) > 0)
+					parse_packet (timestamp, &si_other, pkt, size)) > 0)
 			{
 				size -= res;
 				pkt += res;
