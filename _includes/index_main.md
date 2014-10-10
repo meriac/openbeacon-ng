@@ -29,7 +29,7 @@ We are considering to do a kickstarter for FCC & CE certification and a nice pla
 
 Please stay tuned for exciting software in the spirit of our [OpenPCD.org](http://www.openpcd.org/OpenPCD_2_RFID_Reader_for_13.56MHz) RFID hacking project for this new tag to:
 
-- simulate 100s of tags at the same time with different MAC adresse - see how you phones copes :-)
+- simulate 100s of tags at the same time with different MAC adresse - see how your phones copes :-)
 - sniff & replay beacon packets from other Beacons at random transmit strength: enable privacy in a radius of 30 meters
 - our beaconing firmware is implemented on the bare SoC: no annoying SoftDevice that limits your possibilities
 
