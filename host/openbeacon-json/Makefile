@@ -1,5 +1,5 @@
 CC      :=gcc
-TARGET  :=openbeacon-rx
+TARGET  :=openbeacon-json
 SOURCES :=src/main.c src/crypto.c
 LIBS    :=
 

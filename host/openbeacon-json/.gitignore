@@ -2,8 +2,7 @@
 .cproject
 .project
 .settings
-openbeacon-rx
-filter-singularsighting
+openbeacon-json
 src/custom-encryption-keys.h
 callgrind.out.*
 *.o
