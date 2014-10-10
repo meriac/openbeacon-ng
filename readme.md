@@ -1,6 +1,6 @@
 ### Introduction
 
-The [OpenBeacon.org](http://www.openbeacon.org/) project provides Active 2.4 GHz RFID Realtime Proximity and Position Tracking using the BlueTooth Low Energy (BLE) compatible [nRF51822](https://www.nordicsemi.com/eng/Products/Bluetooth-Smart-Bluetooth-low-energy/nRF51822) chip from Nordic Semiconductors.
+The [get.OpenBeacon.org](http://get.openbeacon.org/) project provides Active 2.4 GHz RFID Realtime Proximity and Position Tracking using the BlueTooth Low Energy (BLE) compatible [nRF51822](https://www.nordicsemi.com/eng/Products/Bluetooth-Smart-Bluetooth-low-energy/nRF51822) chip from Nordic Semiconductors.
 
 Location tracking using [OpenBeacon tags](http://get.openbeacon.org/device.html) can be implemented by running an [OpenBeacon proximity tag firmware](http://get.openbeacon.org/source#github) that regularly transmits beacon packets. Such packets can then be received by [OpenBeacon base stations](http://www.openbeacon.org/EasyReader) in the vicinity. Signals received by one or more base stations can then be used to determine the [position of each tag in real time](http://www.openbeacon.org/API).
 
@@ -30,7 +30,15 @@ We especially want to thank Ciro and the [SocioPatterns collaboration](http://ww
 
 Please [contact us](mailto:license@bitmanufactory.com) for [obtaining a dual-licensed **closed source license**](mailto:license@bitmanufactory.com?subject=Alternative%20License).
 
-This program is free software. You can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation (version 2). This program is distributed in the hope that it will be useful, but **without any warranty**; without even the implied warranty of merchantibility or fitness for a particular purpose. See the [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html) for more details.
+#### Hardware
+
+If you wish, you are free to manufacture the tags yourself. For that purpose you can find the schematics and hardware designs in the directory **hardware**.  The hardware design files in that folder are licensed under the Attribution-ShareAlike 4.0 International ([CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/)). We specifically allow commercial usage - as long as you mention the origin of our original design openly.
+
+You can choose to use our services for bulk orders and for custom hardware development based on this and other designs we created in the past. Your financial support allows us to continue working on this awesome project - any help is highly appreciated!
+
+#### Software
+
+The files in the folders **firmware** and **host** are free software. You can redistribute it and/or modify them under the terms of the GNU General Public License as published by the Free Software Foundation (version 2). This program is distributed in the hope that it will be useful, but **without any warranty**; without even the implied warranty of merchantibility or fitness for a particular purpose. See the [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html) for more details.
 
 
 ### Background Information
