@@ -372,7 +372,7 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 		case RFBPROTO_BEACON_NG_STATUS:
 		{
 			fprintf(out,
-				"\"status\"={\"rx_loss\"=%1.2f,\"tx_loss\"=%1.2f,\"ticks\"=%06i,\"voltage\"=%1.1f,\"acc_x\"=%1.3f,\"acc_y\"=%1.3f,\"acc_z\"=%1.3f,\"flash_log_free_blocks\"=%d,\"boot_count\"=%0d,\"info\"=%0d,\"flags\"=%0d}",
+				"\"status\"={\"rx_loss\"=%1.2f,\"tx_loss\"=%1.2f,\"ticks\"=%06i,\"voltage\"=%1.1f,\"acc_x\"=%1.3f,\"acc_y\"=%1.3f,\"acc_z\"=%1.3f,\"flash_log_free_blocks\"=%d,\"boot_count\"=%0d,\"flags\"=%04X}",
 				track.p.status.rx_loss / 100.0,
 				track.p.status.tx_loss / 100.0,
 				track.p.status.ticks,
@@ -382,7 +382,6 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 				track.p.status.acc_z * ACC_SCALE_G,
 				track.p.status.flash_log_free_blocks,
 				track.p.status.boot_count,
-				track.p.status.info,
 				track.p.status.flags
 			);
 			break;
