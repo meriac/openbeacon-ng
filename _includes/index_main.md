@@ -2,7 +2,7 @@
 
 The Internet of Things finally has its [official Bluetooth LE URL beacons](https://github.com/google/physical-web/blob/master/documentation/introduction.md)! We sure could not wait till some official hardware is around, so we added support for the physical web packet protocol to existing OpenBeacon tags.
 
-We turned [our existing nRF51822 base OpenBeacon tag](/device.html) into the ultimate hacking, fuzzing and pentesting tool for Bluetooth Low Energy and released the [hardware schematics and the PCB layout](/device.html#download).
+We turned our existing OpenBeacon tag design into the ultimate hacking, fuzzing and pentesting tool for Bluetooth Low Energy and released the [hardware schematics and the PCB layout](/device.html).
 
 We strongly believe that the future of the Internet of Things can be privacy enabled and can work distributed without selling your soul to large cloud services. Please join our project for enabling that vision!
 
