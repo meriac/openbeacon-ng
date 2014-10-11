@@ -1,6 +1,6 @@
 [permalink](/physicalweb.html)
 
-The Internet of Things finally has its [official Bluetooth LE URL beacons](https://github.com/google/physical-web/blob/master/documentation/introduction.md)! We sure could not wait till some official hardware is around, so we added support for the physical web packet protocol to existing OpenBeacon tags.
+The Internet of Things finally got [official Bluetooth LE URL beacons](https://github.com/google/physical-web/blob/master/documentation/introduction.md)! We sure could not wait till some official hardware is around, so we added support for the physical web packet protocol to existing OpenBeacon tags.
 
 We turned our existing OpenBeacon tag design into the ultimate hacking, fuzzing and pentesting tool for Bluetooth Low Energy and released the [hardware schematics and the PCB layout](/device.html).
 
