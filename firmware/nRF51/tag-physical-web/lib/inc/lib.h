@@ -53,5 +53,3 @@ typedef enum {
 	} TTagURLShortener;
 
 #endif/*__LIB_H__*/
-
-

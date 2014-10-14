@@ -215,6 +215,14 @@ int radio_advertise(const void* packet, uint32_t len)
 	return len;
 }
 
+void radio_enable(BOOL enable)
+{
+	if(enable)
+		NRF_RTC0->TASKS_START = 1;
+	else
+		NRF_RTC0->TASKS_STOP = 1;
+}
+
 void radio_init(uint32_t uid)
 {
 	/* remember uid */

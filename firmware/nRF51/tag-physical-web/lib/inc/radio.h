@@ -26,6 +26,7 @@
 #define __RADIO_H__
 
 extern void radio_init(uint32_t uid);
+extern void radio_enable(BOOL enable);
 extern int radio_advertise(const void* packet, uint32_t len);
 extern void radio_interval(uint32_t ticks);
 
