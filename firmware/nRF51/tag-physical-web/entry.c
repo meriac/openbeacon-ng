@@ -23,7 +23,7 @@ void entry(void)
 	{
 		/* get tag angle from 3D accelerometer */
 		acc_magnitude(&tag_angle);
-		/* only tx while beaon is worn (facing forward +/-45 degree) */
+		/* only tx while beacon is worn (facing forward +/-45 degree) */
 		radio_enable(abs(tag_angle)<45);
 
 		/* blink once every three seconds */
