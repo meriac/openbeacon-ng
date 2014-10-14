@@ -15,7 +15,7 @@ git clone https://github.com/meriac/openbeacon-ng
 cd openbeacon-ng/firmware/nRF51/tag-physical-web
 make clean flash
 </script>
-As you can see the makefile directly supports flashing from command line (under OSX and Linux) by using a [Segger J-Link debug probe](https://www.segger.com/jlink-software.html) from the [Nordic nRF51822 development kit](http://uk.mouser.com/ProductDetail/Nordic-Semiconductor/nRF51822-DK).
+As you can see the makefile directly supports flashing from command line (under OSX and Linux) by using a [Segger J-Link debug probe](https://www.segger.com/jlink-software.html) from the [Nordic nRF51822 development kit](http://uk.mouser.com/Search/Refine.aspx?Keyword=949-NRF51822-DK).
 
 ### Support ###
 
