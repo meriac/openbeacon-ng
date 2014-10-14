@@ -29,7 +29,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <config.h>
 #include <nrf5.h>
 
 #define PACKED __attribute__((packed))
@@ -41,6 +40,8 @@
 typedef uint8_t BOOL;
 #define TRUE 1
 #define FALSE 0
+
+#include <config.h>
 
 /* this definition is linked weakly against uart_tx */
 extern BOOL default_putchar (uint8_t data);
