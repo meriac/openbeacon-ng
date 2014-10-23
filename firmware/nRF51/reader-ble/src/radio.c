@@ -166,5 +166,6 @@ void radio_init(void)
 	NRF_RTC0->TASKS_START = 1;
 
 	/* start HF crystal oscillator */
+	NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 	NRF_CLOCK->TASKS_HFCLKSTART = 1;
 }
