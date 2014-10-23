@@ -36,9 +36,8 @@ typedef struct {
 	uint8_t frequency;
 } TMapping;
 
+static int g_pkt_count = 0;
 static uint8_t g_advertisment_index;
-static uint32_t g_sequence_counter;
-
 static uint8_t g_pkt_buffer[64];
 
 static const TMapping g_advertisment[] = {
@@ -67,9 +66,6 @@ void RTC0_IRQ_Handler(void)
 	/* run every two seconds */
 	if(NRF_RTC0->EVENTS_COMPARE[0])
 	{
-		/* increment sequence counter once per second */
-		g_sequence_counter++;
-
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[0] = 0;
 
@@ -98,18 +94,25 @@ void POWER_CLOCK_IRQ_Handler(void)
 void RADIO_IRQ_Handler(void)
 {
 	/* received packet */
-	if(NRF_RADIO->EVENTS_END)
+	if(NRF_RADIO->EVENTS_PAYLOAD)
 	{
 		/* acknowledge event */
-		NRF_RADIO->EVENTS_END = 0;
+		NRF_RADIO->EVENTS_PAYLOAD = 0;
+
+		g_pkt_count++;
 	}
+}
+
+int radio_packet_count(void)
+{
+	return g_pkt_count;
 }
 
 void radio_init(void)
 {
-	/* reset sequence counter */
-	g_sequence_counter = 0;
+	/* reset counters */
 	g_advertisment_index = 0;
+	g_pkt_count = 0;
 
 	/* setup default radio settings for proximity mode */
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Ble_1Mbit << RADIO_MODE_MODE_Pos;
@@ -132,11 +135,10 @@ void radio_init(void)
 	NRF_RADIO->CRCPOLY = 0x0100065BUL;
 	NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_buffer;
 	NRF_RADIO->SHORTS = (
-		(RADIO_SHORTS_READY_START_Enabled       << RADIO_SHORTS_READY_START_Pos) |
-		(RADIO_SHORTS_END_DISABLE_Enabled       << RADIO_SHORTS_END_DISABLE_Pos)
+		(RADIO_SHORTS_READY_START_Enabled       << RADIO_SHORTS_READY_START_Pos)
 	);
 	NRF_RADIO->INTENSET = (
-		(RADIO_INTENSET_DISABLED_Enabled        << RADIO_INTENSET_DISABLED_Pos)
+		(RADIO_INTENSET_PAYLOAD_Enabled         << RADIO_INTENSET_PAYLOAD_Pos)
 	);
 	/* update radio channel */
 	radio_switch_channel();

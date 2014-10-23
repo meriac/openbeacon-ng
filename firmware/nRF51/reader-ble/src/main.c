@@ -82,6 +82,8 @@ void main_entry(void)
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	while(TRUE)
 	{
+		debug_printf("radio_packet_count=%i\n\r", radio_packet_count());
+
 		/* blink every second */
 		timer_wait(MILLISECONDS(1000));
 		nrf_gpio_pin_set(CONFIG_LED_PIN);

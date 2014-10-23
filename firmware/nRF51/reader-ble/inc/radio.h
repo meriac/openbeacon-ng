@@ -26,5 +26,6 @@
 #define __RADIO_H__
 
 extern void radio_init(void);
+extern int radio_packet_count(void);
 
 #endif/*__RADIO_H__*/
