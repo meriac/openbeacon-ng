@@ -39,14 +39,12 @@
 /* only two priority bits available ! */
 
 #define IRQ_PRIORITY_HIGH        0
-#define IRQ_PRIORITY_AES         (IRQ_PRIORITY_HIGH)
-#define IRQ_PRIORITY_RNG         (IRQ_PRIORITY_HIGH+1)
+#define IRQ_PRIORITY_UART0       (IRQ_PRIORITY_HIGH)
 #define IRQ_PRIORITY_POWER_CLOCK (IRQ_PRIORITY_HIGH+1)
 #define IRQ_PRIORITY_RADIO       (IRQ_PRIORITY_HIGH+2)
 
 #define IRQ_PRIORITY_LOW         (IRQ_PRIORITY_HIGH+3)
 #define IRQ_PRIORITY_RTC0        (IRQ_PRIORITY_LOW)
 #define IRQ_PRIORITY_RTC1        (IRQ_PRIORITY_LOW)
-#define IRQ_PRIORITY_UART0       (IRQ_PRIORITY_LOW)
 
 #endif/*__CONFIG_H__*/
