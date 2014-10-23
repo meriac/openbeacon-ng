@@ -85,7 +85,7 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
-		NRF_RADIO->EVENTS_END = 0;
+		NRF_RADIO->EVENTS_PAYLOAD = 0;
 		/* start RX */
 		NRF_RADIO->TASKS_RXEN = 1;
 	}
