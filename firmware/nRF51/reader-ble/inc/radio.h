@@ -25,7 +25,22 @@
 #ifndef __RADIO_H__
 #define __RADIO_H__
 
+#ifndef RADIO_MAX_PKT_BUFFERS
+#define RADIO_MAX_PKT_BUFFERS 32
+#endif/*RADIO_MAX_PKT_BUFFERS*/
+
+#define RADIO_MAX_PACKET_SIZE 64
+
+typedef struct
+{
+	int8_t rssi;
+	uint8_t channel;
+	uint8_t buf[RADIO_MAX_PACKET_SIZE];
+} TBeaconBuffer;
+
 extern void radio_init(void);
 extern int radio_packet_count(void);
+extern BOOL radio_rx(TBeaconBuffer *buf);
+
 
 #endif/*__RADIO_H__*/

@@ -55,6 +55,7 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
+	TBeaconBuffer buf;
 	uint32_t tag_id;
 
 	/* enabled LED output */
@@ -82,12 +83,11 @@ void main_entry(void)
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	while(TRUE)
 	{
-		debug_printf("radio_packet_count=%i\n\r", radio_packet_count());
-
-		/* blink every two seconds */
-		timer_wait(MILLISECONDS(2000));
-		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(0.1));
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		if(!radio_rx(&buf))
+			__WFE();
+		else
+		{
+			debug_printf("ch=%i, rssi=%i\n\r", buf.channel, buf.rssi);
+		}
 	}
 }

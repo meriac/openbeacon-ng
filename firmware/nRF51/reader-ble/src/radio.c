@@ -36,9 +36,10 @@ typedef struct {
 	uint8_t frequency;
 } TMapping;
 
-static volatile int g_pkt_count = 0;
 static uint8_t g_advertisment_index;
-static uint8_t g_pkt_buffer[64];
+static volatile int g_pkt_pos_wr, g_pkt_pos_rd, g_pkt_count;
+static int8_t g_rssi;
+static TBeaconBuffer g_pkt[RADIO_MAX_PKT_BUFFERS];
 
 static const TMapping g_advertisment[] = {
 	{37,  2},
@@ -70,7 +71,7 @@ void RTC0_IRQ_Handler(void)
 		NRF_RTC0->EVENTS_COMPARE[0] = 0;
 
 		/* re-trigger timer */
-		NRF_RTC0->CC[0]+= MILLISECONDS(1024);
+		NRF_RTC0->CC[0]+= MILLISECONDS(330);
 
 		/* switch to next bluetooth channel */
 		radio_switch_channel();
@@ -92,21 +93,43 @@ void POWER_CLOCK_IRQ_Handler(void)
 
 void RADIO_IRQ_Handler(void)
 {
+	TBeaconBuffer *pkt;
+
+	g_pkt_count++;
+
 	if(NRF_RADIO->EVENTS_END)
 	{
 		/* acknowledge event */
 		NRF_RADIO->EVENTS_END = 0;
 
-		/* set LED on every RX */
-		if(NRF_RADIO->CRCSTATUS == 1)
-			g_pkt_count++;
-
 		/* start RX */
 		NRF_RADIO->TASKS_RXEN = 1;
 	}
 
+	if(NRF_RADIO->EVENTS_PAYLOAD)
+	{
+		/* acknowledge event */
+		NRF_RADIO->EVENTS_PAYLOAD = 0;
+
+		/* set LED on every RX */
+		if(NRF_RADIO->CRCSTATUS == 1)
+		{
+			pkt = &g_pkt[g_pkt_pos_wr++];
+			if(g_pkt_pos_wr>=RADIO_MAX_PKT_BUFFERS)
+				g_pkt_pos_wr = 0;
+
+			pkt->channel = g_advertisment[g_advertisment_index].channel;
+			pkt->rssi = g_rssi;
+			g_pkt_count++;
+		}
+		/* reset RSSI */
+		g_rssi = 0;
+	}
+
 	if(NRF_RADIO->EVENTS_RSSIEND)
 	{
+		g_rssi = -((int8_t)NRF_RADIO->RSSISAMPLE);
+
 		/* acknowledge event */
 		NRF_RADIO->EVENTS_RSSIEND = 0;
 
@@ -120,11 +143,38 @@ int radio_packet_count(void)
 	return g_pkt_count;
 }
 
+BOOL radio_rx(TBeaconBuffer *buf)
+{
+	TBeaconBuffer *src;
+
+	if(g_pkt_count>0)
+	{
+		__disable_irq();
+
+		/* remember last packet */
+		src = &g_pkt[g_pkt_pos_rd++];
+		if(g_pkt_pos_rd>=RADIO_MAX_PKT_BUFFERS)
+			g_pkt_pos_rd = 0;
+		g_pkt_count--;
+
+		memcpy(buf, src, sizeof(*buf));
+		/*FIXME: remove */
+		memset(src, 0, sizeof(*src));
+		g_pkt_count--;
+
+		__enable_irq();
+
+		return TRUE;
+	}
+	return FALSE;
+}
+
 void radio_init(void)
 {
 	/* reset counters */
 	g_advertisment_index = 0;
-	g_pkt_count = 0;
+	g_pkt_pos_wr = g_pkt_pos_rd = g_pkt_count = 0;
+	memset(&g_pkt, 0, sizeof(g_pkt));
 
 	/* setup default radio settings for proximity mode */
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Ble_1Mbit << RADIO_MODE_MODE_Pos;
@@ -133,13 +183,13 @@ void radio_init(void)
 	NRF_RADIO->PREFIX0 = ((BLE_ADDRESS>>24) & RADIO_PREFIX0_AP0_Msk);
 	NRF_RADIO->BASE0 = (BLE_ADDRESS<<8);
 	NRF_RADIO->RXADDRESSES = 1;
-	NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_buffer;
+	NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt[0].buf;
 	NRF_RADIO->PCNF0 =
 		(1 << RADIO_PCNF0_S0LEN_Pos)|
 		(8 << RADIO_PCNF0_LFLEN_Pos);
 	NRF_RADIO->PCNF1 =
 		(RADIO_PCNF1_WHITEEN_Enabled << RADIO_PCNF1_WHITEEN_Pos)|
-		(0xFF                        << RADIO_PCNF1_MAXLEN_Pos)|
+		(RADIO_MAX_PACKET_SIZE       << RADIO_PCNF1_MAXLEN_Pos)|
 		(3 << RADIO_PCNF1_BALEN_Pos);
 	NRF_RADIO->CRCCNF =
 		(RADIO_CRCCNF_LEN_Three << RADIO_CRCCNF_LEN_Pos) |
@@ -155,6 +205,7 @@ void radio_init(void)
 
 	NRF_RADIO->INTENSET = (
 		(RADIO_INTENSET_RSSIEND_Enabled         << RADIO_INTENSET_RSSIEND_Pos) |
+		(RADIO_INTENSET_PAYLOAD_Enabled         << RADIO_INTENSET_PAYLOAD_Pos) |
 		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)
 	);
 	/* update radio channel */
