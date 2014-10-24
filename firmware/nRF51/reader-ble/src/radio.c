@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - nRF51 2.4GHz Radio Routines
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2013-2014 Milosch Meriac <meriac@openbeacon.de>
  *
  ***************************************************************
 

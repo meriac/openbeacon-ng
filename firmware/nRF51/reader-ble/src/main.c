@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - nRF51 Main Entry
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2013-2014 Milosch Meriac <meriac@openbeacon.de>
  *
  ***************************************************************
 
