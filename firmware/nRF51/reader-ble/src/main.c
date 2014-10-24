@@ -26,9 +26,21 @@
 #include <radio.h>
 #include <timer.h>
 
+#define BT_PREFIX 2
+#define BT_MAC_SIZE 6
+#define BT_IBEACON_HDR_SIZE sizeof(g_iBeacon_sig)
+#define BT_IB_PREFIX_SIZE (BT_PREFIX+BT_MAC_SIZE+BT_IBEACON_HDR_SIZE)
+
 static const uint8_t g_iBeacon_sig[] = {
 	0x02,0x01,0x06,0x1A,0xFF,0x4C,0x00,0x02,0x15
 };
+typedef struct {
+	uint8_t guid[16];
+	uint16_t major;
+	uint16_t minor;
+	uint8_t tx_power;
+} PACKED TiBeacon;
+
 static int8_t g_tag_angle;
 
 int8_t tag_angle(void)
@@ -59,6 +71,7 @@ void halt(uint8_t times)
 void main_entry(void)
 {
 	TBeaconBuffer pkt;
+	const TiBeacon* ib = (TiBeacon*)&pkt.buf[BT_IB_PREFIX_SIZE];
 	uint32_t tag_id;
 
 	/* enabled LED output */
@@ -90,10 +103,14 @@ void main_entry(void)
 			__WFE();
 		else
 			/* check for iBeacon signature */
-			if(!memcmp(&pkt.buf[8], &g_iBeacon_sig, sizeof(g_iBeacon_sig)))
+			if( (pkt.buf[1] >= 36) && !memcmp(
+					&pkt.buf[BT_PREFIX+BT_MAC_SIZE],
+					&g_iBeacon_sig,
+					sizeof(g_iBeacon_sig)
+				) )
 			{
-				debug_printf("ch=%i, rssi=%i\n\r", pkt.channel, pkt.rssi);
-				hex_dump((unsigned char*)&pkt.buf[2], 0, pkt.buf[1]);
+				debug_printf("ch=%i, rssi=%i, size=%i\n\r", pkt.channel, pkt.rssi, pkt.buf[1]);
+				hex_dump((unsigned char*)ib, 0, sizeof(*ib));
 			}
 	}
 }
