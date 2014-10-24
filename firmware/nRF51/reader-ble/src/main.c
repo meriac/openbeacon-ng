@@ -26,6 +26,9 @@
 #include <radio.h>
 #include <timer.h>
 
+static const uint8_t g_iBeacon_sig[] = {
+	0x02,0x01,0x06,0x1A,0xFF,0x4C,0x00,0x02,0x15
+};
 static int8_t g_tag_angle;
 
 int8_t tag_angle(void)
@@ -86,9 +89,11 @@ void main_entry(void)
 		if(!radio_rx(&pkt))
 			__WFE();
 		else
-		{
-			debug_printf("ch=%i, rssi=%i\n\r", pkt.channel, pkt.rssi);
-			hex_dump((unsigned char*)&pkt.buf, 0, sizeof(pkt.buf));
-		}
+			/* check for iBeacon signature */
+			if(!memcmp(&pkt.buf[8], &g_iBeacon_sig, sizeof(g_iBeacon_sig)))
+			{
+				debug_printf("ch=%i, rssi=%i\n\r", pkt.channel, pkt.rssi);
+				hex_dump((unsigned char*)&pkt.buf[2], 0, pkt.buf[1]);
+			}
 	}
 }
