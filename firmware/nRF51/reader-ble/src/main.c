@@ -55,7 +55,7 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
-	TBeaconBuffer buf;
+	TBeaconBuffer pkt;
 	uint32_t tag_id;
 
 	/* enabled LED output */
@@ -83,11 +83,12 @@ void main_entry(void)
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	while(TRUE)
 	{
-		if(!radio_rx(&buf))
+		if(!radio_rx(&pkt))
 			__WFE();
 		else
 		{
-			debug_printf("ch=%i, rssi=%i\n\r", buf.channel, buf.rssi);
+			debug_printf("ch=%i, rssi=%i\n\r", pkt.channel, pkt.rssi);
+			hex_dump((unsigned char*)&pkt.buf, 0, sizeof(pkt.buf));
 		}
 	}
 }

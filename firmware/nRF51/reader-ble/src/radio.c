@@ -95,8 +95,6 @@ void RADIO_IRQ_Handler(void)
 {
 	TBeaconBuffer *pkt;
 
-	g_pkt_count++;
-
 	if(NRF_RADIO->EVENTS_END)
 	{
 		/* acknowledge event */
@@ -117,6 +115,8 @@ void RADIO_IRQ_Handler(void)
 			pkt = &g_pkt[g_pkt_pos_wr++];
 			if(g_pkt_pos_wr>=RADIO_MAX_PKT_BUFFERS)
 				g_pkt_pos_wr = 0;
+			/* set PACKETPTR to next slot */
+			NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt[g_pkt_pos_wr].buf;
 
 			pkt->channel = g_advertisment[g_advertisment_index].channel;
 			pkt->rssi = g_rssi;
@@ -155,7 +155,6 @@ BOOL radio_rx(TBeaconBuffer *buf)
 		src = &g_pkt[g_pkt_pos_rd++];
 		if(g_pkt_pos_rd>=RADIO_MAX_PKT_BUFFERS)
 			g_pkt_pos_rd = 0;
-		g_pkt_count--;
 
 		memcpy(buf, src, sizeof(*buf));
 		/*FIXME: remove */
