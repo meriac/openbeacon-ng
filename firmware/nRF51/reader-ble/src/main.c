@@ -135,6 +135,7 @@ void main_entry(void)
 					sizeof(g_iBeacon_sig)
 				) )
 			{
+				debug_printf("> ");
 				print_guid(ib->guid);
 				debug_printf(",%i,%i,0x%04X,0x%04X,%i\n\r",
 					pkt.rssi,
