@@ -136,12 +136,12 @@ void main_entry(void)
 				) )
 			{
 				print_guid(ib->guid);
-				debug_printf(",0x%04X,0x%04X,%i,%i,%i\n\r",
+				debug_printf(",%i,%i,0x%04X,0x%04X,%i\n\r",
+					pkt.rssi,
+					ib->txpower,
 					ntohs(ib->major),
 					ntohs(ib->minor),
-					pkt.channel,
-					ib->txpower,
-					pkt.rssi
+					pkt.channel
 					);
 			}
 	}
