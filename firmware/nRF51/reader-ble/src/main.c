@@ -84,10 +84,10 @@ void main_entry(void)
 	{
 		debug_printf("radio_packet_count=%i\n\r", radio_packet_count());
 
-		/* blink every second */
-		timer_wait(MILLISECONDS(1000));
+		/* blink every two seconds */
+		timer_wait(MILLISECONDS(2000));
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(1));
+		timer_wait(MILLISECONDS(0.1));
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	}
 }

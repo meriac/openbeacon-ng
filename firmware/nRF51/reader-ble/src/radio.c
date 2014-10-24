@@ -36,7 +36,7 @@ typedef struct {
 	uint8_t frequency;
 } TMapping;
 
-static int g_pkt_count = 0;
+static volatile int g_pkt_count = 0;
 static uint8_t g_advertisment_index;
 static uint8_t g_pkt_buffer[64];
 
@@ -85,7 +85,6 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
-		NRF_RADIO->EVENTS_PAYLOAD = 0;
 		/* start RX */
 		NRF_RADIO->TASKS_RXEN = 1;
 	}
@@ -93,13 +92,26 @@ void POWER_CLOCK_IRQ_Handler(void)
 
 void RADIO_IRQ_Handler(void)
 {
-	/* received packet */
-	if(NRF_RADIO->EVENTS_PAYLOAD)
+	if(NRF_RADIO->EVENTS_END)
 	{
 		/* acknowledge event */
-		NRF_RADIO->EVENTS_PAYLOAD = 0;
+		NRF_RADIO->EVENTS_END = 0;
 
-		g_pkt_count++;
+		/* set LED on every RX */
+		if(NRF_RADIO->CRCSTATUS == 1)
+			g_pkt_count++;
+
+		/* start RX */
+		NRF_RADIO->TASKS_RXEN = 1;
+	}
+
+	if(NRF_RADIO->EVENTS_RSSIEND)
+	{
+		/* acknowledge event */
+		NRF_RADIO->EVENTS_RSSIEND = 0;
+
+		/* disable RSSI measurement */
+		NRF_RADIO->TASKS_RSSISTOP = 1;
 	}
 }
 
@@ -120,7 +132,8 @@ void radio_init(void)
 	NRF_RADIO->TXADDRESS = 0;
 	NRF_RADIO->PREFIX0 = ((BLE_ADDRESS>>24) & RADIO_PREFIX0_AP0_Msk);
 	NRF_RADIO->BASE0 = (BLE_ADDRESS<<8);
-	NRF_RADIO->RXADDRESSES = 0;
+	NRF_RADIO->RXADDRESSES = 1;
+	NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_buffer;
 	NRF_RADIO->PCNF0 =
 		(1 << RADIO_PCNF0_S0LEN_Pos)|
 		(8 << RADIO_PCNF0_LFLEN_Pos);
@@ -133,12 +146,16 @@ void radio_init(void)
 		(1 << RADIO_CRCCNF_SKIP_ADDR_Pos);
 	NRF_RADIO->CRCINIT = 0x00555555UL;
 	NRF_RADIO->CRCPOLY = 0x0100065BUL;
-	NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_buffer;
 	NRF_RADIO->SHORTS = (
-		(RADIO_SHORTS_READY_START_Enabled       << RADIO_SHORTS_READY_START_Pos)
+		(RADIO_SHORTS_READY_START_Enabled       << RADIO_SHORTS_READY_START_Pos)       |
+		(RADIO_SHORTS_END_DISABLE_Enabled       << RADIO_SHORTS_END_DISABLE_Pos)       |
+		(RADIO_SHORTS_ADDRESS_RSSISTART_Enabled << RADIO_SHORTS_ADDRESS_RSSISTART_Pos) |
+		(RADIO_SHORTS_DISABLED_RSSISTOP_Enabled << RADIO_SHORTS_DISABLED_RSSISTOP_Pos)
 	);
+
 	NRF_RADIO->INTENSET = (
-		(RADIO_INTENSET_PAYLOAD_Enabled         << RADIO_INTENSET_PAYLOAD_Pos)
+		(RADIO_INTENSET_RSSIEND_Enabled         << RADIO_INTENSET_RSSIEND_Pos) |
+		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)
 	);
 	/* update radio channel */
 	radio_switch_channel();
