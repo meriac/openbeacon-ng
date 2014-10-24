@@ -38,7 +38,7 @@ typedef struct {
 	uint8_t guid[16];
 	uint16_t major;
 	uint16_t minor;
-	uint8_t tx_power;
+	int8_t txpower;
 } PACKED TiBeacon;
 
 static int8_t g_tag_angle;
@@ -66,6 +66,32 @@ void halt(uint8_t times)
 		blink(times);
 		timer_wait(SECONDS(3));
 	}
+}
+
+static void print_hex(const uint8_t* data, uint16_t len)
+{
+	uint8_t d;
+
+	while(len>0)
+	{
+		d = *data++;
+		default_putchar(hex_char(d>>4));
+		default_putchar(hex_char(d&0xF));
+		len--;
+	}
+}
+
+static void print_guid(const uint8_t* data)
+{
+	print_hex(data +  0, 4);
+	default_putchar('-');
+	print_hex(data +  4, 2);
+	default_putchar('-');
+	print_hex(data +  6, 2);
+	default_putchar('-');
+	print_hex(data +  8, 2);
+	default_putchar('-');
+	print_hex(data + 10, 6);
 }
 
 void main_entry(void)
@@ -109,8 +135,14 @@ void main_entry(void)
 					sizeof(g_iBeacon_sig)
 				) )
 			{
-				debug_printf("ch=%i, rssi=%i, size=%i\n\r", pkt.channel, pkt.rssi, pkt.buf[1]);
-				hex_dump((unsigned char*)ib, 0, sizeof(*ib));
+				print_guid(ib->guid);
+				debug_printf(",0x%04X,0x%04X,%i,%i,%i\n\r",
+					ntohs(ib->major),
+					ntohs(ib->minor),
+					pkt.channel,
+					ib->txpower,
+					pkt.rssi
+					);
 			}
 	}
 }
