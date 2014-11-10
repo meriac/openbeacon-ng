@@ -11,8 +11,6 @@ static const uint8_t g_beacon_pkt[] = {
 
 void entry(void)
 {
-	int8_t tag_angle;
-
 	/* set advertisment packet */
 	radio_advertise(&g_beacon_pkt, sizeof(g_beacon_pkt));
 	/* run advertisement in background every 995ms */
@@ -21,13 +19,8 @@ void entry(void)
 	/* infinite foreground loop */
 	while(TRUE)
 	{
-		/* get tag angle from 3D accelerometer */
-		acc_magnitude(&tag_angle);
-		/* only tx while beacon is worn (facing forward +/-45 degree) */
-		radio_enable(abs(tag_angle)<45);
-
-		/* blink once every three seconds */
-		timer_wait_ms(3000);
+		/* blink once every five seconds */
+		timer_wait_ms(5000);
 		pin_set(CONFIG_LED_PIN);
 		timer_wait_ms(1);
 		pin_clear(CONFIG_LED_PIN);
