@@ -102,7 +102,7 @@ ARM_SRC_C := $(filter %.c,$(ARM_SRC))
 ARM_OBJ_C := $(ARM_SRC_C:.c=.o)
 ARM_SRC_S := $(filter %.s,$(ARM_SRC))
 ARM_OBJ_S := $(ARM_SRC_S:.s=.o)
-ARM_OBJ   := $(ARM_OBJ_C) $(ARM_OBJ_S)
+ARM_OBJ   := $(ARM_OBJ_S) $(ARM_OBJ_C)
 APP_ADDITIONAL?=
 
 $(TARGET).bin : $(TARGET).elf

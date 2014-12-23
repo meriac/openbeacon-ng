@@ -12,8 +12,9 @@ OPTIM=-Os -mword-relocations
 #
 nRF51_SDK=nrf51_iot_sdk_0.7.0.zip
 SOFTDEVICE=Nordic/nrf51/components/softdevice/s1xx_iot/s1xx-iot-prototype2_softdevice.hex
+INCLUDES=lib/Nordic/nrf51/components/softdevice/s1xx_iot/headers
 
-APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS
+APP_CFLAGS=-I$(INCLUDES) -Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS -Wno-unused-function -Wno-unused-parameter
 APP_LDFLAGS=-lm
 
 APP_SRC= \
@@ -26,6 +27,7 @@ all: $(TARGET).bin
 
 lib/softdevice.bin: $(nRF51_SDK)
 	unzip -d lib $<
+	dos2unix $(INCLUDES)/*.h
 	$(OBJCOPY) -Iihex -Obinary lib/$(SOFTDEVICE) $@
 
 lib/softdevice.o : lib/softdevice.s lib/softdevice.bin
@@ -34,6 +36,6 @@ app_clean:
 	find src lib -name '*.o' -exec rm \{\} \;
 
 clean_all: clean
-	rm -rf lib/Nordic
+	rm -rf lib/Nordic lib/*.bin
 
 include ../core/Makefile.rules
