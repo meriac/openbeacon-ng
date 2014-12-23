@@ -8,5 +8,3 @@
   __softdevice_bss_start:
   .space 0x2000
   __softdevice_bss_end:
-
-

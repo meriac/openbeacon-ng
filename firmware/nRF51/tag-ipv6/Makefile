@@ -17,23 +17,24 @@ APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS
 APP_LDFLAGS=-lm
 
 APP_SRC= \
+  lib/softdevice.s \
   src/main.c
 
 APP_SRC+=$(IMAGES_C)
 
 all: $(TARGET).bin
 
-$(SOFTDEVICE): $(nRF51_SDK)
-	unzip $<
-	touch $@
+lib/softdevice.bin: $(nRF51_SDK)
+	unzip -d lib $<
+	$(OBJCOPY) -Iihex -Obinary lib/$(SOFTDEVICE) $@
 
-lib/softdevice.bin: $(SOFTDEVICE)
-	arm-none-eabi-objcopy -Iihex -Obinary $^ $@
+lib/softdevice.o: lib/softdevice.s lib/softdevice.bin
+	$(CC) -c $< -o $@
 
 app_clean:
-	find src -name '*.o' -exec rm \{\} \;
+	find src lib -name '*.o' -exec rm \{\} \;
 
 clean_all: clean
-	rm -f Nordic
+	rm -rf lib/Nordic
 
 include ../core/Makefile.rules

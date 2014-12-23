@@ -7,6 +7,7 @@ SECTIONS
 
 	prog : 
 	{
+		KEEP(*(.softdevice.text))
 		KEEP(*(.isr_vector))
 		*(.text)
 		*(.text.*)
@@ -18,8 +19,9 @@ SECTIONS
 
 	__end_of_text__ = .;
 
-	.persistent :
+	.persistent (NOLOAD):
 	{
+		KEEP(*(.softdevice.bss))
 		__persistent_beg__ = .;
 		*(.persistent)
 		*(.persistent.*)
@@ -46,7 +48,7 @@ SECTIONS
   } >ram AT>flash
   __exidx_end = .;
 
-	.bss :
+	.bss (NOLOAD):
 	{
 		__bss_beg__ = .;
 		*(.bss)
