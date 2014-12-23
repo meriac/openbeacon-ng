@@ -28,8 +28,7 @@ lib/softdevice.bin: $(nRF51_SDK)
 	unzip -d lib $<
 	$(OBJCOPY) -Iihex -Obinary lib/$(SOFTDEVICE) $@
 
-lib/softdevice.o: lib/softdevice.s lib/softdevice.bin
-	$(CC) -c $< -o $@
+lib/softdevice.o : lib/softdevice.s lib/softdevice.bin
 
 app_clean:
 	find src lib -name '*.o' -exec rm \{\} \;

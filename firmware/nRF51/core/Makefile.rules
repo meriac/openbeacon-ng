@@ -43,7 +43,6 @@ CFLAGS= \
 -msoft-float \
 -mthumb \
 -fno-common \
--T$(LDSCRIPT) \
 $(DEBUG)  \
 $(OPTIM) \
 -fomit-frame-pointer \
@@ -51,7 +50,7 @@ $(OPTIM) \
 -fdata-sections \
 $(APP_CFLAGS)
 
-LINKER_FLAGS=$(APP_LDFLAGS) -Xlinker --gc-sections -Xlinker -o$(TARGET).elf -Xlinker -M -Xlinker -Map=$(TARGET).map
+LINKER_FLAGS=$(APP_LDFLAGS) -Xlinker --gc-sections -Xlinker -o$(TARGET).elf -Xlinker -M -Xlinker -Map=$(TARGET).map -T$(LDSCRIPT)
 
 ARM_SRC= \
   $(APP_SRC) \
@@ -99,7 +98,11 @@ export TARGET_ERASE
 #
 # Define all object files.
 #
-ARM_OBJ = $(ARM_SRC:.c=.o)
+ARM_SRC_C := $(filter %.c,$(ARM_SRC))
+ARM_OBJ_C := $(ARM_SRC_C:.c=.o)
+ARM_SRC_S := $(filter %.s,$(ARM_SRC))
+ARM_OBJ_S := $(ARM_SRC_S:.s=.o)
+ARM_OBJ   := $(ARM_OBJ_C) $(ARM_OBJ_S)
 APP_ADDITIONAL?=
 
 $(TARGET).bin : $(TARGET).elf
@@ -108,11 +111,14 @@ $(TARGET).bin : $(TARGET).elf
 $(TARGET).hex : $(TARGET).elf
 	$(OBJCOPY) $(TARGET).elf -O ihex $(TARGET).hex
 
-$(TARGET).elf : $(ARM_OBJ) $(CRT0) $(BOOTLOADER) $(APP_ADDITIONAL) Makefile
+$(TARGET).elf : $(ARM_OBJ) $(CRT0) $(BOOTLOADER) $(APP_ADDITIONAL) $(LDSCRIPT)
 	$(CC) $(CFLAGS) $(ARM_OBJ) $(BOOTLOADER) $(APP_ADDITIONAL) -nostartfiles $(CRT0) $(LINKER_FLAGS)
 	$(OBJDUMP) -d $(TARGET).elf > $(TARGET).asm
 
-$(ARM_OBJ) : %.o : %.c $(LDSCRIPT) Makefile
+$(ARM_OBJ_C) : %.o : %.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(ARM_OBJ_S) : %.o : %.s
 	$(CC) -c $(CFLAGS) $< -o $@
 
 flash: $(TARGET).bin
