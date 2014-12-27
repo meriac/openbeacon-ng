@@ -3,6 +3,7 @@
  * OpenBeacon.org - nRF51 3D Accelerometer Routines
  *
  * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Modified by Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ***************************************************************
 
@@ -69,9 +70,15 @@
 #define ACC_REG_FIFO_SRC_REG      0x2F
 #define ACC_REG_INT1_CFG          0x30
 
+#if CONFIG_ACCEL_SLEEP
+extern uint8_t moving;
+extern uint8_t sleep;
+#endif
+
 extern uint8_t acc_init(void);
 extern void acc_write(uint8_t cmd, uint8_t data);
 extern void acc_read(uint8_t cmd, uint8_t len, uint8_t *data);
-extern uint16_t acc_magnitude(int8_t* angle);
+extern void acc_sample(void);
+extern int16_t acc_get(uint8_t axis);
 
 #endif/*__ACC_H__*/

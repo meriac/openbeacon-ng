@@ -3,6 +3,7 @@
  * OpenBeacon.org - nRF51 3D Accelerometer Routines
  *
  * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Modified by Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ***************************************************************
 
@@ -23,20 +24,10 @@
 
 */
 #include <openbeacon.h>
+#include <openbeacon-proto.h>
+#include <main.h>
 #include <acc.h>
 #include <timer.h>
-
-/* lookup sine table of r/z to degrees */
-static const int8_t g_asin7deg_table[] = {
-	 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7,
-	 7, 8, 8, 9, 9,10,10,10,11,11,12,12,13,13,14,14,
-	15,15,16,16,16,17,17,18,18,19,19,20,20,21,21,22,
-	22,23,23,24,24,25,25,26,26,27,27,28,28,29,29,30,
-	30,31,31,32,32,33,33,34,35,35,36,36,37,37,38,38,
-	39,40,40,41,41,42,43,43,44,44,45,46,46,47,48,48,
-	49,50,51,51,52,53,53,54,55,56,57,57,58,59,60,61,
-	62,63,64,65,66,67,68,70,71,72,74,76,78,80,83,90
-};
 
 /* accelerometer initialization array */
 static const uint8_t g_acc_init[][2] = {
@@ -48,10 +39,24 @@ static const uint8_t g_acc_init[][2] = {
 };
 #define ACC_INIT_COUNT ((int)(sizeof(g_acc_init)/sizeof(g_acc_init[0])))
 
-static int8_t asin7deg(int8_t t)
-{
-	return (t>=0) ? g_asin7deg_table[t] : -g_asin7deg_table[-t];
-}
+/* most recent acceleration measurement */
+static int16_t acc[3];
+
+#if CONFIG_ACCEL_SLEEP
+#define ACC_BUFFER_LEN   10
+#define ACC_DELTA_THRES  100000L
+#define ACC_SLEEP_THRES  300
+
+static int16_t acc_buffer[ACC_BUFFER_LEN][3];
+static int32_t acc_avg[3];
+static uint8_t acc_buffer_index;
+static uint8_t acc_buffer_full;
+static uint16_t sleep_counter;
+
+uint8_t moving = 1;
+uint8_t sleep = 0;
+#endif /* CONFIG_ACCEL_SLEEP */
+
 
 void acc_write(uint8_t cmd, uint8_t data)
 {
@@ -73,6 +78,7 @@ void acc_write(uint8_t cmd, uint8_t data)
 
 	nrf_gpio_pin_set(CONFIG_ACC_nCS);
 }
+
 
 void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 {
@@ -98,41 +104,78 @@ void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 	nrf_gpio_pin_set(CONFIG_ACC_nCS);
 }
 
-uint16_t acc_magnitude(int8_t* angle)
-{
-	int16_t acc[3], a, alpha;
 
+#if CONFIG_ACCEL_SLEEP
+static void acc_process_sample(void)
+{
+	int16_t acc_delta;
+    uint32_t acc_delta_norm = 0;
+    uint8_t i, j;
+
+	if (acc_buffer_full)
+	{
+		acc_delta_norm = 0;
+
+		for (i=0; i<3; i++)
+		{
+			acc_avg[i] = 0;
+			for (j=0; j<ACC_BUFFER_LEN; j++)
+				acc_avg[i] += acc_buffer[j][i];
+			acc_avg[i] /= ACC_BUFFER_LEN;
+
+			acc_delta = acc[i] - acc_avg[i];
+			acc_delta_norm += acc_delta * acc_delta;
+		}
+
+		if (acc_delta_norm < ACC_DELTA_THRES)
+ 		{
+			moving = 0;
+			if (!sleep && ++sleep_counter > ACC_SLEEP_THRES)
+				sleep = 1;
+		} else {
+			if (sleep)
+				status_flags |= FLAG_WOKEUP;
+			moving = 1;
+			sleep = 0;
+			sleep_counter = 0;
+			acc_buffer_index = 0;
+			acc_buffer_full = 0;
+		} 
+	}
+
+	for (i=0; i<3; i++)
+		acc_buffer[acc_buffer_index][i] = acc[i];
+
+	acc_buffer_index++;
+	if (acc_buffer_index == ACC_BUFFER_LEN)
+		acc_buffer_index = 0;
+
+	if (!acc_buffer_full && !acc_buffer_index)
+		acc_buffer_full = 1;
+}
+#endif /* CONFIG_ACCEL_SLEEP */
+
+
+void acc_sample(void)
+{
 	/* briefly turn on accelerometer */
 	acc_write(ACC_REG_CTRL_REG1, 0x97);
 	timer_wait(MILLISECONDS(2));
 	acc_read(ACC_REG_OUT_X, sizeof(acc), (uint8_t*)&acc);
 	acc_write(ACC_REG_CTRL_REG1, 0x00);
 
-	/* get acceleration vector magnitude */
-	a =  sqrt32(
-		((uint32_t)acc[0])*acc[0] + 
-		((uint32_t)acc[1])*acc[1] +
-		((uint32_t)acc[2])*acc[2]
-	)/64;
-
-	/* calculate tag angle */
-	if(angle)
-	{
-		if(!a)
-			alpha = 127;
-		else
-		{
-			alpha = (acc[2]*2)/a;
-			if(alpha>127)
-				alpha=127;
-			else
-				if(alpha<-127)
-					alpha=-127;
-		}
-		*angle = asin7deg(alpha);
-	}
-	return a;
+#if CONFIG_ACCEL_SLEEP
+	acc_process_sample();
+#endif
 }
+
+
+inline int16_t acc_get(uint8_t axis)
+{
+	return acc[axis];
+}
+
+
 uint8_t acc_init(void)
 {
 	int i;
@@ -175,6 +218,17 @@ uint8_t acc_init(void)
 	/* initialize accelerometer */
 	for(i=0; i<ACC_INIT_COUNT; i++)
 		acc_write(g_acc_init[i][0], g_acc_init[i][1]);
+
+#if CONFIG_ACCEL_SLEEP
+	acc_buffer_index = 0;
+	acc_buffer_full = 0;
+	moving = 1;
+	sleep = 0;
+	sleep_counter = 0;
+#endif /* CONFIG_ACCEL_SLEEP */
+
+	/* make first measurement */
+	acc_sample();
 
 	return 0;
 }

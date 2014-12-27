@@ -4,9 +4,10 @@ LD=$(CROSS)ld
 OBJCOPY=$(CROSS)objcopy
 OBJDUMP=$(CROSS)objdump
 AR=$(CROSS)ar
+NM=$(CROSS)nm
 LDSCRIPT=$(CORE)linker/$(CPU).ld
 SEGGER=/opt/SEGGER/JLink
-JLINK=$(SEGGER)/JLinkExe
+JLINK=$(SEGGER)/JLinkExe -If SWD -Device $(CPU)
 
 # determine program version
 PROGRAM_VERSION:=$(shell git describe --tags --abbrev=4 --dirty 2>/dev/null | sed s/^v//)
@@ -69,8 +70,6 @@ ARM_SRC= \
 # JLink flash script
 #
 define TARGET_FLASH
-	si 1
-	device $(CPU)
 	rx 100
 	halt
 	w4 4001e504 1
@@ -85,8 +84,6 @@ export TARGET_FLASH
 
 define TARGET_ERASE
 	r
-	si 1
-	device $(CPU)
 	w4 4001e504 2
 	w4 4001e50c 1
 	w4 4001e514 1

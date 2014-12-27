@@ -1,8 +1,8 @@
 /***************************************************************
  *
- * OpenBeacon.org - nRF51 2.4GHz Radio Routines
+ * OpenBeacon.org - AES Encryption & Signing
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2014 Milosch Meriac <meriac@openbeacon.de>
  *
  ***************************************************************
 
@@ -22,15 +22,31 @@
  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-#ifndef __RADIO_H__
-#define __RADIO_H__
+#ifndef __CRYPTO_H__
+#define __CRYPTO_H__
 
+#define PACKED __attribute__((packed))
 #include <openbeacon-proto.h>
 
-/* arbitrary epoch time threshold, used to check to epoch time validity */
-#define VALID_EPOCH_THRES 1411633853
+#define AES_ROUNDS 10
+#define AES_BLOCK_SIZE 16
+#define AES_BLOCKS32 (AES_BLOCK_SIZE/4)
 
-extern void radio_init(uint32_t uid);
-extern uint32_t get_time(void);
+#define AES_KEYID_ENCRYPTION 0x01
+#define AES_KEYID_SIGNATURE  0x02
+#define AES_KEYID_AUTH       0x03
 
-#endif/*__RADIO_H__*/
+typedef uint8_t TAES[AES_BLOCK_SIZE];
+
+typedef struct {
+	TAES key, in, out;
+} PACKED TCryptoEngine;
+
+extern void aes_init(void);
+extern void aes_key_derivation(const TAES* key);
+extern void aes(TCryptoEngine* engine);
+extern TAES* aes_sign(const void* data, uint32_t length);
+extern uint8_t aes_encr(const void* in, void* out, uint32_t size, uint8_t mac_len);
+extern uint8_t aes_decr(const void* in, void* out, uint32_t length, uint8_t mac_len);
+
+#endif/*__CRYPTO_H__*/

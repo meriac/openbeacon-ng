@@ -47,11 +47,11 @@
 #define PROXAGGREGATION_TIME 10
 #define MAX_PROXIMITY_SLOTS 16
 
+#define ACC_SCALE_G (2.0 / (1 << 15))
+
 typedef struct
 {
 	uint32_t tag_id, epoch;
-	float voltage;
-	int angle;
 	bool button, calibrated;
 	double last_seen;
 	uint32_t last_reader_id;
@@ -61,7 +61,7 @@ typedef struct
 typedef struct
 {
 	uint32_t last_seen;
-	int power;
+	int tx_power, rx_power;
 	uint32_t distance;
 } TTagProximitySlot;
 
@@ -216,9 +216,7 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 	tag->epoch = track.epoch;
 	tag->last_seen = timestamp;
 	tag->last_reader_id = reader_id;
-	tag->voltage = track.voltage/10.0;
-	tag->angle = track.angle;
-
+	
 	switch(track.proto)
 	{
 		case RFBPROTO_BEACON_NG_SIGHTING:
@@ -275,7 +273,8 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 				if(prox->fifo_pos>=MAX_PROXIMITY_SLOTS)
 					prox->fifo_pos = 0;
 				prox_slot->last_seen =  timestamp;
-				prox_slot->power = slot->rx_power;
+				prox_slot->rx_power = slot->rx_power;
+				prox_slot->tx_power = slot->tx_power;
 
 				/* pre-calculate calibration values */
 				if(prox->calibrated)
@@ -283,7 +282,7 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 					cal = (tag->tag_id == tag1) ? prox->tag1_calrx : prox->tag2_calrx;
 					/* calculate distance in mm */
 					prox_slot->distance =
-						(exp10((cal - prox_slot->power)/20.0)/
+						(__exp10((cal - prox_slot->rx_power)/20.0)/
 						(41.88*(2400+CONFIG_PROX_CHANNEL)))*1000000;
 				}
 				else
@@ -304,11 +303,11 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 						prox->calibrated = true;
 						prox->tag1_calrx =
 							prox->tag1p->rx_loss +
-							prox->tag2p->px_power +
+	//						prox->tag2p->px_power +
 							prox->tag2p->tx_loss;
 						prox->tag2_calrx =
 							prox->tag2p->rx_loss +
-							prox->tag1p->px_power +
+	//						prox->tag1p->px_power +
 							prox->tag1p->tx_loss;
 					}
 				}
@@ -326,7 +325,6 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 			tag->calibrated = true;
 			tag->rx_loss  = track.p.status.rx_loss/100.0;
 			tag->tx_loss  = track.p.status.tx_loss/100.0;
-			tag->px_power = track.p.status.px_power/100.0;
 			break;
 		}
 	}
@@ -342,11 +340,9 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 	const TBeaconNgSighting *slot;
 
 	/* show common fields */
-	fprintf(out, "{\"id\"=\"0x%08X\",\"t\"=%i,\"voltage\"=%1.1f,\"angle\"=%03i,",
+	fprintf(out, "{\"id\"=\"0x%08X\",\"t\"=%i,",
 		track.uid,
-		track.epoch,
-		track.voltage/10.0,
-		track.angle
+		track.epoch
 	);
 
 	/* show specific fields */
@@ -360,9 +356,10 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 			{
 				if(slot->uid)
 				{
-					fprintf(out, "%s{\"id\"=\"0x%08X\",\"dBm\"=%03i}",
+					fprintf(out, "%s{\"id\"=\"0x%08X\",\"TX dBm\"=%03i,\"RX dBm\"=%03i}",
 						t ? ",":"",
 						slot->uid,
+						slot->tx_power,
 						slot->rx_power
 					);
 				}
@@ -374,11 +371,18 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 
 		case RFBPROTO_BEACON_NG_STATUS:
 		{
-			fprintf(out, "\"status\"={\"rx_loss\"=%1.2f,\"tx_loss\"=%1.2f,\"px_power\"=%2.0f,\"ticks\"=%06i}",
-				track.p.status.rx_loss/100.0,
-				track.p.status.tx_loss/100.0,
-				track.p.status.px_power/100.0,
-				track.p.status.ticks
+			fprintf(out,
+				"\"status\"={\"rx_loss\"=%1.2f,\"tx_loss\"=%1.2f,\"ticks\"=%06i,\"voltage\"=%1.1f,\"acc_x\"=%1.3f,\"acc_y\"=%1.3f,\"acc_z\"=%1.3f,\"flash_log_free_blocks\"=%d,\"boot_count\"=%0d,\"flags\"=%04X}",
+				track.p.status.rx_loss / 100.0,
+				track.p.status.tx_loss / 100.0,
+				track.p.status.ticks,
+				track.p.status.voltage / 10.0,
+				track.p.status.acc_x * ACC_SCALE_G,
+				track.p.status.acc_y * ACC_SCALE_G,
+				track.p.status.acc_z * ACC_SCALE_G,
+				track.p.status.flash_log_free_blocks,
+				track.p.status.boot_count,
+				track.p.status.flags
 			);
 			break;
 		}
@@ -433,7 +437,7 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 	}
 
 	/* show & process latest packet */
-//	print_packet(stdout, reader_id, track);
+	print_packet(stdout, reader_id, track);
 	process_packet(timestamp, reader_id, track);
 	return sizeof(TBeaconLogSighting);
 }
@@ -455,13 +459,11 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 
 	if(g_first)
 		fprintf(g_out,"  \"tag\":[");
-	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i,\"angle\":%i,\"voltage\":%1.1f}",
+	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i}",
 		g_first ? "":",",
 		tag->tag_id,
 		tag->tag_id,
-		delta,
-		tag->angle,
-		tag->voltage
+		delta
 	);
 
 	g_first = false;
@@ -495,7 +497,7 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 		if(slot->last_seen && ((timestamp - slot->last_seen) <= PROXAGGREGATION_TIME))
 		{
 			count++;
-			power+=slot->power;
+			power+=slot->rx_power;
 			if(slot->distance)
 			{
 				dist+=slot->distance;

@@ -3,6 +3,7 @@
  * OpenBeacon.org - AES Encryption & Signing
  *
  * Copyright 2014 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2014 Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ***************************************************************
 
@@ -44,13 +45,13 @@
 
 /* crypto key */
 #ifdef  CUSTOM_ENCRYPTION_KEYS
-#	include "custom-encryption-keys.h"
+#include "custom-encryption-keys.h"
 #else /*CUSTOM_ENCRYPTION_KEY*/
 static const TAES g_default_key = {
 	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
 	0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
 };
-#endif/*CUSTOM_ENCRYPTION_KEYS*/
+#endif /*CUSTOM_ENCRYPTION_KEYS*/
 
 static TCryptoEngine g_signature, g_encrypt;
 
@@ -207,7 +208,7 @@ uint8_t aes_decr(const void* in, void* out, uint32_t length, uint8_t mac_len)
 }
 
 static void
-aes_add_round_keys(const TAES &key, TAES &state)
+aes_add_round_keys(const uint8_t *key, uint8_t *state)
 {
 	/* unroll AddRoundKey */
 	AddRoundKey(0);
@@ -239,7 +240,7 @@ void aes(TCryptoEngine* engine)
 	memcpy(&key, &engine->key, AES_BLOCK_SIZE);
 	memcpy(&state, &engine->in, AES_BLOCK_SIZE);
 
-	aes_add_round_keys(key, state);
+	aes_add_round_keys((uint8_t *) &key, (uint8_t *) &state);
 
 	rcon = 1;
 	for (round = 0; round < AES_ROUNDS; round++)
@@ -310,7 +311,7 @@ void aes(TCryptoEngine* engine)
 		key[14] ^= key[10];
 		key[15] ^= key[11];
 
-		aes_add_round_keys(key, state);
+		aes_add_round_keys((uint8_t *) &key, (uint8_t *) &state);
 
 		/* update rcon */
 		rcon = aes_xtime(rcon);

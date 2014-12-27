@@ -21,6 +21,8 @@ APP_SRC= \
   src/adc.c \
   src/aes.c \
   src/flash.c \
+  src/log.c \
+  src/heatshrink_encoder.c \
   src/radio.c \
   src/timer.c \
   src/main.c
@@ -44,5 +46,11 @@ clean_all: clean
 indent:
 	find src inc -iname '*.[ch]' -exec indent -c81 -i4 -cli4 -bli0 -ts 4 \{\} \;
 	rm -f src/*.[ch]~ inc/*.[ch]~
+
+set_time: $(TARGET).elf
+	G_TIME_ADDR=`$(NM) -C $(TARGET).elf | awk '{if ($$3 == "g_time") print $$1;}'`; \
+	CTIME=`date +%s`; \
+	CTIME_HEX=`printf "%x\n" $$CTIME`; \
+	echo w4 $$G_TIME_ADDR $$CTIME_HEX "\n" exit | $(JLINK)
 
 include ../core/Makefile.rules

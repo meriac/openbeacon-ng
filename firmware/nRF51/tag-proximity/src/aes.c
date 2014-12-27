@@ -162,7 +162,7 @@ void aes(TCryptoEngine* engine)
 /* initial key derivation */
 void aes_key_derivation(const TAES* key, uint32_t uid)
 {
-	/* use base key to derieve needed keys */
+	/* use base key to derive needed keys */
 	memcpy(g_encrypt.key, key, sizeof(g_encrypt.key));
 
 	/* create site-signature key */
@@ -202,6 +202,6 @@ void aes_init(uint32_t uid)
 	NVIC_SetPriority(ECB_IRQn, IRQ_PRIORITY_AES);
 	NVIC_EnableIRQ(ECB_IRQn);
 
-	/* derieve initial key */
+	/* derive initial key */
 	aes_key_derivation(&g_default_key, uid);
 }

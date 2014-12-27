@@ -3,6 +3,7 @@
  * OpenBeacon.org - nRF51 Main Entry
  *
  * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Modified by Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ***************************************************************
 
@@ -25,8 +26,17 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+extern uint8_t hibernate;
+extern uint8_t status_flags;
+extern uint8_t boot_count;
+extern uint32_t reset_reason;
+
+#if CONFIG_ACCEL_SLEEP
+extern uint8_t sleep;
+#endif
+
 extern void blink(uint8_t times);
-extern void halt(uint8_t times);
-extern int8_t tag_angle(void);
+extern void blink_fast(uint8_t times);
+extern uint16_t blink_wait_release(void);
 
 #endif/*__MAIN_H__*/

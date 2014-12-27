@@ -3,6 +3,7 @@
  * OpenBeacon.org - OnAir protocol specification and definition
  *
  * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Modified by Ciro Cattuto <ciro.cattuto@isi.it>
  *
  ****************************************************************************
 
@@ -38,33 +39,48 @@
 #define RFBPROTO_BEACON_NG_STATUS   31
 #define RFBPROTO_BEACON_NG_PROX     32
 
+#define FLAG_BOOT               (1 << 0)
+#define FLAG_TIME_RESET         (1 << 1)
+#define FLAG_LOG_STOPPED        (1 << 2)
+#define FLAG_WOKEUP             (1 << 3)
+#define FLAG_MOVING             (1 << 4)
+#define ERROR_FLASH_FULL        (1 << 5)
+#define ERROR_FLASH_WRITE       (1 << 6)
+#define ERROR_LOG_BUF_OVERRUN   (1 << 7)
+#define ERROR_LOG_COMPRESS      (1 << 8)
+
+
 typedef struct
 {
+	uint16_t flags;
+	uint16_t ticks;
+	uint16_t flash_log_free_blocks;
 	int16_t rx_loss;
 	int16_t tx_loss;
-	int16_t px_power;
-	uint16_t ticks;
+	int16_t acc_x;
+	int16_t acc_y;
+	int16_t acc_z;
+	uint8_t voltage;
+	uint8_t boot_count;
 } PACKED TBeaconNgStatus;
 
 typedef struct
 {
-	int8_t rx_power;
 	uint32_t uid;
+	int8_t tx_power;
+	int8_t rx_power;
 } PACKED TBeaconNgSighting;
 
 typedef union
 {
 	TBeaconNgStatus status;
 	TBeaconNgSighting sighting[CONFIG_SIGHTING_SLOTS];
-	uint8_t raw[15];
+	uint8_t raw[18];
 } PACKED TBeaconNgPayload;
 
 typedef struct
 {
 	uint8_t proto;
-	int8_t tx_power;
-	int8_t angle;
-	uint8_t voltage;
 	uint32_t uid;
 	uint32_t epoch;
 	TBeaconNgPayload p;
@@ -76,18 +92,18 @@ typedef struct
 	uint32_t uid;
 	uint32_t epoch;
 	uint16_t ticks;
+	int8_t tx_power;
 } PACKED TBeaconNgProxAnnounce;
 
 typedef union
 {
 	TBeaconNgProxAnnounce prox;
-	uint8_t raw[10];
+	uint8_t raw[11];
 } PACKED TBeaconNgProxPayload;
 
 typedef struct
 {
 	TBeaconNgProxPayload p;
-	uint8_t proto;
 	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgProx;
 
