@@ -11,6 +11,7 @@ OPTIM=-Os -mword-relocations
 # see: "nRF51-IoT-SDK-zip" link
 #
 nRF51_SDK=nrf51_iot_sdk_0.7.0.zip
+nRF51_SDK_URL=http://www.nordicsemi.com/eng/nordic/download_resource/41601/6/71011617
 SOFTDEVICE=Nordic/nrf51/components/softdevice/s1xx_iot/s1xx-iot-prototype2_softdevice.hex
 
 COMP=lib/Nordic/nrf51/components
@@ -30,9 +31,13 @@ APP_SRC+=$(IMAGES_C)
 
 all: $(TARGET).bin
 
+$(nRF51_SDK):
+	curl -o $@ $(nRF51_SDK_URL)
+
 lib/softdevice.bin: $(nRF51_SDK)
+	rm -rf lib/Nordic
 	unzip -d lib $<
-	dos2unix $(INCLUDES)/*.h
+	find lib/Nordic -iname *.[ch] -exec dos2unix \{\} \;
 	$(OBJCOPY) -Iihex -Obinary lib/$(SOFTDEVICE) $@
 
 lib/softdevice.o : lib/softdevice.s lib/softdevice.bin
