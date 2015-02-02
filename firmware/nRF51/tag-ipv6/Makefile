@@ -12,10 +12,15 @@ OPTIM=-Os -mword-relocations
 #
 nRF51_SDK=nrf51_iot_sdk_0.7.0.zip
 SOFTDEVICE=Nordic/nrf51/components/softdevice/s1xx_iot/s1xx-iot-prototype2_softdevice.hex
-INCLUDES=lib/Nordic/nrf51/components/softdevice/s1xx_iot/headers
 
-APP_CFLAGS=-I$(INCLUDES) -Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS -Wno-unused-function -Wno-unused-parameter
-APP_LDFLAGS=-lm
+COMP=lib/Nordic/nrf51/components
+INCLUDES= \
+	-I$(COMP)/softdevice/s1xx_iot/headers \
+	-I$(COMP)/ble/ble_6lowpan \
+	-I$(COMP)/iot/include
+
+APP_CFLAGS=$(INCLUDES) -Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS -Wno-unused-function -Wno-unused-parameter
+APP_LDFLAGS=-lm $(COMP)/ble/ble_6lowpan/lib/ble_6lowpan.a
 
 APP_SRC= \
   lib/softdevice.s \
