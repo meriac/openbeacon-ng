@@ -38,6 +38,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "helper.h"
 
 #define MAX_PKT_SIZE 64
 #define MAX_UARTS 2
@@ -79,12 +80,12 @@ static void port_reader(TReader *reader, uint8_t *buffer, int len)
 			switch(data)
 			{
 				case 0x00 :
-					data = 0xFF;
+					if(reader->pos < MAX_PKT_SIZE)
+						reader->buf[reader->pos++] = 0xFF;
 					break;
 
 				case 0x01 :
 					port_reader_pkt(reader);
-
 					/* reset packet */
 					reader->pos = 0;
 					break;
