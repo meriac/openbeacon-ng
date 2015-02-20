@@ -29,6 +29,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <termios.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -36,7 +37,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 
+#define MAX_PKT_SIZE 64
+#define MAX_UARTS 2
 #define BUFLEN 2048
 #define PORT 2342
 #define IP4_SIZE 4
@@ -44,6 +48,84 @@
 #define REFRESH_SERVER_IP_TIME (60*5)
 
 static uint8_t buffer[BUFLEN];
+
+typedef struct {
+	int fd;
+	int id;
+	int pos;
+	uint8_t escape;
+	uint8_t buf[MAX_PKT_SIZE];
+} TReader;
+
+TReader g_reader[MAX_UARTS];
+
+static void port_reader_pkt(TReader *reader)
+{
+	printf("rx_pkt[%i]=%i [%i]\n", reader->id, reader->pos, (int8_t)reader->buf[0]);
+}
+
+static void port_reader(TReader *reader, uint8_t *buffer, int len)
+{
+	uint8_t data;
+
+	while(len--)
+	{
+		data = *buffer++;
+
+		if(reader->escape)
+		{
+			reader->escape = 0;
+
+			switch(data)
+			{
+				case 0x00 :
+					data = 0xFF;
+					break;
+
+				case 0x01 :
+					port_reader_pkt(reader);
+
+					/* reset packet */
+					reader->pos = 0;
+					break;
+
+				default:
+					fprintf(stderr, "error: invalid encoding [%02X]\n", data);
+			}
+		}
+		else
+			if(data == 0xFF)
+				reader->escape = 1;
+			else
+				if(reader->pos < MAX_PKT_SIZE)
+					reader->buf[reader->pos++] = data;
+	}
+}
+
+static int port_open(const char *device)
+{
+	int handle;
+	struct termios options;
+
+	/* open serial port */
+	if((handle = open( device, O_RDONLY | O_NOCTTY | O_NDELAY)) == -1)
+	{
+		fprintf(stderr, "error: failed to open serial port (%s)\n", device);
+		exit(10);
+	}
+
+	/* apply serial port settings */
+	tcgetattr(handle, &options);
+	cfmakeraw(&options);
+	options.c_cflag = B1000000 | CS8 | CLOCAL | CREAD;
+	options.c_iflag = IGNPAR;
+	options.c_oflag = 0;
+	options.c_lflag = 0;
+	tcflush(handle, TCIFLUSH);
+	tcsetattr(handle, TCSANOW, &options);
+
+	return handle;
+}
 
 int main( int argc, const char* argv[] )
 {
@@ -54,12 +136,25 @@ int main( int argc, const char* argv[] )
 	uint32_t server_ip;
 	socklen_t slen = sizeof (si_other);
 	time_t lasttime, t;
+	fd_set fds;
+	int i, maxfd, res;
+	struct timeval timeout;
+	TReader *reader;
 
 	if( argc < 2 )
 	{
 		fprintf (stderr, "usage: %s hostname [port]\n", argv[0]);
 		return 1;
 	}
+
+	/* initialize descriptor list */
+	FD_ZERO(&fds);
+	memset(&g_reader, 0, sizeof(g_reader));
+	g_reader[0].id = 1;
+	g_reader[0].fd = port_open("/dev/ttyO1");
+	g_reader[1].id = 2;
+	g_reader[1].fd = port_open("/dev/ttyO2");
+	maxfd = g_reader[1].fd+1;
 
 	/* assign default port if needed */
 	port = ( argc < 3 ) ? PORT : atoi(argv[2]);
@@ -91,6 +186,34 @@ int main( int argc, const char* argv[] )
 		memset (&si_server, 0, sizeof (si_server));
 		si_server.sin_family = AF_INET;
 		si_server.sin_port = htons (port);
+
+		while (1)
+		{
+			/* set timeout value within input loop */
+			timeout.tv_usec = 0; /* milliseconds */
+			timeout.tv_sec  = 1; /* seconds */
+			/* register descriptors */
+			for(i=0; i<MAX_UARTS; i++)
+				FD_SET(g_reader[i].fd, &fds);
+			/* wait for data */
+			res = select(maxfd, &fds, NULL, NULL, &timeout);
+			/* retry on timeout */
+			if(res == 0)
+				continue;
+
+			/* process data for all readers */
+			for(i=0; i<MAX_UARTS; i++)
+			{
+				reader = &g_reader[i];
+
+				if(FD_ISSET(reader->fd, &fds))
+					do {
+						res = read(reader->fd, buffer, BUFLEN);
+						if(res>0)
+							port_reader(reader, buffer, res);
+					} while (res == BUFLEN);
+			}
+		}
 
 		while (1)
 		{
