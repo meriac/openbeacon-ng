@@ -38,6 +38,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+#include "crc32.h"
 #include "helper.h"
 
 #define MAX_PKT_SIZE 64
@@ -45,10 +47,13 @@
 #define BUFLEN 2048
 #define PORT 2342
 #define IP4_SIZE 4
-#define OPENBEACON_SIZE 16
+#define OPENBEACON_SIZE 32
 #define REFRESH_SERVER_IP_TIME (60*5)
+#define DUPLICATES_BACKLOG_SIZE 32
 
 static uint8_t buffer[BUFLEN];
+static uint32_t g_duplicate_backlog[DUPLICATES_BACKLOG_SIZE];
+static int g_duplicate_pos;
 
 typedef struct {
 	int fd;
@@ -62,7 +67,34 @@ TReader g_reader[MAX_UARTS];
 
 static void port_reader_pkt(TReader *reader)
 {
-	printf("rx_pkt[%i]=%i [%i]\n", reader->id, reader->pos, (int8_t)reader->buf[0]);
+	int i;
+	uint8_t duplicate;
+	uint32_t crc;
+
+	/* return invalid packet size */
+	if(reader->pos != (OPENBEACON_SIZE+1))
+		return;
+
+	/* calculate checkum to check for duplicates */
+	crc = crc32 (&reader->buf[1], OPENBEACON_SIZE);
+	/* check previous packets for duplicates */
+	duplicate = 0;
+	for (i = 0; i < DUPLICATES_BACKLOG_SIZE; i++)
+		if (g_duplicate_backlog[i] == crc)
+		{
+			duplicate = 1;
+			break;
+		}
+
+	/* remember unique CRC's */
+	if(!duplicate)
+	{
+		g_duplicate_backlog[g_duplicate_pos++] = crc;
+		if(g_duplicate_pos>=DUPLICATES_BACKLOG_SIZE)
+			g_duplicate_pos=0;
+
+		printf("rx_pkt[%i]=%i [%i]\n", reader->id, reader->pos, (int8_t)reader->buf[0]);
+	}
 }
 
 static void port_reader(TReader *reader, uint8_t *buffer, int len)
@@ -145,6 +177,10 @@ int main( int argc, const char* argv[] )
 		return 1;
 	}
 
+	/* reset variables */
+	g_duplicate_pos = 0;
+	memset(&g_duplicate_backlog, 0, sizeof(g_duplicate_backlog));
+
 	/* initialize descriptor list */
 	FD_ZERO(&fds);
 	memset(&g_reader, 0, sizeof(g_reader));
@@ -185,8 +221,34 @@ int main( int argc, const char* argv[] )
 		si_server.sin_family = AF_INET;
 		si_server.sin_port = htons (port);
 
+		/* loop over UART data */
 		while (1)
 		{
+			/* update server connection */
+			t = time (NULL);
+			if ((t - lasttime) > REFRESH_SERVER_IP_TIME)
+			{
+				if ((addr = gethostbyname (host)) == NULL)
+					fprintf (stderr, "error: can't resolve server name (%s)\n", host);
+				else
+					if ((addr->h_addrtype != AF_INET)
+						|| (addr->h_length != IP4_SIZE))
+						fprintf (stderr, "error: wrong address type\n");
+					else
+					{
+						memcpy (&si_server.sin_addr, addr->h_addr, addr->h_length);
+
+						if (server_ip != si_server.sin_addr.s_addr)
+						{
+							server_ip = si_server.sin_addr.s_addr;
+							fprintf (stderr, "refreshed server IP to [%s]\n",
+							inet_ntoa (si_server.sin_addr));
+						}
+
+						lasttime = t;
+					}
+			}
+
 			/* set timeout value within input loop */
 			timeout.tv_usec = 0; /* milliseconds */
 			timeout.tv_sec  = 1; /* seconds */
@@ -215,30 +277,6 @@ int main( int argc, const char* argv[] )
 
 		while (1)
 		{
-			t = time (NULL);
-			if ((t - lasttime) > REFRESH_SERVER_IP_TIME)
-			{
-				if ((addr = gethostbyname (host)) == NULL)
-					fprintf (stderr, "error: can't resolve server name (%s)\n", host);
-				else
-					if ((addr->h_addrtype != AF_INET)
-						|| (addr->h_length != IP4_SIZE))
-						fprintf (stderr, "error: wrong address type\n");
-					else
-					{
-						memcpy (&si_server.sin_addr, addr->h_addr, addr->h_length);
-
-						if (server_ip != si_server.sin_addr.s_addr)
-						{
-							server_ip = si_server.sin_addr.s_addr;
-							fprintf (stderr, "refreshed server IP to [%s]\n",
-							inet_ntoa (si_server.sin_addr));
-						}
-
-						lasttime = t;
-					}
-			}
-
 			if ((len = recvfrom (sock, &buffer, BUFLEN - IP4_SIZE, 0,
 				(sockaddr *) & si_other, &slen)) == -1)
 				return 4;
