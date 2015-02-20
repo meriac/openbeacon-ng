@@ -117,12 +117,9 @@ static int port_open(const char *device)
 	/* apply serial port settings */
 	tcgetattr(handle, &options);
 	cfmakeraw(&options);
-	options.c_cflag = B1000000 | CS8 | CLOCAL | CREAD;
-	options.c_iflag = IGNPAR;
-	options.c_oflag = 0;
-	options.c_lflag = 0;
-	tcflush(handle, TCIFLUSH);
+	cfsetspeed(&options, B1000000);
 	tcsetattr(handle, TCSANOW, &options);
+	tcflush(handle, TCIFLUSH);
 
 	return handle;
 }
