@@ -4,7 +4,7 @@ CFLAGS   := -O3 -W -Wall -Werror -I.
 LDLIBS   := 
 
 TARGET   := openbeacon_forwarder
-SOURCES  := $(TARGET).c helper.c crc32.c
+SOURCES  := $(TARGET).c helper.c crc32.c crc16.c
 OBJECTS  := $(patsubst %.c,%.o,$(SOURCES))
 
 all: $(TARGET)

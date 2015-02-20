@@ -39,6 +39,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "openbeacon.h"
+#include "crc16.h"
 #include "crc32.h"
 #include "helper.h"
 
@@ -47,13 +49,15 @@
 #define BUFLEN 2048
 #define PORT 2342
 #define IP4_SIZE 4
-#define OPENBEACON_SIZE 32
 #define REFRESH_SERVER_IP_TIME (60*5)
 #define DUPLICATES_BACKLOG_SIZE 32
 
 static uint8_t buffer[BUFLEN];
 static uint32_t g_duplicate_backlog[DUPLICATES_BACKLOG_SIZE];
 static int g_duplicate_pos;
+static uint32_t g_reader_sequence;
+static struct sockaddr_in g_si_server;
+static int g_socket;
 
 typedef struct {
 	int fd;
@@ -70,6 +74,8 @@ static void port_reader_pkt(TReader *reader)
 	int i;
 	uint8_t duplicate;
 	uint32_t crc;
+	time_t t;
+	TBeaconLogSighting bcn;
 
 	/* return invalid packet size */
 	if(reader->pos != (OPENBEACON_SIZE+1))
@@ -93,7 +99,29 @@ static void port_reader_pkt(TReader *reader)
 		if(g_duplicate_pos>=DUPLICATES_BACKLOG_SIZE)
 			g_duplicate_pos=0;
 
-		printf("rx_pkt[%i]=%i [%i]\n", reader->id, reader->pos, (int8_t)reader->buf[0]);
+		/* Setup log file header */
+		memset(&bcn, 0, sizeof(bcn));
+		bcn.hdr.protocol = BEACONLOG_SIGHTING;
+		bcn.hdr.reader_id = htons(1234);
+		bcn.hdr.size = htons(sizeof(bcn));
+
+		/* Setup log file header */
+		bcn.hdr.interface = reader->id;
+		memcpy(&bcn.log, &reader->buf[1], OPENBEACON_SIZE);
+
+		/* add time stamp & sequence number */
+		time(&t);
+		bcn.sequence = htonl (g_reader_sequence++);
+		bcn.timestamp = htonl (t);
+
+		/* post packet to log file queue with CRC */
+		crc = icrc16 ((u_int8_t *) & bcn.hdr.protocol,
+			sizeof (bcn) - sizeof (bcn.hdr.icrc16));
+		bcn.hdr.icrc16 = htons (crc);
+
+		/* transmit packet */
+		sendto (g_socket, &bcn, sizeof(bcn), 0,
+			(struct sockaddr *) &g_si_server, sizeof (g_si_server));
 	}
 }
 
@@ -160,11 +188,10 @@ static int port_open(const char *device)
 int main( int argc, const char* argv[] )
 {
 	const char* host;
-	struct sockaddr_in si_me, si_other, si_server;
+	struct sockaddr_in si_me;
 	struct hostent *addr;
-	int sock, len, port;
+	int port;
 	uint32_t server_ip;
-	socklen_t slen = sizeof (si_other);
 	time_t lasttime, t;
 	fd_set fds;
 	int i, maxfd, res;
@@ -179,7 +206,9 @@ int main( int argc, const char* argv[] )
 
 	/* reset variables */
 	g_duplicate_pos = 0;
+	g_reader_sequence = 0;
 	memset(&g_duplicate_backlog, 0, sizeof(g_duplicate_backlog));
+
 
 	/* initialize descriptor list */
 	FD_ZERO(&fds);
@@ -196,7 +225,7 @@ int main( int argc, const char* argv[] )
 	/* get host name */
 	host = argv[1];
 
-	if ((sock = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+	if ((g_socket = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 	{
 		fprintf(stderr, "error: can't create socket\n");
 		return 2;
@@ -208,7 +237,7 @@ int main( int argc, const char* argv[] )
 		si_me.sin_port = htons (port);
 		si_me.sin_addr.s_addr = htonl (INADDR_ANY);
 
-		if (bind (sock, (sockaddr *) & si_me, sizeof (si_me)) == -1)
+		if (bind (g_socket, (sockaddr *) & si_me, sizeof (si_me)) == -1)
 		{
 			fprintf (stderr, "error: can't bind to listening socket\n");
 			return 3;
@@ -217,9 +246,9 @@ int main( int argc, const char* argv[] )
 		lasttime = 0;
 		server_ip = 0;
 
-		memset (&si_server, 0, sizeof (si_server));
-		si_server.sin_family = AF_INET;
-		si_server.sin_port = htons (port);
+		memset (&g_si_server, 0, sizeof (g_si_server));
+		g_si_server.sin_family = AF_INET;
+		g_si_server.sin_port = htons (port);
 
 		/* loop over UART data */
 		while (1)
@@ -236,13 +265,13 @@ int main( int argc, const char* argv[] )
 						fprintf (stderr, "error: wrong address type\n");
 					else
 					{
-						memcpy (&si_server.sin_addr, addr->h_addr, addr->h_length);
+						memcpy (&g_si_server.sin_addr, addr->h_addr, addr->h_length);
 
-						if (server_ip != si_server.sin_addr.s_addr)
+						if (server_ip != g_si_server.sin_addr.s_addr)
 						{
-							server_ip = si_server.sin_addr.s_addr;
+							server_ip = g_si_server.sin_addr.s_addr;
 							fprintf (stderr, "refreshed server IP to [%s]\n",
-							inet_ntoa (si_server.sin_addr));
+							inet_ntoa (g_si_server.sin_addr));
 						}
 
 						lasttime = t;
@@ -272,20 +301,6 @@ int main( int argc, const char* argv[] )
 						if(res>0)
 							port_reader(reader, buffer, res);
 					} while (res == BUFLEN);
-			}
-		}
-
-		while (1)
-		{
-			if ((len = recvfrom (sock, &buffer, BUFLEN - IP4_SIZE, 0,
-				(sockaddr *) & si_other, &slen)) == -1)
-				return 4;
-
-			if (len == OPENBEACON_SIZE)
-			{
-				memcpy (&buffer[len], &si_other.sin_addr.s_addr, IP4_SIZE);
-				sendto (sock, &buffer, len + IP4_SIZE, 0,
-					(struct sockaddr *) &si_server, sizeof (si_server));
 			}
 		}
 	}
