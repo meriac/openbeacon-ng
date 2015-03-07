@@ -18,7 +18,7 @@ endif
 
 DEBUG   :=-O3
 CXXOPT  :=$(DEBUG)
-INCLUDE :=-I../../firmware/nRF51/tag-marker/inc/
+INCLUDE :=-I../../firmware/nRF51/tag-power/inc/
 CXXFLAGS:=-Werror -Wall -D_REENTRANT -DPROGRAM_VERSION=\"$(PROGRAM_VERSION)\" -DPROGRAM_NAME=\"$(TARGET)\" $(ENCRYPTION_KEYS) $(INCLUDE)
 LDFLAGS :=$(LIBS)
 OBJS    :=$(SOURCES:%.cpp=%.o)
