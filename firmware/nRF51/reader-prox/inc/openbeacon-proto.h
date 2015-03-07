@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - OnAir protocol specification and definition
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2013-2015 Milosch Meriac <meriac@openbeacon.org>
  *
  ****************************************************************************
 

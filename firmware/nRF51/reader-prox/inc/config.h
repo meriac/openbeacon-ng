@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - nRF51 board config files
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2013-2015 Milosch Meriac <meriac@openbeacon.org>
  *
  ***************************************************************
 
