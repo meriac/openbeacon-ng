@@ -55,6 +55,8 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
+	int i;
+	uint8_t *p, data;
 	TBeaconBuffer pkt;
 	uint32_t tag_id;
 
@@ -93,8 +95,20 @@ void main_entry(void)
 		{
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 
-			debug_printf("\n\rrssi=%i\n\r", pkt.rssi);
-			hex_dump(pkt.buf, 0, sizeof(pkt.buf));
+			/* output packet, escape 0xFF's by appending 0x01's */
+			p = (uint8_t*)&pkt;
+			for(i=0; i<(int)sizeof(pkt); i++)
+			{
+				data = *p++;
+				default_putchar(data);
+				/* if data is 0xFF, emit control character */
+				if(data == 0xFF)
+					default_putchar(0x00);
+			}
+
+			/* issue frame termination indicator */
+			default_putchar(0xFF);
+			default_putchar(0x01);
 
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
 		}
