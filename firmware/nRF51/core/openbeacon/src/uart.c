@@ -27,6 +27,10 @@
 
 #ifdef  CONFIG_UART_BAUDRATE
 
+#ifndef CONFIG_UART_FORCE_POWERED
+#define CONFIG_UART_FORCE_POWERED 0
+#endif/*CONFIG_UART_FORCE_POWERED*/
+
 static uint8_t g_uart_buffer[CONFIG_UART_BUFFER];
 static uint16_t g_uart_buffer_head, g_uart_buffer_tail;
 static volatile uint16_t g_uart_buffer_count;
@@ -81,7 +85,7 @@ void uart_init(void)
 	NRF_UART0->TASKS_STARTRX = 1;
 	NRF_UART0->EVENTS_RXDRDY = 0;
 #else
-	NRF_UART0->ENABLE = 0;
+	NRF_UART0->ENABLE = CONFIG_UART_FORCE_POWERED ? (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos) : 0;
 #endif/*CONFIG_UART_RXD_PIN*/
 }
 
@@ -134,7 +138,9 @@ void UART0_IRQ_Handler(void)
 		if(!g_uart_buffer_count)
 		{
 			NRF_UART0->TASKS_STOPTX = 1;
+#if !CONFIG_UART_FORCE_POWERED
 			NRF_UART0->ENABLE = 0;
+#endif
 		}
 		else
 		{

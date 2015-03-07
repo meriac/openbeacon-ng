@@ -93,7 +93,7 @@ void main_entry(void)
 		{
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 
-			debug_printf("g_pkt_count=%i ", radio_packet_count());
+			debug_printf("rssi=%i ", buf.rssi);
 			hex_dump((uint8_t*)&buf.pkt, 0, sizeof(buf.pkt));
 
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
