@@ -5,8 +5,9 @@ OBJCOPY=$(CROSS)objcopy
 OBJDUMP=$(CROSS)objdump
 AR=$(CROSS)ar
 LDSCRIPT=$(CORE)linker/$(CPU).ld
-SEGGER=/opt/SEGGER/JLink
-JLINK=$(SEGGER)/JLinkExe
+SEGGER=
+JLINK=$(SEGGER)JLinkExe
+JLINK_OPT=-if swd -device $(CPU)
 
 # determine program version
 PROGRAM_VERSION:=$(shell git describe --tags --abbrev=4 --dirty 2>/dev/null | sed s/^v//)
@@ -122,10 +123,10 @@ $(ARM_OBJ_S) : %.o : %.s
 	$(CC) -c $(CFLAGS) $< -o $@
 
 flash: $(TARGET).bin
-	@echo "$$TARGET_FLASH" | $(JLINK)
+	@echo "$$TARGET_FLASH" | $(JLINK) $(JLINK_OPT)
 
 erase:
-	@echo "$$TARGET_ERASE" | $(JLINK)
+	@echo "$$TARGET_ERASE" | $(JLINK) $(JLINK_OPT)
 
 version:
 	@echo "$(TARGET) version $(PROGRAM_VERSION)"
