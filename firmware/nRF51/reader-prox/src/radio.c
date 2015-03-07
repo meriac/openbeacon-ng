@@ -59,21 +59,22 @@ void RADIO_IRQ_Handler(void)
 
 	if(NRF_RADIO->EVENTS_PAYLOAD)
 	{
-		/* acknowledge event */
-		NRF_RADIO->EVENTS_PAYLOAD = 0;
-
 		/* set LED on every RX */
 		if((NRF_RADIO->CRCSTATUS == 1) && (g_pkt_count < RADIO_MAX_PKT_BUFFERS))
 		{
 			pkt = &g_pkt[g_pkt_pos_wr++];
 			if(g_pkt_pos_wr>=RADIO_MAX_PKT_BUFFERS)
 				g_pkt_pos_wr = 0;
+
 			/* set PACKETPTR to next slot */
 			NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt[g_pkt_pos_wr].buf;
 
 			pkt->rssi = g_rssi;
 			g_pkt_count++;
 		}
+
+		/* acknowledge event */
+		NRF_RADIO->EVENTS_PAYLOAD = 0;
 
 		/* reset RSSI */
 		g_rssi = 0;
@@ -155,6 +156,9 @@ void radio_init(void)
 	NRF_RADIO->CRCCNF = (RADIO_CRCCNF_LEN_One << RADIO_CRCCNF_LEN_Pos);
 	NRF_RADIO->CRCINIT = 0xFFUL;
 	NRF_RADIO->CRCPOLY = 0x107UL;
+
+	/* set PACKETPTR to first slot */
+	NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt[g_pkt_pos_wr].buf;
 
 	NRF_RADIO->SHORTS = (
 		(RADIO_SHORTS_READY_START_Enabled       << RADIO_SHORTS_READY_START_Pos)       |
