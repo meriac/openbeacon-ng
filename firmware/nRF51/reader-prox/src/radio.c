@@ -28,7 +28,6 @@
 #include <timer.h>
 
 #define NRF_MAC_SIZE 5UL
-#define NRF_TRACKER_SIZE sizeof(TBeaconNgProx)
 
 #define RADIO_TRACKER_TXADDRESS 0
 #define RADIO_TRACKER_TXPOWER (RADIO_TXPOWER_TXPOWER_Neg16dBm << RADIO_TXPOWER_TXPOWER_Pos)
@@ -70,7 +69,7 @@ void RADIO_IRQ_Handler(void)
 			if(g_pkt_pos_wr>=RADIO_MAX_PKT_BUFFERS)
 				g_pkt_pos_wr = 0;
 			/* set PACKETPTR to next slot */
-			NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt[g_pkt_pos_wr].pkt;
+			NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt[g_pkt_pos_wr].buf;
 
 			pkt->rssi = g_rssi;
 			g_pkt_count++;
@@ -109,8 +108,6 @@ BOOL radio_rx(TBeaconBuffer *buf)
 			g_pkt_pos_rd = 0;
 
 		memcpy(buf, src, sizeof(*buf));
-		/*FIXME: remove */
-//		memset(src, 0, sizeof(*src));
 
 		__disable_irq();
 		g_pkt_count--;
@@ -144,14 +141,15 @@ void radio_init(void)
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_2Mbit << RADIO_MODE_MODE_Pos;
 
 	/* reconfigure radio for tracker TX */
-	NRF_RADIO->FREQUENCY = CONFIG_TRACKER_CHANNEL;
+	NRF_RADIO->FREQUENCY = CONFIG_RADIO_CHANNEL;
 	NRF_RADIO->TXPOWER = RADIO_TRACKER_TXPOWER;
 	NRF_RADIO->TXADDRESS = RADIO_TRACKER_TXADDRESS;
 	NRF_RADIO->PCNF1 = RADIO_TRACKER_PCNF1;
 
 	/* generic radio setup */
-	NRF_RADIO->PREFIX0 = 0x80UL;
-	NRF_RADIO->BASE0 = 0x40C04080UL;
+	NRF_RADIO->PREFIX0 = NRF_TRACKER_PREFIX;
+	NRF_RADIO->BASE0 = NRF_TRACKER_ADDRESS;
+
 	NRF_RADIO->RXADDRESSES = 1;
 	NRF_RADIO->PCNF0 = 0x0;
 	NRF_RADIO->CRCCNF = (RADIO_CRCCNF_LEN_One << RADIO_CRCCNF_LEN_Pos);
@@ -184,4 +182,7 @@ void radio_init(void)
 	/* start HF crystal oscillator */
 	NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 	NRF_CLOCK->TASKS_HFCLKSTART = 1;
+
+	/* start DC-DC converter */
+	NRF_POWER->DCDCEN = (POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos);
 }

@@ -29,14 +29,21 @@
 #define RADIO_MAX_PKT_BUFFERS 32
 #endif/*RADIO_MAX_PKT_BUFFERS*/
 
-#define RADIO_MAX_PACKET_SIZE 64
-
-#include <openbeacon-proto.h>
+#ifdef  RADIO_OLD_FORMAT
+#  define NRF_TRACKER_SIZE 16
+#  define NRF_TRACKER_PREFIX  0x80UL
+#  define NRF_TRACKER_ADDRESS 0x40C04080UL
+#else
+#  define NRF_TRACKER_SIZE 32
+#  define NRF_TRACKER_PREFIX 0x46UL //NRF_RADIO->PREFIX0 = 0x46D7UL
+//#  define NRF_TRACKER_ADDRESS 0xEA8AF0B1UL
+#  define NRF_TRACKER_ADDRESS 0xCC864569UL
+#endif/*RADIO_OLD_FORMAT*/
 
 typedef struct
 {
 	int8_t rssi;
-	TBeaconNgProx pkt;
+	uint8_t buf[NRF_TRACKER_SIZE];
 } TBeaconBuffer;
 
 extern void radio_init(void);
