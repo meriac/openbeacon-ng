@@ -119,6 +119,7 @@ void RTC0_IRQ_Handler(void)
 		NRF_RTC0->EVENTS_COMPARE[1] = 0;
 		/* re-trigger LED timer */
 		NRF_RTC0->CC[1] += MILLISECONDS(5000);
+		/* blink for 2ms */
 		NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + MILLISECONDS(2);
 		/* enabled LED */
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
@@ -197,7 +198,7 @@ static void radio_start_aes(void)
 	/* progress to next packet:
 	 * ensure that every packet is transmitted
 	 * g_iteration times */
-	g_prng_block.in[0] = (g_counter / 16) + g_iteration;
+	g_prng_block.in[0] = (g_counter / 64) + g_iteration;
 
 	if(g_iteration<TAG_COUNT)
 	{
