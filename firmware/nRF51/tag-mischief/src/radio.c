@@ -87,14 +87,14 @@ static const TMapping g_advertisment[] = {
 
 void RTC0_IRQ_Handler(void)
 {
-	/* run every second */
+	/* run five times per second */
 	if(NRF_RTC0->EVENTS_COMPARE[0])
 	{
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[0] = 0;
 
 		/* re-trigger timer */
-		NRF_RTC0->CC[0]+= MILLISECONDS(500);
+		NRF_RTC0->CC[0]+= MILLISECONDS(200);
 
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
@@ -112,6 +112,26 @@ void RTC0_IRQ_Handler(void)
 			);
 		}
 	}
+
+	if(NRF_RTC0->EVENTS_COMPARE[1])
+	{
+		/* acknowledge event */
+		NRF_RTC0->EVENTS_COMPARE[1] = 0;
+		/* re-trigger LED timer */
+		NRF_RTC0->CC[1] += MILLISECONDS(5000);
+		NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + MILLISECONDS(2);
+		/* enabled LED */
+		nrf_gpio_pin_set(CONFIG_LED_PIN);
+	}
+
+	if(NRF_RTC0->EVENTS_COMPARE[2])
+	{
+		/* acknowledge event */
+		NRF_RTC0->EVENTS_COMPARE[2] = 0;
+		/* reset LED */
+		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+	}
+
 }
 
 static void radio_send_advertisment_repeat(void)
@@ -197,8 +217,6 @@ static void radio_start_aes(void)
 		NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 		/* disable DC-DC converter */
 		NRF_POWER->DCDCEN = 0;
-
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	}
 }
 
@@ -209,8 +227,6 @@ void POWER_CLOCK_IRQ_Handler(void)
 	{
 		/* acknowledge event */
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-
-		nrf_gpio_pin_set(CONFIG_LED_PIN);
 
 		/* start first PRNG AES */
 		radio_start_aes();
@@ -300,8 +316,12 @@ void radio_init(uint32_t uid)
 	NRF_RTC0->COUNTER = 0;
 	NRF_RTC0->PRESCALER = 0;
 	NRF_RTC0->CC[0] = LF_FREQUENCY;
+	NRF_RTC0->CC[1] = LF_FREQUENCY*2;
+	NRF_RTC0->CC[2] = 0;
 	NRF_RTC0->INTENSET = (
-		(RTC_INTENSET_COMPARE0_Enabled   << RTC_INTENSET_COMPARE0_Pos)
+		(RTC_INTENSET_COMPARE0_Enabled   << RTC_INTENSET_COMPARE0_Pos) |
+		(RTC_INTENSET_COMPARE1_Enabled   << RTC_INTENSET_COMPARE1_Pos) |
+		(RTC_INTENSET_COMPARE2_Enabled   << RTC_INTENSET_COMPARE2_Pos)
 	);
 	NVIC_SetPriority(RTC0_IRQn, IRQ_PRIORITY_RTC0);
 	NVIC_EnableIRQ(RTC0_IRQn);
