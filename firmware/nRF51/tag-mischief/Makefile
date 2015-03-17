@@ -16,7 +16,7 @@ APP_SRC= \
   src/main.c
 
 APP_SRC+=$(IMAGES_C)
-
+DB_FILE=inc/db.h
 all: $(TARGET).bin
 
 publish: clean $(TARGET).bin
@@ -25,7 +25,10 @@ publish: clean $(TARGET).bin
 app_clean:
 	find src -name '*.o' -exec rm \{\} \;
 
+$(DB_FILE): /usr/share/dict/words
+	./db-update.php $^ > $@
+
 clean_all: clean
-	rm -f README $(CUSTOM_KEY)
+	rm -f README $(CUSTOM_KEY) $(DB_FILE)
 
 include ../core/Makefile.rules
