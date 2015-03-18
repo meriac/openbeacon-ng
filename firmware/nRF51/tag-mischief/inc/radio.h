@@ -26,5 +26,6 @@
 #define __RADIO_H__
 
 extern void radio_init(uint32_t uid);
+extern volatile uint32_t g_counter;
 
 #endif/*__RADIO_H__*/

@@ -36,15 +36,17 @@
 #define BLE_PREFIX_SIZE 9
 #define BLE_POSTFIX (BLE_PREFIX_SIZE+2)
 
-#define TAG_COUNT 8
+#define TAG_COUNT 10
 
 typedef struct {
 	uint8_t channel;
 	uint8_t frequency;
 } TMapping;
 
-static int g_advertisment_index;
-static volatile uint32_t g_iteration, g_counter;
+static volatile int g_advertisment_index;
+static volatile uint32_t g_iteration;
+volatile uint32_t  g_counter;
+
 static uint32_t g_uid;
 static uint8_t g_pkt_buffer[64];
 
@@ -60,16 +62,11 @@ void RTC0_IRQ_Handler(void)
 	/* run five times per second */
 	if(NRF_RTC0->EVENTS_COMPARE[0])
 	{
-		/* blink every 4 seconds */
-		g_counter++;
-		if((g_counter & 0xF) == 0)
-			nrf_gpio_pin_set(CONFIG_LED_PIN);
-
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[0] = 0;
 
 		/* re-trigger timer */
-		NRF_RTC0->CC[0]+= MILLISECONDS(250);
+		NRF_RTC0->CC[0] = NRF_RTC0->COUNTER + MILLISECONDS(200);
 
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
@@ -113,8 +110,6 @@ static void radio_send_advertisment(void)
 	uint8_t pos;
 	uint32_t counter, seed1, seed2;
 
-	memset(g_pkt_buffer, 0, 32);
-
 	counter = g_iteration + g_counter;
 	seed1 = crc32(&counter, sizeof(counter));
 	seed2 = crc32(&seed1, sizeof(seed1));
@@ -133,11 +128,14 @@ static void radio_send_advertisment(void)
 
 	/* append name */
 	pos = name( 25, (char*)&g_pkt_buffer[BLE_POSTFIX+2], seed1 );
+
+	/* calculate total packet size */
+	g_pkt_buffer[1] = BLE_POSTFIX + pos;
+
 	g_pkt_buffer[BLE_POSTFIX]   = pos+1;
 	g_pkt_buffer[BLE_POSTFIX+1] = 0x08;
 
-	/* calculate total packet size */
-	g_pkt_buffer[1] = BLE_POSTFIX + g_pkt_buffer[BLE_POSTFIX];
+//	hex_dump(g_pkt_buffer, 0, g_pkt_buffer[1]+2);
 
 	/* send first packet */
 	g_advertisment_index = 0;
@@ -152,7 +150,7 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		/* send first packet */
 		radio_send_advertisment();
 	}
 }
@@ -166,11 +164,9 @@ void RADIO_IRQ_Handler(void)
 		NRF_RADIO->EVENTS_DISABLED = 0;
 
 		/* switch to next channel */
+		g_advertisment_index++;
 		if(g_advertisment_index<ADVERTISMENT_CHANNELS)
-		{
 			radio_send_advertisment_repeat();
-			g_advertisment_index++;
-		}
 		else
 		{
 			g_advertisment_index = 0;
@@ -181,12 +177,12 @@ void RADIO_IRQ_Handler(void)
 			if(g_iteration<TAG_COUNT)
 			{
 				g_iteration++;
-				/* prepare packet */
+
 				radio_send_advertisment();
 			}
 			else
 			{
-				g_iteration=0;
+				g_iteration = 0;
 
 				/* stop HF clock */
 				NRF_CLOCK->TASKS_HFCLKSTOP = 1;
@@ -195,15 +191,19 @@ void RADIO_IRQ_Handler(void)
 			}
 		}
 	}
+
+	/* acknowledge event */
+	if(NRF_RADIO->EVENTS_END)
+		NRF_RADIO->EVENTS_END = 0;
 }
 
 void radio_init(uint32_t uid)
 {
 	/* remember uid */
-	g_uid = uid;
+	g_uid = g_counter = uid;
 
 	/* reset sequence counter */
-	g_iteration = g_counter = 0;
+	g_iteration = 0;
 
 	/* initialize ADC battery voltage measurements */
 	adc_init();
@@ -232,7 +232,8 @@ void radio_init(uint32_t uid)
 		(RADIO_SHORTS_END_DISABLE_Enabled       << RADIO_SHORTS_END_DISABLE_Pos)
 	);
 	NRF_RADIO->INTENSET = (
-		(RADIO_INTENSET_DISABLED_Enabled        << RADIO_INTENSET_DISABLED_Pos)
+		(RADIO_INTENSET_DISABLED_Enabled        << RADIO_INTENSET_DISABLED_Pos) |
+		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)
 	);
 	NVIC_SetPriority(RADIO_IRQn, IRQ_PRIORITY_RADIO);
 	NVIC_EnableIRQ(RADIO_IRQn);
