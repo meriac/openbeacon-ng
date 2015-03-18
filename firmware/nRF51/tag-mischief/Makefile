@@ -21,7 +21,7 @@ DB_FILE=inc/db.h
 all: $(TARGET).bin
 
 publish: clean $(TARGET).bin
-	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
+	scp -P30303 $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 
 app_clean:
 	find src -name '*.o' -exec rm \{\} \;
