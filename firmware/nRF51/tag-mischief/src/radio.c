@@ -36,7 +36,7 @@
 #define BLE_PREFIX_SIZE 9
 #define BLE_POSTFIX (BLE_PREFIX_SIZE+2)
 
-#define TAG_COUNT 10
+#define TAG_COUNT 23
 
 typedef struct {
 	uint8_t channel;
