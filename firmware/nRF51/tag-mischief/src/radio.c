@@ -27,6 +27,7 @@
 #include <radio.h>
 #include <adc.h>
 #include <timer.h>
+#include <name.h>
 
 /* don't start DC/DC converter for voltages below 2.3V */
 #define NRF_DCDC_STARTUP_VOLTAGE 23
@@ -35,17 +36,7 @@
 #define BLE_PREFIX_SIZE 9
 #define BLE_POSTFIX (BLE_PREFIX_SIZE+2)
 
-#define TAG_COUNT 4
-
-#define AES_BLOCK_SIZE 16
-
-typedef uint8_t TAES[AES_BLOCK_SIZE];
-
-typedef struct {
-	TAES key;
-	uint32_t in[4];
-	TAES out;
-} PACKED TAESEngine;
+#define TAG_COUNT 8
 
 typedef struct {
 	uint8_t channel;
@@ -53,29 +44,8 @@ typedef struct {
 } TMapping;
 
 static int g_advertisment_index;
-static uint32_t g_uid, g_iteration, g_counter;
-static TAESEngine g_prng_block;
-
-static const TAES g_default_key = {
-	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-	0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
-};
-
-static const uint8_t g_advertisment_pdu[] = {
-	/* Our name */
-	15, 0x08, 'O','p','e','n','B','e','a','c','o','n',' ','T','a','g'
-};
-
-static const uint8_t g_ibeacon_pkt[] = {
-	/* iBeacon packet */
-	  26, 0xFF, 0x4C, 0x00, 0x02, 0x15,
-	      0x3B, 0x0C, 0x44, 0xC6, 0x55, 0xA8, 0xF9, 0x55,
-	      0x32, 0xEB, 0x6A, 0xB2, 0x65, 0x42, 0xFE, 0x1A,
-	      0x00, 0x00,
-	      0x00, 0x00,
-	      0xC5
-};
-
+static volatile uint32_t g_iteration, g_counter;
+static uint32_t g_uid;
 static uint8_t g_pkt_buffer[64];
 
 static const TMapping g_advertisment[] = {
@@ -90,11 +60,16 @@ void RTC0_IRQ_Handler(void)
 	/* run five times per second */
 	if(NRF_RTC0->EVENTS_COMPARE[0])
 	{
+		/* blink every 4 seconds */
+		g_counter++;
+		if((g_counter & 0xF) == 0)
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[0] = 0;
 
 		/* re-trigger timer */
-		NRF_RTC0->CC[0]+= MILLISECONDS(200);
+		NRF_RTC0->CC[0]+= MILLISECONDS(250);
 
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
@@ -112,27 +87,6 @@ void RTC0_IRQ_Handler(void)
 			);
 		}
 	}
-
-	if(NRF_RTC0->EVENTS_COMPARE[1])
-	{
-		/* acknowledge event */
-		NRF_RTC0->EVENTS_COMPARE[1] = 0;
-		/* re-trigger LED timer */
-		NRF_RTC0->CC[1] += MILLISECONDS(5000);
-		/* blink for 2ms */
-		NRF_RTC0->CC[2] = NRF_RTC0->COUNTER + MILLISECONDS(2);
-		/* enabled LED */
-		nrf_gpio_pin_set(CONFIG_LED_PIN);
-	}
-
-	if(NRF_RTC0->EVENTS_COMPARE[2])
-	{
-		/* acknowledge event */
-		NRF_RTC0->EVENTS_COMPARE[2] = 0;
-		/* reset LED */
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-	}
-
 }
 
 static void radio_send_advertisment_repeat(void)
@@ -156,17 +110,21 @@ static void radio_send_advertisment_repeat(void)
 
 static void radio_send_advertisment(void)
 {
-	static const uint8_t advertisment_pdu[] = {
-		/* Our name */
-		15, 0x08, 'O','p','e','n','B','e','a','c','o','n',' ','T','a','g'
-	};
+	uint8_t pos;
+	uint32_t counter, seed1, seed2;
+
+	memset(g_pkt_buffer, 0, 32);
+
+	counter = g_iteration + g_counter;
+	seed1 = crc32(&counter, sizeof(counter));
+	seed2 = crc32(&seed1, sizeof(seed1));
 
 	/* BLE header */
 	g_pkt_buffer[0] = 0x42;
-	g_pkt_buffer[1]= BLE_PREFIX_SIZE+sizeof(advertisment_pdu);
 
 	/* add MAC address */
-	memcpy(&g_pkt_buffer[2], &g_prng_block.out, 6);
+	memcpy(&g_pkt_buffer[2], &seed1, 4);
+	memcpy(&g_pkt_buffer[6], &seed2, 2);
 
 	/* No BT/EDR - Tx only */
 	g_pkt_buffer[8] = 2;
@@ -174,51 +132,16 @@ static void radio_send_advertisment(void)
 	g_pkt_buffer[10]= 0x04;
 
 	/* append name */
-	memcpy(&g_pkt_buffer[BLE_POSTFIX], &advertisment_pdu, sizeof(advertisment_pdu));
+	pos = name( 25, (char*)&g_pkt_buffer[BLE_POSTFIX+2], seed1 );
+	g_pkt_buffer[BLE_POSTFIX]   = pos+1;
+	g_pkt_buffer[BLE_POSTFIX+1] = 0x08;
+
+	/* calculate total packet size */
+	g_pkt_buffer[1] = BLE_POSTFIX + g_pkt_buffer[BLE_POSTFIX];
 
 	/* send first packet */
 	g_advertisment_index = 0;
 	radio_send_advertisment_repeat();
-}
-
-void ECB_IRQ_Handler(void)
-{
-	if(NRF_ECB->EVENTS_ENDECB)
-	{
-		/* acknowledge event */
-		NRF_ECB->EVENTS_ENDECB = 0;
-
-		/* prepare packet */
-		radio_send_advertisment();
-	}
-}
-
-static void radio_start_aes(void)
-{
-	/* progress to next packet:
-	 * ensure that every packet is transmitted
-	 * g_iteration times */
-	g_prng_block.in[0] = (g_counter / 64) + g_iteration;
-
-	if(g_iteration<TAG_COUNT)
-	{
-		g_iteration++;
-
-		/* calculate next PRNG block */
-		NRF_ECB->EVENTS_ENDECB = 0;
-		NRF_ECB->ECBDATAPTR = (uint32_t)&g_prng_block;
-		NRF_ECB->TASKS_STARTECB = 1;
-	}
-	else
-	{
-		g_iteration=0;
-		g_counter++;
-
-		/* stop HF clock */
-		NRF_CLOCK->TASKS_HFCLKSTOP = 1;
-		/* disable DC-DC converter */
-		NRF_POWER->DCDCEN = 0;
-	}
 }
 
 void POWER_CLOCK_IRQ_Handler(void)
@@ -229,8 +152,8 @@ void POWER_CLOCK_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
-		/* start first PRNG AES */
-		radio_start_aes();
+		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		radio_send_advertisment();
 	}
 }
 
@@ -243,15 +166,33 @@ void RADIO_IRQ_Handler(void)
 		NRF_RADIO->EVENTS_DISABLED = 0;
 
 		/* switch to next channel */
-		g_advertisment_index++;
 		if(g_advertisment_index<ADVERTISMENT_CHANNELS)
+		{
 			radio_send_advertisment_repeat();
+			g_advertisment_index++;
+		}
 		else
 		{
 			g_advertisment_index = 0;
 
-			/* start next PRNG AES */
-			radio_start_aes();
+			/* progress to next packet:
+			 * ensure that every packet is transmitted
+			 * g_iteration times */
+			if(g_iteration<TAG_COUNT)
+			{
+				g_iteration++;
+				/* prepare packet */
+				radio_send_advertisment();
+			}
+			else
+			{
+				g_iteration=0;
+
+				/* stop HF clock */
+				NRF_CLOCK->TASKS_HFCLKSTOP = 1;
+				/* disable DC-DC converter */
+				NRF_POWER->DCDCEN = 0;
+			}
 		}
 	}
 }
@@ -262,8 +203,6 @@ void radio_init(uint32_t uid)
 	g_uid = uid;
 
 	/* reset sequence counter */
-	memcpy(&g_prng_block.key, &g_default_key, sizeof(g_prng_block.key));
-	memset(&g_prng_block.in, 0, sizeof(g_prng_block.in));
 	g_iteration = g_counter = 0;
 
 	/* initialize ADC battery voltage measurements */
@@ -305,24 +244,13 @@ void radio_init(uint32_t uid)
 	NVIC_SetPriority(POWER_CLOCK_IRQn, IRQ_PRIORITY_POWER_CLOCK);
 	NVIC_EnableIRQ(POWER_CLOCK_IRQn);
 
-	/* setup AES PRNG */
-	NRF_ECB->TASKS_STOPECB = 1;
-	NRF_ECB->INTENSET =
-		ECB_INTENSET_ENDECB_Enabled   << ECB_INTENSET_ENDECB_Pos;
-	NVIC_SetPriority(ECB_IRQn, IRQ_PRIORITY_AES);
-	NVIC_EnableIRQ(ECB_IRQn);
-
 	/* setup radio timer */
 	NRF_RTC0->TASKS_STOP = 1;
 	NRF_RTC0->COUNTER = 0;
 	NRF_RTC0->PRESCALER = 0;
 	NRF_RTC0->CC[0] = LF_FREQUENCY;
-	NRF_RTC0->CC[1] = LF_FREQUENCY*2;
-	NRF_RTC0->CC[2] = 0;
 	NRF_RTC0->INTENSET = (
-		(RTC_INTENSET_COMPARE0_Enabled   << RTC_INTENSET_COMPARE0_Pos) |
-		(RTC_INTENSET_COMPARE1_Enabled   << RTC_INTENSET_COMPARE1_Pos) |
-		(RTC_INTENSET_COMPARE2_Enabled   << RTC_INTENSET_COMPARE2_Pos)
+		(RTC_INTENSET_COMPARE0_Enabled   << RTC_INTENSET_COMPARE0_Pos)
 	);
 	NVIC_SetPriority(RTC0_IRQn, IRQ_PRIORITY_RTC0);
 	NVIC_EnableIRQ(RTC0_IRQn);

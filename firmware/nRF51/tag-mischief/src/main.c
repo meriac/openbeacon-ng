@@ -28,6 +28,7 @@
 #include <flash.h>
 #include <radio.h>
 #include <timer.h>
+#include <crc32.h>
 
 static int8_t g_tag_angle;
 
@@ -93,6 +94,7 @@ void main_entry(void)
 	/* enter main loop */
 	blink = 0;
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
+
 	while(TRUE)
 	{
 		/* get tag angle once per second */
