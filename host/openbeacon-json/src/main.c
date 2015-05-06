@@ -109,6 +109,21 @@ microtime (void)
 
 
 void
+print_error(FILE *out, double timestamp, struct sockaddr_in *reader_addr, char *error_msg, uint32_t error_code)
+{
+	fprintf(out, "{");
+
+	fprintf(out, "\"reader\": {\"ip\":\"%s\",\"t\":%d},",
+		inet_ntoa(reader_addr->sin_addr),
+		(uint32_t) timestamp);
+
+	fprintf(out, "\"error\":\"%s (%d)\"}", error_msg, error_code);
+
+	fprintf(out, "}\n\r");
+}
+
+
+void
 print_packet(FILE *out, double timestamp, struct sockaddr_in *reader_addr, const TBeaconNgTracker *track)
 {
 	uint32_t t;
@@ -185,27 +200,31 @@ parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *dat
 	pkt = (const TBeaconLogSighting*)data;
 	if(pkt->hdr.protocol != BEACONLOG_SIGHTING)
 	{
-		fprintf(stderr, " Invalid protocol [0x%02X]\n\r", pkt->hdr.protocol);
+		print_error(stdout, timestamp, reader_addr, "Invalid protocol", pkt->hdr.protocol);
+		//fprintf(stderr, " Invalid protocol [0x%02X]\n\r", pkt->hdr.protocol);
 		return len;
 	}
 
 	t = ntohs(pkt->hdr.size);
 	if(ntohs(t != sizeof(TBeaconLogSighting)))
 	{
-		fprintf(stderr, " Invalid packet size (%u)\n\r", t);
+		print_error(stdout, timestamp, reader_addr, "Invalid packet size", t);
+		//fprintf(stderr, " Invalid packet size (%u)\n\r", t);
 		return len;
 	}
 	
 	if(ntohs(pkt->hdr.icrc16) != icrc16(&pkt->hdr.protocol, (sizeof(TBeaconLogSighting)-sizeof(pkt->hdr.icrc16))))
 	{
-		fprintf(stderr, " Invalid packet CRC\n\r");
+		print_error(stdout, timestamp, reader_addr, "Invalid packet CRC", 0);
+		//fprintf(stderr, " Invalid packet CRC\n\r");
 		return len;
 	}
 
 	/* decrypt valid packet */
 	if((t = aes_decr(&pkt->log, &track, sizeof(track), CONFIG_SIGNATURE_SIZE))!=0)
 	{
-		fprintf(stderr, " Failed decrypting packet with error [%i]\n\r", t);
+		print_error(stdout, timestamp, reader_addr, "Packet decryption error", t);
+		//fprintf(stderr, " Failed decrypting packet with error [%i]\n\r", t);
 		return len;
 	}
 
@@ -213,7 +232,8 @@ parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *dat
 	if(!((track.proto == RFBPROTO_BEACON_NG_SIGHTING)||
 		(track.proto == RFBPROTO_BEACON_NG_STATUS)))
 	{
-		fprintf(stderr, " Unknown protocol [%i]\n\r", track.proto);
+		print_error(stdout, timestamp, reader_addr, "Unkown packet protocol", track.proto);
+		//fprintf(stderr, " Unknown protocol [%i]\n\r", track.proto);
 		return len;
 	}
 
