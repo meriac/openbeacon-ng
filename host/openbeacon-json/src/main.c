@@ -117,7 +117,7 @@ print_error(FILE *out, double timestamp, struct sockaddr_in *reader_addr, char *
 		inet_ntoa(reader_addr->sin_addr),
 		(uint32_t) timestamp);
 
-	fprintf(out, "\"error\":\"%s (%d)\"}", error_msg, error_code);
+	fprintf(out, "\"error\": \"%s (%d)\"", error_msg, error_code);
 
 	fprintf(out, "}\n\r");
 }
