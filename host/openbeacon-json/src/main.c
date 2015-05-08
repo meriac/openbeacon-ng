@@ -120,6 +120,8 @@ print_error(FILE *out, double timestamp, struct sockaddr_in *reader_addr, char *
 	fprintf(out, "\"error\": \"%s (%d)\"", error_msg, error_code);
 
 	fprintf(out, "}\n\r");
+
+	fflush(out);
 }
 
 
@@ -184,6 +186,8 @@ print_packet(FILE *out, double timestamp, struct sockaddr_in *reader_addr, const
 	}
 
 	fprintf(out, "}}\n\r");
+
+	fflush(out);
 }
 
 
