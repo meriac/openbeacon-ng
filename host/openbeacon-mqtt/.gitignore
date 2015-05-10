@@ -2,7 +2,7 @@
 .cproject
 .project
 .settings
-openbeacon-json
+openbeacon-mqtt
 src/custom-encryption-keys.h
 callgrind.out.*
 *.o
