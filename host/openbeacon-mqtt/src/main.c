@@ -132,7 +132,7 @@ send_error(double timestamp, struct sockaddr_in *reader_addr, char *error_msg, u
 
 
 void
-send_packet(double timestamp, struct sockaddr_in *reader_addr, const uint8_t *signature, const TBeaconNgTracker *track)
+send_packet(double timestamp, struct sockaddr_in *reader_addr, uint16_t reader_id, const uint8_t *signature, const TBeaconNgTracker *track)
 {
 	int i = 0, j;
 	uint32_t t;
@@ -140,8 +140,9 @@ send_packet(double timestamp, struct sockaddr_in *reader_addr, const uint8_t *si
 
 	i += sprintf(buf+i, "{");
 
-	i += sprintf(buf+i, "\"reader\": {\"ip\":\"%s\",\"t\":%d},",
+	i += sprintf(buf+i, "\"reader\": {\"ip\":\"%s\",\"id\":%d,\"t\":%d},",
 		inet_ntoa(reader_addr->sin_addr),
+		reader_id,
 		(uint32_t) timestamp);
 
 	i += sprintf(buf+i, "\"packet\": {\"id\":\"%08X\",\"t\":%d,",
@@ -206,9 +207,9 @@ send_packet(double timestamp, struct sockaddr_in *reader_addr, const uint8_t *si
 static int
 parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *data, int len)
 {
-	uint32_t t;
 	const TBeaconLogSighting *pkt;
 	TBeaconNgTracker track;
+	uint32_t t;
 
 	if(len<(int)sizeof(TBeaconLogSighting))
 		return len;
@@ -253,8 +254,8 @@ parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *dat
 		return len;
 	}
 
-	/* show & process latest packet */
-	send_packet(timestamp, reader_addr, ((uint8_t *) &pkt->log) + sizeof(track) - CONFIG_SIGNATURE_SIZE, &track);
+	/* send packet */
+	send_packet(timestamp, reader_addr, ntohs(pkt->hdr.reader_id), ((uint8_t *) &pkt->log) + sizeof(track) - CONFIG_SIGNATURE_SIZE, &track);
 
 	return sizeof(TBeaconLogSighting);
 }
@@ -338,9 +339,9 @@ main (int argc, char **argv)
 	ret = listen_packets();
 
 	mosquitto_disconnect(mosq);
-    	mosquitto_loop_stop(mosq, false);
-    	mosquitto_destroy(mosq);
-    	mosquitto_lib_cleanup();
+	mosquitto_loop_stop(mosq, false);
+	mosquitto_destroy(mosq);
+	mosquitto_lib_cleanup();
 
 	return ret;
 }
