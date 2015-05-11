@@ -132,9 +132,9 @@ send_error(double timestamp, struct sockaddr_in *reader_addr, char *error_msg, u
 
 
 void
-send_packet(double timestamp, struct sockaddr_in *reader_addr, const TBeaconNgTracker *track)
+send_packet(double timestamp, struct sockaddr_in *reader_addr, const uint8_t *signature, const TBeaconNgTracker *track)
 {
-	int i = 0;
+	int i = 0, j;
 	uint32_t t;
 	const TBeaconNgSighting *slot;
 
@@ -148,6 +148,11 @@ send_packet(double timestamp, struct sockaddr_in *reader_addr, const TBeaconNgTr
 		track->uid,
 		track->epoch
 	);
+
+    i += sprintf(buf+i, "\"crc\":\"");
+    for (j=0; j<CONFIG_SIGNATURE_SIZE; j++)
+        i += sprintf(buf+i, "%02X", signature[j]);
+    i += sprintf(buf+i, "\",");
 
 	/* show specific fields */
 	switch(track->proto)
@@ -249,7 +254,7 @@ parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *dat
 	}
 
 	/* show & process latest packet */
-	send_packet(timestamp, reader_addr, &track);
+	send_packet(timestamp, reader_addr, ((uint8_t *) &pkt->log) + sizeof(track) - CONFIG_SIGNATURE_SIZE, &track);
 
 	return sizeof(TBeaconLogSighting);
 }
