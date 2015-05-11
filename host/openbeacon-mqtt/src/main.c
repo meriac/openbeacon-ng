@@ -113,14 +113,15 @@ microtime (void)
 
 
 void
-send_error(double timestamp, struct sockaddr_in *reader_addr, char *error_msg, uint32_t error_code)
+send_error(double timestamp, struct sockaddr_in *reader_addr, uint16_t reader_id, char *error_msg, uint32_t error_code)
 {
 	int i = 0;
 
 	i += sprintf(buf+i, "{");
 
-	i += sprintf(buf+i, "\"reader\": {\"ip\":\"%s\",\"t\":%d},",
+	i += sprintf(buf+i, "\"reader\": {\"ip\":\"%s\",\"id\":%d,\"t\":%d},",
 		inet_ntoa(reader_addr->sin_addr),
+		reader_id,
 		(uint32_t) timestamp);
 
 	i += sprintf(buf+i, "\"error\": \"%s (%d)\"", error_msg, error_code);
@@ -217,7 +218,7 @@ parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *dat
 	pkt = (const TBeaconLogSighting*)data;
 	if(pkt->hdr.protocol != BEACONLOG_SIGHTING)
 	{
-		send_error(timestamp, reader_addr, "Invalid protocol", pkt->hdr.protocol);
+		send_error(timestamp, reader_addr, ntohs(pkt->hdr.reader_id), "Invalid protocol", pkt->hdr.protocol);
 		//fprintf(stderr, " Invalid protocol [0x%02X]\n\r", pkt->hdr.protocol);
 		return len;
 	}
@@ -225,14 +226,14 @@ parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *dat
 	t = ntohs(pkt->hdr.size);
 	if(ntohs(t != sizeof(TBeaconLogSighting)))
 	{
-		send_error(timestamp, reader_addr, "Invalid packet size", t);
+		send_error(timestamp, reader_addr, ntohs(pkt->hdr.reader_id), "Invalid packet size", t);
 		//fprintf(stderr, " Invalid packet size (%u)\n\r", t);
 		return len;
 	}
 	
 	if(ntohs(pkt->hdr.icrc16) != icrc16(&pkt->hdr.protocol, (sizeof(TBeaconLogSighting)-sizeof(pkt->hdr.icrc16))))
 	{
-		send_error(timestamp, reader_addr, "Invalid packet CRC", 0);
+		send_error(timestamp, reader_addr, ntohs(pkt->hdr.reader_id), "Invalid packet CRC", 0);
 		//fprintf(stderr, " Invalid packet CRC\n\r");
 		return len;
 	}
@@ -240,7 +241,7 @@ parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *dat
 	/* decrypt valid packet */
 	if((t = aes_decr(&pkt->log, &track, sizeof(track), CONFIG_SIGNATURE_SIZE))!=0)
 	{
-		send_error(timestamp, reader_addr, "Packet decryption error", t);
+		send_error(timestamp, reader_addr, ntohs(pkt->hdr.reader_id), "Packet decryption error", t);
 		//fprintf(stderr, " Failed decrypting packet with error [%i]\n\r", t);
 		return len;
 	}
@@ -249,7 +250,7 @@ parse_packet (double timestamp, struct sockaddr_in *reader_addr, const void *dat
 	if(!((track.proto == RFBPROTO_BEACON_NG_SIGHTING)||
 		(track.proto == RFBPROTO_BEACON_NG_STATUS)))
 	{
-		send_error(timestamp, reader_addr, "Unkown packet protocol", track.proto);
+		send_error(timestamp, reader_addr, ntohs(pkt->hdr.reader_id), "Unkown packet protocol", track.proto);
 		//fprintf(stderr, " Unknown protocol [%i]\n\r", track.proto);
 		return len;
 	}
