@@ -333,7 +333,9 @@ main (int argc, char **argv)
 	/* initialize Mosquitto library */
 	mosquitto_lib_init();
 	mosq = mosquitto_new("openbeacon-mqtt", true, NULL);
-	mosquitto_connect(mosq, (argc > 1) ? argv[1] : "127.0.0.1", MOSQUITTO_TCP_PORT, 600);
+	ret = mosquitto_connect(mosq, (argc > 1) ? argv[1] : "127.0.0.1", MOSQUITTO_TCP_PORT, 600);
+	if (ret != MOSQ_ERR_SUCCESS)
+		return -1;
 	mosquitto_loop_start(mosq);
 
 	/* main loop */
