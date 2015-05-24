@@ -1,6 +1,7 @@
 TARGET=reader-ble
 ARCH=nrf5
 CPU=$(ARCH)1822
+VARIANT=xxAB
 DEBUG=-g
 OPTIM=-Os -mword-relocations
 

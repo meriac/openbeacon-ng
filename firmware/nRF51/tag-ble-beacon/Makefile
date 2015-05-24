@@ -1,6 +1,7 @@
 TARGET=tag-ble-beacon
 ARCH=nrf5
 CPU=$(ARCH)1822
+VARIANT=xxAB
 DEBUG=-g
 OPTIM=-Os -mword-relocations
 
