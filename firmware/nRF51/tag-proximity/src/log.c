@@ -193,7 +193,7 @@ static void flash_log_block_commit(void)
 
 #if FLASH_LOG_COMPRESSION
 
-static void flash_log_write(uint8_t flush_buf)
+static int flash_log_write(uint8_t flush_buf)
 {
 	uint8_t *my_head = buf_head;
 	uint16_t chunk_size;
@@ -251,7 +251,7 @@ static void flash_log_write(uint8_t flush_buf)
 		status_flags |= ERROR_LOG_COMPRESS;
 		heatshrink_encoder_reset(&hse);
 		buf_tail = my_head;
-		return;
+		return 1;
 	}
 
 	/* if block buffer is almost full, or if we are flushing the ring buffer,
@@ -268,7 +268,7 @@ static void flash_log_write(uint8_t flush_buf)
 			status_flags |= ERROR_LOG_COMPRESS;
 			heatshrink_encoder_reset(&hse);
 			buf_tail = my_head;
-			return;
+			return 1;
 		}
 
 		/* if necessary, pull out remaining compressed data */
@@ -291,7 +291,7 @@ static void flash_log_write(uint8_t flush_buf)
 					status_flags |= ERROR_LOG_COMPRESS;
 					heatshrink_encoder_reset(&hse);
 					buf_tail = my_head;
-					return;
+					return 1;
         		}
     		} while (pres == HSER_POLL_MORE);
     	}
@@ -303,7 +303,7 @@ static void flash_log_write(uint8_t flush_buf)
 			status_flags |= ERROR_LOG_COMPRESS;
 			heatshrink_encoder_reset(&hse);
 			buf_tail = my_head;
-			return;
+			return 1;
 		}
 
 		/* reset encoder */
@@ -312,11 +312,13 @@ static void flash_log_write(uint8_t flush_buf)
 		/* commit block to flash */
 		flash_log_block_commit();
 	}
+
+	return 0;
 }
 
 #else
 
-static void flash_log_write(uint8_t flush_buf)
+static int flash_log_write(uint8_t flush_buf)
 {
 	uint8_t *my_head = buf_head;
 	uint16_t chunk_size;
@@ -349,6 +351,8 @@ static void flash_log_write(uint8_t flush_buf)
 	   commit block to flash memory */
 	if ( (LogBlock.env.len == LOG_BLOCK_DATA_SIZE) || flush_buf )
 		flash_log_block_commit();
+
+	return 0;
 }
 
 #endif /* FLASH_LOG_COMPRESSION */
@@ -369,7 +373,8 @@ void flash_log_flush(void)
 
 	/* flush ring buffer */
 	while (BUF_LEN(my_head,buf_tail) > 0)
-		flash_log_write(0);
+		if (flash_log_write(0))
+			break; /* on error */
 
 	/* flush block buffer */
 	flash_log_write(1);
