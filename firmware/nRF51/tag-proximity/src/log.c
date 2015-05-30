@@ -244,11 +244,12 @@ static void flash_log_write(uint8_t flush_buf)
 			buf_tail -= BUF_SIZE;
 	}
 
-	/* on error, clear the ring buffer and exit */
+	/* on error, clear the ring buffer, reset encoder and exit */
 	if (pres < 0 || sres < 0)
 	{
 		log_compression_error++;
 		status_flags |= ERROR_LOG_COMPRESS;
+		heatshrink_encoder_reset(&hse);
 		buf_tail = my_head;
 		return;
 	}
@@ -260,11 +261,12 @@ static void flash_log_write(uint8_t flush_buf)
 		/* signal encoder that we are done */
 		fres = heatshrink_encoder_finish(&hse);
 
-		/* on error, clear the ring buffer and exit */
+		/* on error, clear the ring buffer, reset encoder and exit */
 		if (fres < 0)
 		{
 			log_compression_error++;
 			status_flags |= ERROR_LOG_COMPRESS;
+			heatshrink_encoder_reset(&hse);
 			buf_tail = my_head;
 			return;
 		}
@@ -282,22 +284,24 @@ static void flash_log_write(uint8_t flush_buf)
     			/* update block length */
         		LogBlock.env.len += poll_sz;
 
-        		/* on block buffer overflow, clear the ring buffer and exit */
+        		/* on block buffer overflow, clear the ring buffer, reset encoder and exit */
         		if (LogBlock.env.len >= LOG_BLOCK_DATA_SIZE)
         		{
 					log_compression_error++;
 					status_flags |= ERROR_LOG_COMPRESS;
+					heatshrink_encoder_reset(&hse);
 					buf_tail = my_head;
 					return;
         		}
     		} while (pres == HSER_POLL_MORE);
     	}
 
-		/* on error, clear the ring buffer and exit */
+		/* on error, clear the ring buffer, reset encoder and exit */
     	if (pres < 0)
 		{
 			log_compression_error++;
 			status_flags |= ERROR_LOG_COMPRESS;
+			heatshrink_encoder_reset(&hse);
 			buf_tail = my_head;
 			return;
 		}
