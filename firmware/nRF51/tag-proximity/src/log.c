@@ -352,7 +352,9 @@ static void flash_log_write(uint8_t flush_buf)
 
 void flash_log_write_trigger(void)
 {
-	if ( log_running && (BUF_LEN(buf_head,buf_tail) >= BUF_LEN_THRES) )
+	uint8_t *my_head = buf_head;
+
+	if ( log_running && (BUF_LEN(my_head,buf_tail) >= BUF_LEN_THRES) )
 		flash_log_write(0);
 }
 
