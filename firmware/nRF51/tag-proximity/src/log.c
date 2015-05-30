@@ -193,7 +193,7 @@ static void flash_log_block_commit(void)
 
 #if FLASH_LOG_COMPRESSION
 
-void flash_log_write(uint8_t flush_buf)
+static void flash_log_write(uint8_t flush_buf)
 {
 	uint8_t *my_head = buf_head;
 	uint16_t chunk_size;
@@ -312,7 +312,7 @@ void flash_log_write(uint8_t flush_buf)
 
 #else
 
-void flash_log_write(uint8_t flush_buf)
+static void flash_log_write(uint8_t flush_buf)
 {
 	uint8_t *my_head = buf_head;
 	uint16_t chunk_size;
@@ -394,7 +394,7 @@ void flash_log_status(void)
  we obtain a binary log file named after the tag ID
 */
 
-char base64_char(uint8_t b)
+static char base64_char(uint8_t b)
 {
 	if (b < 26)
 		return 'A' + b;
@@ -412,7 +412,7 @@ char base64_char(uint8_t b)
 
 #define CHARS_PER_LINE 64
 
-void base64_dump(uint16_t len, uint8_t *data)
+static void base64_dump(uint16_t len, uint8_t *data)
 {
 	uint16_t i, j, printed_chars = 1;
 	char c[4];
