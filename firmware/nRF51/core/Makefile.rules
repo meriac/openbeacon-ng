@@ -1,5 +1,6 @@
 CROSS=arm-none-eabi-
 CC=$(CROSS)gcc
+CXX=$(CROSS)g++
 LD=$(CROSS)ld
 OBJCOPY=$(CROSS)objcopy
 OBJDUMP=$(CROSS)objdump
@@ -22,9 +23,9 @@ endif
 CORE=../core/
 
 #
-# CFLAGS common to both the THUMB and ARM mode builds
+# CFLAGS common to both the THUMB and ARM mode builds, C and C++
 #
-CFLAGS= \
+COMMON_CFLAGS= \
 -D __$(CPU)__ \
 -D __$(ARCH)__ \
 -D PROGRAM_VERSION=\"$(PROGRAM_VERSION)\" \
@@ -37,7 +38,6 @@ CFLAGS= \
 -Werror \
 -Wextra  \
 -Wno-multichar \
--Wstrict-prototypes  \
 -Wno-strict-aliasing  \
 -D CORTEXM0_GCC  \
 -mcpu=cortex-m0 \
@@ -49,7 +49,14 @@ $(OPTIM) \
 -fomit-frame-pointer \
 -ffunction-sections \
 -fdata-sections \
+$(APP_COMMON_CFLAGS)
+
+CFLAGS=$(COMMON_CFLAGS) \
+-Wstrict-prototypes  \
 $(APP_CFLAGS)
+
+CXXFLAGS=$(COMMON_CFLAGS) \
+$(APP_CXXFLAGS)
 
 LINKER_FLAGS=$(APP_LDFLAGS) -Xlinker --gc-sections -Xlinker -o$(TARGET).elf -Xlinker -M -Xlinker -Map=$(TARGET).map -T$(LDSCRIPT)
 
@@ -99,11 +106,13 @@ export TARGET_ERASE
 #
 # Define all object files.
 #
-ARM_SRC_C := $(filter %.c,$(ARM_SRC))
-ARM_OBJ_C := $(ARM_SRC_C:.c=.o)
-ARM_SRC_S := $(filter %.s,$(ARM_SRC))
-ARM_OBJ_S := $(ARM_SRC_S:.s=.o)
-ARM_OBJ   := $(ARM_OBJ_S) $(ARM_OBJ_C)
+ARM_SRC_C   := $(filter %.c,$(ARM_SRC))
+ARM_OBJ_C   := $(ARM_SRC_C:.c=.o)
+ARM_SRC_S   := $(filter %.s,$(ARM_SRC))
+ARM_OBJ_S   := $(ARM_SRC_S:.s=.o)
+ARM_SRC_CPP := $(filter %.cpp,$(ARM_SRC))
+ARM_OBJ_CPP := $(ARM_SRC_CPP:.cpp=.o)
+ARM_OBJ     := $(ARM_OBJ_S) $(ARM_OBJ_C) $(ARM_OBJ_CPP)
 APP_ADDITIONAL?=
 
 $(TARGET).bin : $(TARGET).elf
@@ -121,6 +130,9 @@ $(ARM_OBJ_C) : %.o : %.c
 
 $(ARM_OBJ_S) : %.o : %.s
 	$(CC) -c $(CFLAGS) $< -o $@
+
+$(ARM_OBJ_CPP) : %.o : %.cpp
+	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 flash: $(TARGET).bin
 	@echo "$$TARGET_FLASH" | $(JLINK) $(JLINK_OPT)
