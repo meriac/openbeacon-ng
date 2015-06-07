@@ -55,7 +55,7 @@ static uint16_t seq = 1;
 static uint16_t flash_error_count = 0;
 static uint8_t log_running = 0;
 static uint16_t log_wrap_count = 0;
-static uint16_t log_buffer_overrun_count = 0;
+static uint16_t log_buffer_overflow_count = 0;
 static uint16_t log_compression_error = 0;
 
 #if FLASH_LOG_COMPRESSION
@@ -71,8 +71,8 @@ uint16_t flash_log(uint16_t len, uint8_t *data)
 	/* check for buffer overflow */
 	if ( BUF_SIZE - BUF_LEN(buf_head,my_tail) <= len )
 	{
-		log_buffer_overrun_count++;
-		status_flags |= ERROR_LOG_BUF_OVERRUN;
+		log_buffer_overflow_count++;
+		status_flags |= ERROR_LOG_BUF_OVERFLOW;
 		return 0;
 	}
 
@@ -272,8 +272,10 @@ static int flash_log_write(uint8_t flush_buf)
         		LogBlock.env.len += poll_sz;
 
         		/* handle block buffer overflow */
-        		if (LogBlock.env.len >= LOG_BLOCK_DATA_SIZE)
+        		if (LogBlock.env.len >= LOG_BLOCK_DATA_SIZE) {
+        			status_flags |= ERROR_LOG_BLK_OVERFLOW;
         			goto cleanup;
+        		}
     		} while (pres == HSER_POLL_MORE);
     	}
 
@@ -378,14 +380,14 @@ void flash_log_flush(void)
 void flash_log_status(void)
 {
 	debug_printf(
-		"\n\rflash log status:\n\rrunning %i, wrapped %i, block: %i, block len: %i, head: %i, tail: %i, errors: %i, overruns: %i, compression: %i\n\r",
+		"\n\rflash log status:\n\rrunning %i, wrapped %i, block: %i, block len: %i, head: %i, tail: %i, errors: %i, overflows: %i, compression: %i\n\r",
 		log_running,
 		log_wrap_count,
 		current_block,
 		LogBlock.env.len,
 		buf_head - buffer, buf_tail - buffer,
 		flash_error_count,
-		log_buffer_overrun_count,
+		log_buffer_overflow_count,
 		log_compression_error
 		);
 }

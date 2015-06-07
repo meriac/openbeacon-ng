@@ -46,8 +46,9 @@
 #define FLAG_MOVING             (1 << 4)
 #define ERROR_FLASH_FULL        (1 << 5)
 #define ERROR_FLASH_WRITE       (1 << 6)
-#define ERROR_LOG_BUF_OVERRUN   (1 << 7)
+#define ERROR_LOG_BUF_OVERFLOW  (1 << 7)
 #define ERROR_LOG_COMPRESS      (1 << 8)
+#define ERROR_LOG_BLK_OVERFLOW  (1 << 9)
 
 
 typedef struct
