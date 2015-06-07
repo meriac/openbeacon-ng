@@ -27,7 +27,7 @@
 #define __MAIN_H__
 
 extern uint8_t hibernate;
-extern uint8_t status_flags;
+extern uint16_t status_flags;
 extern uint8_t boot_count;
 extern uint32_t reset_reason;
 

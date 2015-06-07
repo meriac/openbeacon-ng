@@ -35,7 +35,7 @@
 #endif
 
 uint8_t hibernate = 0;
-uint8_t status_flags = 0;
+uint16_t status_flags = 0;
 uint8_t boot_count;
 uint32_t reset_reason;
 
