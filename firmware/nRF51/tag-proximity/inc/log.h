@@ -34,6 +34,7 @@
 /* compression */
 #define	FLASH_LOG_COMPRESSION	1
 #define COMPRESS_CHUNK_SIZE		256
+#define BLOCK_SPACE_MIN			256
 
 /* flash storage */
 #define BLOCK_PAGES				8

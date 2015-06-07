@@ -207,7 +207,7 @@ static int flash_log_write(uint8_t flush_buf)
 	/* proceed until there is data in the ring buffer
 	   and there is space in the block buffer */
 	while (	(BUF_LEN(my_head,buf_tail) > 0) &&
-			(LOG_BLOCK_DATA_SIZE - LogBlock.env.len > COMPRESS_CHUNK_SIZE) )
+			(LOG_BLOCK_DATA_SIZE - LogBlock.env.len > BLOCK_SPACE_MIN) )
 	{
 		/* set the size of the next _contiguous_ chunk to compress */
 		if (buf_tail < my_head)
@@ -226,6 +226,11 @@ static int flash_log_write(uint8_t flush_buf)
 		if (sres < 0)
 			goto cleanup;
 
+		/* advance tail of ring buffer */
+		buf_tail += sink_sz;
+		if (buf_tail >= buffer+BUF_SIZE)
+			buf_tail -= BUF_SIZE;
+
 		/* pull out the compressed stream */
 		do {
             pres = heatshrink_encoder_poll(
@@ -240,16 +245,11 @@ static int flash_log_write(uint8_t flush_buf)
 		/* handle encoder error */
         if (pres < 0)
         	goto cleanup;
-
-		/* advance tail of ring buffer */
-		buf_tail += sink_sz;
-		if (buf_tail >= buffer+BUF_SIZE)
-			buf_tail -= BUF_SIZE;
 	}
 
 	/* if block buffer is almost full, or if we are flushing the ring buffer,
 	   flush the encoder and commit compressed data to flash memory */
-	if ( (LOG_BLOCK_DATA_SIZE - LogBlock.env.len <= COMPRESS_CHUNK_SIZE ) || flush_buf )
+	if ( (LOG_BLOCK_DATA_SIZE - LogBlock.env.len <= BLOCK_SPACE_MIN ) || flush_buf )
 		{
 		/* signal encoder that we are done */
 		fres = heatshrink_encoder_finish(&hse);
