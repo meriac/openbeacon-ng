@@ -413,10 +413,10 @@ void RADIO_IRQ_Handler(void)
 							g_pkt_tracker.p.status.flags |= FLAG_LOG_STOPPED;
 #endif /* CONFIG_FLASH_LOGGING */
 
-#if CONFIG_ACCEL_SLEEP
+#if CONFIG_ACCEL_MOTION
 						if (moving)
 							g_pkt_tracker.p.status.flags |= FLAG_MOVING;
-#endif /* CONFIG_ACCEL_SLEEP */
+#endif /* CONFIG_ACCEL_MOTION */
 
 						/* if we have just rebooted, set upper byte of flags to reset reason */
 						if (status_flags & FLAG_BOOT)

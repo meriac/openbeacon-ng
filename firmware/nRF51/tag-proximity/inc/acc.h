@@ -70,8 +70,11 @@
 #define ACC_REG_FIFO_SRC_REG      0x2F
 #define ACC_REG_INT1_CFG          0x30
 
-#if CONFIG_ACCEL_SLEEP
+#if CONFIG_ACCEL_MOTION
 extern uint8_t moving;
+#endif
+
+#if CONFIG_ACCEL_SLEEP
 extern uint8_t sleep;
 #endif
 

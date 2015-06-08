@@ -31,6 +31,12 @@
 /* accelerometer-based sleep */
 #define CONFIG_ACCEL_SLEEP          0
 
+/* accelerometer-based motion detection */
+#define CONFIG_ACCEL_MOTION			1
+#if CONFIG_ACCEL_SLEEP
+#define CONFIG_ACCEL_MOTION			1
+#endif
+
 /* blink on receiving a proximity packet */
 #define CONFIG_PROXIMITY_BLINK      0
 

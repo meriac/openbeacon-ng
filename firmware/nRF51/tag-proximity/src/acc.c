@@ -42,20 +42,27 @@ static const uint8_t g_acc_init[][2] = {
 /* most recent acceleration measurement */
 static int16_t acc[3];
 
-#if CONFIG_ACCEL_SLEEP
+
+#if CONFIG_ACCEL_MOTION
 #define ACC_BUFFER_LEN   10
 #define ACC_DELTA_THRES  100000L
-#define ACC_SLEEP_THRES  300
 
 static int16_t acc_buffer[ACC_BUFFER_LEN][3];
 static int32_t acc_avg[3];
 static uint8_t acc_buffer_index;
 static uint8_t acc_buffer_full;
-static uint16_t sleep_counter;
 
 uint8_t moving = 1;
+#endif /* CONFIG_ACCEL_MOTION */
+
+
+#if CONFIG_ACCEL_SLEEP
+#define ACC_SLEEP_THRES  300
+
 uint8_t sleep = 0;
+static uint16_t sleep_counter;
 #endif /* CONFIG_ACCEL_SLEEP */
+
 
 
 void acc_write(uint8_t cmd, uint8_t data)
@@ -105,7 +112,7 @@ void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 }
 
 
-#if CONFIG_ACCEL_SLEEP
+#if CONFIG_ACCEL_MOTION
 static void acc_process_sample(void)
 {
 	int16_t acc_delta;
@@ -130,16 +137,20 @@ static void acc_process_sample(void)
 		if (acc_delta_norm < ACC_DELTA_THRES)
  		{
 			moving = 0;
+#if CONFIG_ACCEL_SLEEP
 			if (!sleep && ++sleep_counter > ACC_SLEEP_THRES)
 				sleep = 1;
+#endif /* CONFIG_ACCEL_SLEEP */
 		} else {
-			if (sleep)
-				status_flags |= FLAG_WOKEUP;
 			moving = 1;
-			sleep = 0;
-			sleep_counter = 0;
 			acc_buffer_index = 0;
 			acc_buffer_full = 0;
+#if CONFIG_ACCEL_SLEEP
+			if (sleep)
+				status_flags |= FLAG_WOKEUP;
+			sleep = 0;
+			sleep_counter = 0;
+#endif /* CONFIG_ACCEL_SLEEP */
 		} 
 	}
 
@@ -153,7 +164,7 @@ static void acc_process_sample(void)
 	if (!acc_buffer_full && !acc_buffer_index)
 		acc_buffer_full = 1;
 }
-#endif /* CONFIG_ACCEL_SLEEP */
+#endif /* CONFIG_ACCEL_MOTION */
 
 
 void acc_sample(void)
@@ -164,7 +175,7 @@ void acc_sample(void)
 	acc_read(ACC_REG_OUT_X, sizeof(acc), (uint8_t*)&acc);
 	acc_write(ACC_REG_CTRL_REG1, 0x00);
 
-#if CONFIG_ACCEL_SLEEP
+#if CONFIG_ACCEL_MOTION
 	acc_process_sample();
 #endif
 }
@@ -219,10 +230,13 @@ uint8_t acc_init(void)
 	for(i=0; i<ACC_INIT_COUNT; i++)
 		acc_write(g_acc_init[i][0], g_acc_init[i][1]);
 
-#if CONFIG_ACCEL_SLEEP
+#if CONFIG_ACCEL_MOTION
 	acc_buffer_index = 0;
 	acc_buffer_full = 0;
 	moving = 1;
+#endif /* CONFIG_ACCEL_MOTION */
+
+#if CONFIG_ACCEL_SLEEP
 	sleep = 0;
 	sleep_counter = 0;
 #endif /* CONFIG_ACCEL_SLEEP */
