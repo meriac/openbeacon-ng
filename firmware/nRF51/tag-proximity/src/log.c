@@ -161,6 +161,7 @@ static void flash_log_block_commit(void)
 		current_block = FLASH_LOG_FIRST_BLOCK;
 #else
 		log_running = 0;
+		status_flags |= ERROR_FLASH_FULL;
 #endif
 	}
 
@@ -223,8 +224,10 @@ static int flash_log_write(uint8_t flush_buf)
 		sres = heatshrink_encoder_sink(&hse, buf_tail, chunk_size, &sink_sz);
 
 		/* handle encoder error */
-		if (sres < 0)
+		if (sres < 0) {
+			status_flags |= ERROR_LOG_COMPRESS;
 			goto cleanup;
+		}
 
 		/* advance tail of ring buffer */
 		buf_tail += sink_sz;
@@ -239,12 +242,21 @@ static int flash_log_write(uint8_t flush_buf)
             	LOG_BLOCK_DATA_SIZE - LogBlock.env.len,
             	&poll_sz);
 
+    		/* update block length */
             LogBlock.env.len += poll_sz;
+
+            /* handle block buffer overflow */
+        	if (LogBlock.env.len >= LOG_BLOCK_DATA_SIZE) {
+        		status_flags |= ERROR_LOG_BLK_OVERFLOW;
+        		goto cleanup;
+        	}
         } while (pres == HSER_POLL_MORE);
 
 		/* handle encoder error */
-        if (pres < 0)
+        if (pres < 0) {
+        	status_flags |= ERROR_LOG_COMPRESS;
         	goto cleanup;
+        }
 	}
 
 	/* if block buffer is almost full, or if we are flushing the ring buffer,
@@ -255,8 +267,10 @@ static int flash_log_write(uint8_t flush_buf)
 		fres = heatshrink_encoder_finish(&hse);
 
 		/* handle encoder error */
-		if (fres < 0)
+		if (fres < 0) {
+			status_flags |= ERROR_LOG_COMPRESS;
 			goto cleanup;
+		}
 
 		/* if necessary, pull out remaining compressed data */
 		if (fres == HSER_FINISH_MORE)
@@ -280,8 +294,10 @@ static int flash_log_write(uint8_t flush_buf)
     	}
 
 		/* handle encoder error */
-    	if (pres < 0)
+    	if (pres < 0) {
+    		status_flags |= ERROR_LOG_COMPRESS;
     		goto cleanup;
+    	}
 
 		/* reset encoder */
 		heatshrink_encoder_reset(&hse);
@@ -296,9 +312,8 @@ static int flash_log_write(uint8_t flush_buf)
 	/* on error, reset all state */
 	cleanup:
 
-	/* report error */
+	/* log error */
 	log_compression_error++;
-	status_flags |= ERROR_LOG_COMPRESS;
 
 	/* clear block buffer */
 	block_init();
