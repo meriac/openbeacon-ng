@@ -34,7 +34,7 @@
 /* compression */
 #define	FLASH_LOG_COMPRESSION	1
 #define COMPRESS_CHUNK_SIZE		256
-#define BLOCK_SPACE_MIN			256
+#define BLOCK_SPACE_MIN			(COMPRESS_CHUNK_SIZE + 32)
 
 /* flash storage */
 #define BLOCK_PAGES				8
@@ -65,6 +65,9 @@ typedef struct
 {
 	TLogBlockEnvelope env;
 	uint8_t data[LOG_BLOCK_DATA_SIZE];
+
+	/* paranoid: padding in case heatshrink_encoder_poll() overflows the output buffer */ 
+	uint8_t safety[COMPRESS_CHUNK_SIZE];
 } PACKED TLogBlock;
 
 
