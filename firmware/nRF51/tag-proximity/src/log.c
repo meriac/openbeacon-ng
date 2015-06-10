@@ -141,8 +141,8 @@ static void flash_log_block_commit(void)
 	/* get timestamp */
 	LogBlock.env.epoch = get_time();
 
-	/* compute CRC, ignoring signature and CRC fields */
-	LogBlock.env.crc = crc32( ((void *) &LogBlock) + 8, sizeof(LogBlock) - 8);
+	/* compute CRC, ignoring signature and CRC fields (8 bytes) */
+	LogBlock.env.crc = crc32( ((void *) &LogBlock) + 8, LOG_BLOCK_DATA_SIZE + sizeof(LogBlock.env) - 8);
 
 	/* write block */
 	err = flash_log_block_write(current_block, (uint8_t *) &LogBlock );
