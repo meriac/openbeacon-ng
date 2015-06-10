@@ -423,7 +423,7 @@ void RADIO_IRQ_Handler(void)
 						{
 							g_pkt_tracker.p.status.flags &= 0x00FF;
 							g_pkt_tracker.p.status.flags |=
-							  (uint8_t) ( (reset_reason & 0x0F) | ((reset_reason >> 12) & 0x70) ) << 8;
+							  (uint16_t) ( (reset_reason & 0x0F) | ((reset_reason >> 12) & 0x70) ) << 8;
 						}
 
 #if !CONFIG_FLASH_LOGGING
