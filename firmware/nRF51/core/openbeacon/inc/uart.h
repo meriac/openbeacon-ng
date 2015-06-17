@@ -27,12 +27,17 @@
 
 #ifndef CONFIG_UART_BUFFER
 #define CONFIG_UART_BUFFER 128
-#endif/*CONFIG_UART_BUFFER*/
+#endif
 
-#ifdef  CONFIG_UART_BAUDRATE
+#ifndef CONFIG_UART_FORCE_POWERED
+#define CONFIG_UART_FORCE_POWERED 0
+#endif
+
+#ifdef CONFIG_UART_BAUDRATE
 extern void uart_init(void);
+extern int uart_enable(int enable);
 extern BOOL uart_tx(uint8_t data);
 extern int uart_rx(void);
-#endif/*CONFIG_UART_BAUDRATE*/
+#endif
 
-#endif/*__UART_H__*/
+#endif /*__UART_H__*/

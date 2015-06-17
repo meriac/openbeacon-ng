@@ -80,7 +80,15 @@ void uart_init(void)
 	NRF_UART0->EVENTS_RXDRDY = 0;
 #else
 	NRF_UART0->ENABLE = 0;
-#endif/*CONFIG_UART_RXD_PIN*/
+#endif /*CONFIG_UART_RXD_PIN*/
+}
+
+inline int uart_enable(int enable)
+{
+#if CONFIG_UART_FORCE_POWERED
+	NRF_UART0->ENABLE = (enable) ? (NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos) : 0;
+#endif
+	return enable;
 }
 
 #ifdef  CONFIG_UART_TXD_PIN
@@ -132,7 +140,9 @@ void UART0_IRQ_Handler(void)
 		if(!g_uart_buffer_count)
 		{
 			NRF_UART0->TASKS_STOPTX = 1;
+#if !CONFIG_UART_FORCE_POWERED
 			NRF_UART0->ENABLE = 0;
+#endif
 		}
 		else
 		{

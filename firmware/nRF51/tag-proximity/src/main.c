@@ -121,6 +121,7 @@ void main_entry(void)
 
 	/* initialize UART */
 	uart_init();
+	uart_enable(1);
 
 	/* start timer */
 	timer_init();
@@ -145,6 +146,8 @@ void main_entry(void)
 		tag_id,
 		CONFIG_TRACKER_CHANNEL);
 	radio_init(tag_id);
+
+	uart_enable(0);
 
 	/* enter main loop */
 	blink_fast(5);
@@ -175,8 +178,10 @@ void main_entry(void)
 				blink_fast(10);
 
 				/* dump log data & status to serial */
+				uart_enable(1);
 				flash_log_dump();
 				flash_log_status();
+				uart_enable(0);
 #endif /* CONFIG_FLASH_LOGGING */
 			} else if (keypress_duration > 500)
 			{
@@ -190,7 +195,9 @@ void main_entry(void)
 #endif /* CONFIG_FLASH_LOGGING */
 
 				blink_fast(hibernate ? 3 : 6);
+				uart_enable(1);
 				debug_printf("\n\rhibernate -> %i", hibernate);
+				uart_enable(0);
 			}
 		}
 
