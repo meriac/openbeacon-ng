@@ -34,6 +34,7 @@ static volatile uint16_t g_uart_buffer_count;
 /* allow to override default putchar output from serial to something else */
 BOOL default_putchar (uint8_t data) ALIAS(uart_tx);
 
+
 void uart_init(void)
 {
 	g_uart_buffer_count = 0;
@@ -74,21 +75,17 @@ void uart_init(void)
 		(UART_INTENSET_TXDRDY_Enabled << UART_INTENSET_TXDRDY_Pos);
 
 	/* start UART */
-#ifdef  CONFIG_UART_RXD_PIN
+
+#if CONFIG_UART_FORCE_POWERED | CONFIG_UART_RXD_PIN
 	NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
-	NRF_UART0->TASKS_STARTRX = 1;
-	NRF_UART0->EVENTS_RXDRDY = 0;
 #else
 	NRF_UART0->ENABLE = 0;
-#endif /*CONFIG_UART_RXD_PIN*/
-}
-
-inline int uart_enable(int enable)
-{
-#if CONFIG_UART_FORCE_POWERED
-	NRF_UART0->ENABLE = (enable) ? (NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos) : 0;
 #endif
-	return enable;
+
+#ifdef CONFIG_UART_RXD_PIN
+	NRF_UART0->TASKS_STARTRX = 1;
+	NRF_UART0->EVENTS_RXDRDY = 0;
+#endif
 }
 
 #ifdef  CONFIG_UART_TXD_PIN
@@ -111,7 +108,9 @@ BOOL uart_tx(uint8_t data)
 	else
 	{
 		/* enable UART for sending out first byte */
+#if !CONFIG_UART_FORCE_POWERED
 		NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
+#endif
 		NRF_UART0->TASKS_STARTTX = 1;
 		NRF_UART0->TXD = data;
 	}

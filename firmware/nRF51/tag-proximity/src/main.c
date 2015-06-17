@@ -25,6 +25,7 @@
 */
 
 #include <openbeacon.h>
+#include <uart.h>
 #include <acc.h>
 #include <flash.h>
 #include <radio.h>
@@ -38,6 +39,7 @@ uint8_t hibernate = 0;
 uint16_t status_flags = 0;
 uint8_t boot_count;
 uint32_t reset_reason;
+uint8_t uart_enabled = 0;
 
 
 void blink(uint8_t times)
@@ -99,10 +101,14 @@ void main_entry(void)
 	reset_reason = NRF_POWER->RESETREAS;
 	NRF_POWER->RESETREAS = 0;
 
-	/* if reset was externally triggered, boot into hibernation mode */
+	/* if reset was externally triggered,
+	   boot into hibernation mode and enable serial port */
 	if ( (reset_reason & POWER_RESETREAS_RESETPIN_Msk) ||
 		 (reset_reason & POWER_RESETREAS_SREQ_Msk) )
+	{
 		hibernate = 1;
+		uart_enabled = 1;
+	}
 
 	/* get/update boot counter -- register is retained
 	   across resets as long as the device is powered */
@@ -121,7 +127,6 @@ void main_entry(void)
 
 	/* initialize UART */
 	uart_init();
-	uart_enable(1);
 
 	/* start timer */
 	timer_init();
@@ -142,12 +147,11 @@ void main_entry(void)
 		halt(3);
 
 	/* start radio */
-	debug_printf("\n\rInitializing Tag[%08X] v" PROGRAM_VERSION " @24%02iMHz ...\n\r",
+	if (uart_enabled)
+		debug_printf("\n\rInitializing Tag[%08X] v" PROGRAM_VERSION " @24%02iMHz ...\n\r",
 		tag_id,
 		CONFIG_TRACKER_CHANNEL);
 	radio_init(tag_id);
-
-	uart_enable(0);
 
 	/* enter main loop */
 	blink_fast(5);
@@ -172,16 +176,14 @@ void main_entry(void)
 			keypress_duration = blink_wait_release();
 
 			/* long key press while tag is hibernating triggers log dump */
-			if (hibernate && (keypress_duration > 2000))
+			if (hibernate && uart_enabled && (keypress_duration > 2000))
 			{
 #if CONFIG_FLASH_LOGGING
 				blink_fast(10);
 
 				/* dump log data & status to serial */
-				uart_enable(1);
 				flash_log_dump();
 				flash_log_status();
-				uart_enable(0);
 #endif /* CONFIG_FLASH_LOGGING */
 			} else if (keypress_duration > 500)
 			{
@@ -195,9 +197,8 @@ void main_entry(void)
 #endif /* CONFIG_FLASH_LOGGING */
 
 				blink_fast(hibernate ? 3 : 6);
-				uart_enable(1);
-				debug_printf("\n\rhibernate -> %i", hibernate);
-				uart_enable(0);
+				if (uart_enabled)
+					debug_printf("\n\rhibernate -> %i", hibernate);
 			}
 		}
 
