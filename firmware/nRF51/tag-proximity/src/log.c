@@ -561,7 +561,8 @@ uint8_t flash_setup_logging(uint32_t uid)
 	if (nrf_gpio_pin_read(CONFIG_SWITCH_PIN) && blink_wait_release() > 1000)
 	{
 		blink_fast(5);
-		debug_printf("\n\rERASING FLASH\n\r");
+		if (uart_enabled)
+			debug_printf("\n\rERASING FLASH\n\r");
 		flash_erase_chip();
 		flash_wait_ready(1);
 
@@ -602,7 +603,8 @@ uint8_t flash_setup_logging(uint32_t uid)
 #endif
 
 	log_running = 1;
-	debug_printf("\n\rLogging starts at block %i of %i\n\r", current_block, flash_log_last_block);
+	if (uart_enabled)
+		debug_printf("\n\rLogging starts at block %i of %i\n\r", current_block, flash_log_last_block);
 
 	return 0;
 }

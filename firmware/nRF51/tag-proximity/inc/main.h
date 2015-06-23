@@ -30,6 +30,7 @@ extern uint8_t hibernate;
 extern uint16_t status_flags;
 extern uint8_t boot_count;
 extern uint32_t reset_reason;
+extern uint8_t uart_enabled;
 
 extern void blink(uint8_t times);
 extern void blink_fast(uint8_t times);
