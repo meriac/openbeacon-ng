@@ -4,10 +4,10 @@ LD=$(CROSS)ld
 OBJCOPY=$(CROSS)objcopy
 OBJDUMP=$(CROSS)objdump
 AR=$(CROSS)ar
-LDSCRIPT=$(CORE)linker/$(CPU).ld
+LDSCRIPT=$(CORE)linker/$(CPU)_$(VARIANT).ld
 SEGGER=
 JLINK=$(SEGGER)JLinkExe
-JLINK_OPT=-if swd -device $(CPU)
+JLINK_OPT=-if swd -device $(CPU)_$(VARIANT)
 
 # determine program version
 PROGRAM_VERSION:=$(shell git describe --tags --abbrev=4 --dirty 2>/dev/null | sed s/^v//)
@@ -71,7 +71,7 @@ ARM_SRC= \
 #
 define TARGET_FLASH
 	si 1
-	device $(CPU)
+	device $(CPU)_$(VARIANT)
 	rx 100
 	halt
 	w4 4001e504 1
@@ -87,7 +87,7 @@ export TARGET_FLASH
 define TARGET_ERASE
 	r
 	si 1
-	device $(CPU)
+	device $(CPU)_$(VARIANT)
 	w4 4001e504 2
 	w4 4001e50c 1
 	w4 4001e514 1

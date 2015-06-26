@@ -1,6 +1,7 @@
 TARGET=tag-proximity
 ARCH=nrf5
 CPU=$(ARCH)1822
+VARIANT=xxAB
 DEBUG=-g
 OPTIM=-Os -mword-relocations
 CUSTOM_KEY=inc/custom-encryption-key.h
