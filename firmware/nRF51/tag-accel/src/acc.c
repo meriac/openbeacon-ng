@@ -28,9 +28,10 @@
 
 /* accelerometer initialization array */
 static const uint8_t g_acc_init[][2] = {
-	{ACC_REG_CTRL_REG1,     0x00}, /* disable accelerometer */
-	{ACC_REG_CTRL_REG3,     0x00}, /* disable data ready interrupt */
-	{ACC_REG_CTRL_REG4,     0x80}, /* enable block update */
+	{ACC_REG_CTRL_REG1,     0x9F}, /* enabled accelerometer @ 5kHz/low power */
+	{ACC_REG_CTRL_REG2,     0x00}, /* disable filters */
+	{ACC_REG_CTRL_REG3,     0x1E}, /* enable data interrupts */
+	{ACC_REG_CTRL_REG4,     0x80}, /* enable block update, high resolution */
 	{ACC_REG_CTRL_REG5,     0x00}, /* disable fifo */
 	{ACC_REG_FIFO_CTRL_REG, 0x00}  /* enable bypass mode */
 };
@@ -81,23 +82,21 @@ void acc_read(uint8_t cmd, uint8_t len, uint8_t *data)
 	nrf_gpio_pin_set(CONFIG_ACC_nCS);
 }
 
-uint16_t acc_magnitude(void)
+int acc_magnitude(void)
 {
 	int16_t acc[3];
 
-	/* briefly turn on accelerometer */
-	acc_write(ACC_REG_CTRL_REG1, 0x97);
-	timer_wait(MILLISECONDS(2));
+	/* read accelerometer */
 	acc_read(ACC_REG_OUT_X, sizeof(acc), (uint8_t*)&acc);
-	acc_write(ACC_REG_CTRL_REG1, 0x00);
 
 	/* get acceleration vector magnitude */
 	return  sqrt32(
-		((uint32_t)acc[0])*acc[0] + 
-		((uint32_t)acc[1])*acc[1] +
-		((uint32_t)acc[2])*acc[2]
+		((int)acc[0])*acc[0] +
+		((int)acc[1])*acc[1] +
+		((int)acc[2])*acc[2]
 	)/64;
 }
+
 uint8_t acc_init(void)
 {
 	int i;

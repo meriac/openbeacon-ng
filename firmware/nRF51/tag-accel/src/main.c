@@ -57,7 +57,7 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
-	uint16_t mag;
+	int mag;
 
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
