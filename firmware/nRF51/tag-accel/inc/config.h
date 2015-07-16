@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - nRF51 board config files
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2013-2015 Milosch Meriac <milosch@meriac.com>
  *
  ***************************************************************
 
@@ -25,7 +25,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define CONFIG_UART_BAUDRATE UART_BAUDRATE_BAUDRATE_Baud115200
+#define CONFIG_UART_BAUDRATE UART_BAUDRATE_BAUDRATE_Baud1M
+#define CONFIG_UART_FORCE_POWERED 1
 #define CONFIG_UART_TXD_PIN  9
 #ifdef  CONFIG_UART_RX
 #define CONFIG_UART_RXD_PIN  8

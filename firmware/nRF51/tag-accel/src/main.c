@@ -57,6 +57,8 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
+	uint16_t mag;
+
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
 	nrf_gpio_pin_set(CONFIG_LED_PIN);
@@ -82,10 +84,11 @@ void main_entry(void)
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	while(TRUE)
 	{
-		/* get tag angle once per second */
-		timer_wait(MILLISECONDS(5000));
+		/* read magnitued */
+		mag = acc_magnitude();
+		debug_printf("%i\n\r", mag);
 
-		/* blink every 5 seconds */
+		/* blink */
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
 		timer_wait(MILLISECONDS(0.5));
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
