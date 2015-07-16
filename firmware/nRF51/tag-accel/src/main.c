@@ -84,13 +84,12 @@ void main_entry(void)
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	while(TRUE)
 	{
-		/* read magnitued */
+		/* read magnitude */
 		mag = acc_magnitude();
-		debug_printf("%i\n\r", mag);
 
 		/* blink */
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(0.5));
+		debug_printf("%i\n\r", mag);
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	}
 }
