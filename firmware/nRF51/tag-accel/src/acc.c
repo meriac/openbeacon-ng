@@ -30,10 +30,10 @@
 static const uint8_t g_acc_init[][2] = {
 	{ACC_REG_CTRL_REG1,     0x9F}, /* enabled accelerometer @ 5kHz/low power */
 	{ACC_REG_CTRL_REG2,     0x00}, /* disable filters */
-	{ACC_REG_CTRL_REG3,     0x1E}, /* enable data interrupts */
+	{ACC_REG_CTRL_REG3,     0x06}, /* enable watermark and overflow interrupt */
 	{ACC_REG_CTRL_REG4,     0x80}, /* enable block update, high resolution */
-	{ACC_REG_CTRL_REG5,     0x00}, /* disable fifo */
-	{ACC_REG_FIFO_CTRL_REG, 0x00}  /* enable bypass mode */
+	{ACC_REG_CTRL_REG5,     0x40}, /* enable fifo */
+	{ACC_REG_FIFO_CTRL_REG, 0x88}  /* stream mode , watermark @16 */
 };
 #define ACC_INIT_COUNT ((int)(sizeof(g_acc_init)/sizeof(g_acc_init[0])))
 

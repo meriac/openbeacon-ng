@@ -58,6 +58,7 @@ void halt(uint8_t times)
 void main_entry(void)
 {
 	int mag;
+	uint8_t status;
 
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
@@ -84,10 +85,15 @@ void main_entry(void)
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	while(TRUE)
 	{
+		/* wait for new value */
+		while(!nrf_gpio_pin_read(CONFIG_ACC_INT1));
+		/* read accelerometer status */
+		acc_read(ACC_REG_FIFO_SRC_REG, sizeof(status), &status);
+
 		/* read magnitude */
 		mag = acc_magnitude();
 
-		/* blink */
+		/* blink & print */
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
 		debug_printf("%i\n\r", mag);
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
