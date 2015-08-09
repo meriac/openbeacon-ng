@@ -5,7 +5,7 @@
  * uses a physical model and statistical analysis to calculate
  * positions of tags
  *
- * Copyright 2009-2011 Milosch Meriac <meriac@bitmanufaktur.de>
+ * Copyright 2009-2015 Milosch Meriac <milosch@meriac.com>
  *
  ***************************************************************/
 
@@ -45,7 +45,10 @@
 
 #define TAGAGGREGATION_TIME 30
 #define PROXAGGREGATION_TIME 10
-#define MAX_PROXIMITY_SLOTS 16
+#define MAX_PROXIMITY_SLOTS 32
+
+#define PROX_STEP (1/PROXAGGREGATION_TIME)
+#define PROX_WEIGHT(x) (1-(PROX_STEP*x))
 
 typedef struct
 {
@@ -470,8 +473,9 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 static inline void
 thread_iterate_prox (void *Context, double timestamp, bool realtime)
 {
-	int i, count, power, delta;
-	uint32_t dist, dist_count;
+	double weigth, totalp, totald, power;
+	int i, j, count, delta;
+	uint32_t dist;
 	TTagProximitySlot *slot;
 	TTagProximity *prox = (TTagProximity*)Context;
 
@@ -488,36 +492,46 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 		return;
 	}
 
-	dist = dist_count = 0;
-	count = power = 0;
+	dist = 0;
+	count = 0;
 	slot = prox->fifo;
+	totalp = totald = power = 0;
 	for(i=0; i<MAX_PROXIMITY_SLOTS; i++, slot++)
-		if(slot->last_seen && ((timestamp - slot->last_seen) <= PROXAGGREGATION_TIME))
+	{
+		j = timestamp - slot->last_seen;
+		if(slot->last_seen && (j <= PROXAGGREGATION_TIME))
 		{
 			count++;
-			power+=slot->power;
+
+			weigth = PROX_WEIGHT(j);
+			totalp += weigth;
+			power += slot->power * weigth;
+
 			if(slot->distance)
 			{
+				totald += weigth;
 				dist+=slot->distance;
-				dist_count++;
 			}
 		}
+	}
+
 	/* ignore empty sets */
 	if(!count)
 		return;
 
 	if(g_first)
 		fprintf(g_out,"\n  ],\n  \"edge\":[");
-	fprintf(g_out,"%s\n    {\"tag\":[%u,%u],\"age\":%i,\"power\":%1.1f",
+	fprintf(g_out,"%s\n    {\"tag\":[%u,%u],\"age\":%i,\"count\":%u,\"power\":%1.1f",
 		g_first ? "":",",
 		prox->tag1,
 		prox->tag2,
 		delta,
-		((double)power)/count
+		count,
+		power/totalp
 	);
 
-	if(dist_count)
-		fprintf(g_out,",\"dist\":%1.1f", (dist/dist_count)/1000.0);
+	if(totald>0)
+		fprintf(g_out,",\"dist\":%1.1f", (dist/totald)/1000.0);
 
 	fprintf(g_out,"}");
 	g_first = false;
