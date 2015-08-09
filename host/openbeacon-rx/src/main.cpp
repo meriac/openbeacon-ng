@@ -56,9 +56,11 @@ typedef struct
 	uint32_t tag_id, epoch;
 	float voltage;
 	int angle;
-	bool button, calibrated, fixed;
+	bool button, calibrated, fixed, visible;
 	double last_seen;
 	uint32_t last_reader_id;
+	int Fcount;
+	double Fx, Fy;
 	double rx_loss, tx_loss, px_power;
 	double pX, pY, vX, vY;
 } TTagItem;
@@ -216,7 +218,7 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 			beacon = &g_BeaconList[i];
 			if(tag->tag_id == beacon->id)
 			{
-				tag->fixed = true;
+				tag->fixed = tag->visible = true;
 				tag->pX = beacon->pX;
 				tag->pY = beacon->pY;
 			}
@@ -295,6 +297,12 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 				prox_slot->last_seen =  timestamp;
 				prox_slot->power = slot->rx_power;
 
+				/* populate second tag pointer */
+				if(!prox->tag1p)
+					prox->tag1p = (TTagItem*)g_map_tag.Find(prox->tag1, NULL);
+				if(!prox->tag2p)
+					prox->tag2p = (TTagItem*)g_map_tag.Find(prox->tag2, NULL);
+
 				/* pre-calculate calibration values */
 				if(prox->calibrated)
 				{
@@ -307,12 +315,6 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 				else
 				{
 					prox_slot->distance = 0;
-
-					/* populate second tag pointer */
-					if(!prox->tag1p)
-						prox->tag1p = (TTagItem*)g_map_tag.Find(prox->tag1, NULL);
-					if(!prox->tag2p)
-						prox->tag2p = (TTagItem*)g_map_tag.Find(prox->tag2, NULL);
 
 					/* wait till both sides are calibrated */
 					if(	prox->tag1p && prox->tag2p &&
@@ -456,7 +458,7 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 	return sizeof(TBeaconLogSighting);
 }
 
-static inline void
+static void
 thread_iterate_tag (void *Context, double timestamp, bool realtime)
 {
 	int delta;
@@ -472,7 +474,7 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 		return;
 
 	if(g_first)
-		fprintf(g_out,"  \"tag\":[");
+		fprintf(g_out,"\n  ],\n  \"tag\":[");
 	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i,\"angle\":%i,\"voltage\":%1.1f",
 		g_first ? "":",",
 		tag->tag_id,
@@ -485,12 +487,55 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 	if(tag->fixed)
 		fprintf(g_out,",\"fixed\":true");
 
+	if(tag->visible)
+		fprintf(g_out,",\"px\":%i,\"py\":%i", (int)tag->pX, (int)tag->pY);
+
+	if(tag->Fcount)
+		fprintf(g_out,",\"Fx\":%1.1f,\"Fy\":%1.1f", tag->Fx/tag->Fcount,tag->Fy/tag->Fcount);
+
 	fprintf(g_out,"}");
 
 	g_first = false;
 }
 
-static inline void
+static void
+thread_reset_tag (void *Context, double timestamp, bool realtime)
+{
+	TTagItem *tag = (TTagItem*)Context;
+
+	tag->Fx = tag->Fy = 0;
+	tag->Fcount = 0;
+}
+
+static void thread_update_tag_speed(TTagItem *tag, const TTagItem *beacon, double power)
+{
+	double dX, dY, dist;
+
+	/* calculate force unity vector */
+	dX = beacon->pX - tag->pX;
+	dY = beacon->pY - tag->pY;
+	dist = sqrt(dX*dX + dY*dY);
+
+	if(dist>0)
+	{
+		dX /= dist;
+		dY /= dist;
+	}
+
+	/* normalize power - FIXME */
+	power = fabs(power);
+	if(power < 40)
+		power = 0;
+	else
+		power -= 40;
+
+	/* register power */
+	tag->Fx += dX * power;
+	tag->Fy += dY * power;
+	tag->Fcount++;
+}
+
+static void
 thread_iterate_prox (void *Context, double timestamp, bool realtime)
 {
 	double weigth, totalp, totald, power;
@@ -539,15 +584,28 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 	if(!count)
 		return;
 
+	/* normalize data */
+	power/=totalp;
+
+	/* update delta-Velocity */
+	if(prox->tag1p && prox->tag2p)
+	{
+		if(prox->tag1p->fixed && !prox->tag2p->fixed)
+			thread_update_tag_speed(prox->tag2p, prox->tag1p, power);
+		else
+			if(!prox->tag1p->fixed && prox->tag2p->fixed)
+				thread_update_tag_speed(prox->tag1p, prox->tag2p, power);
+	}
+
 	if(g_first)
-		fprintf(g_out,"\n  ],\n  \"edge\":[");
+		fprintf(g_out,"  \"edge\":[");
 	fprintf(g_out,"%s\n    {\"tag\":[%u,%u],\"age\":%i,\"count\":%u,\"power\":%1.1f",
 		g_first ? "":",",
 		prox->tag1,
 		prox->tag2,
 		delta,
 		count,
-		power/totalp
+		power
 	);
 
 	if(totald>0)
@@ -573,13 +631,17 @@ thread_estimation_step (FILE *out, double timestamp, bool realtime)
 
 	g_out = out;
 
-	/* display all tags */
+	/* reset all tags */
 	g_first = true;
-	g_map_tag.IterateLocked (&thread_iterate_tag, timestamp, realtime);
+	g_map_tag.IterateLocked (&thread_reset_tag, timestamp, realtime);
 
 	/* display all edges */
 	g_first = true;
 	g_map_proximity.IterateLocked (&thread_iterate_prox, timestamp, realtime);
+
+	/* display all tags */
+	g_first = true;
+	g_map_tag.IterateLocked (&thread_iterate_tag, timestamp, realtime);
 
 	fprintf (out, "\n  ]\n},");
 

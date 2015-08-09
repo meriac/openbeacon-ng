@@ -31,9 +31,9 @@ typedef struct
 } TBeaconItem;
 
 static const TBeaconItem g_BeaconList[] = {
-	{0x898C666C, 1, 1, 1,   24, 1000},
-	{0x8B61F634, 1, 1, 1,   68,  700},
-	{0x3300C73C, 1, 1, 1, 1000,  700}
+	{0x898C666C, 1, 1, 1, -100,   0},
+	{0x8B61F634, 1, 1, 1,    0, 100},
+	{0x3300C73C, 1, 1, 1,  100,   0}
 };
 
 #define BEACON_COUNT ((int)(sizeof(g_BeaconList)/sizeof(g_BeaconList[0])))
