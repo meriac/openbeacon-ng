@@ -42,6 +42,7 @@
 
 #include "crypto.h"
 #include "bmMapHandleToItem.h"
+#include "../BeaconPositions.h"
 
 #define TAGAGGREGATION_TIME 30
 #define PROXAGGREGATION_TIME 10
@@ -55,10 +56,11 @@ typedef struct
 	uint32_t tag_id, epoch;
 	float voltage;
 	int angle;
-	bool button, calibrated;
+	bool button, calibrated, fixed;
 	double last_seen;
 	uint32_t last_reader_id;
 	double rx_loss, tx_loss, px_power;
+	double pX, pY, vX, vY;
 } TTagItem;
 
 typedef struct
@@ -194,6 +196,7 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 	TTagProximity *prox;
 	TTagProximitySlot *prox_slot;
 	const TBeaconNgSighting *slot;
+	const TBeaconItem *beacon;
 	pthread_mutex_t *tag_mutex, *prox_mutex;
 
 	/* find tag */
@@ -206,6 +209,18 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 		tag->tag_id = track.uid;
 		tag->calibrated = false;
 		tag->epoch = 0;
+
+		/* check for fixed beacons ID's */
+		for(i=0; i<BEACON_COUNT; i++)
+		{
+			beacon = &g_BeaconList[i];
+			if(tag->tag_id == beacon->id)
+			{
+				tag->fixed = true;
+				tag->pX = beacon->pX;
+				tag->pY = beacon->pY;
+			}
+		}
 	}
 
 	/* ignore doubled/replayed packets */
@@ -458,7 +473,7 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 
 	if(g_first)
 		fprintf(g_out,"  \"tag\":[");
-	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i,\"angle\":%i,\"voltage\":%1.1f}",
+	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i,\"angle\":%i,\"voltage\":%1.1f",
 		g_first ? "":",",
 		tag->tag_id,
 		tag->tag_id,
@@ -466,6 +481,11 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 		tag->angle,
 		tag->voltage
 	);
+
+	if(tag->fixed)
+		fprintf(g_out,",\"fixed\":true");
+
+	fprintf(g_out,"}");
 
 	g_first = false;
 }
