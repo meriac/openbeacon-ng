@@ -477,7 +477,10 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 		return;
 
 	if(g_first)
+	{
+		g_first = false;
 		fprintf(g_out,"\n  ],\n  \"tag\":[");
+	}
 	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i,\"angle\":%i,\"voltage\":%1.1f",
 		g_first ? "":",",
 		tag->tag_id,
@@ -508,10 +511,7 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 	}
 	tag->visible = tag->fixed || (tag->Fcount>0);
 
-
 	fprintf(g_out,"}");
-
-	g_first = false;
 }
 
 static void
@@ -614,7 +614,10 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 	}
 
 	if(g_first)
+	{
+		g_first = false;
 		fprintf(g_out,"  \"edge\":[");
+	}
 	fprintf(g_out,"%s\n    {\"tag\":[%u,%u],\"age\":%i,\"count\":%u,\"power\":%1.1f",
 		g_first ? "":",",
 		prox->tag1,
@@ -628,7 +631,6 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 		fprintf(g_out,",\"dist\":%1.1f", (dist/totald)/1000.0);
 
 	fprintf(g_out,"}");
-	g_first = false;
 }
 
 static void
