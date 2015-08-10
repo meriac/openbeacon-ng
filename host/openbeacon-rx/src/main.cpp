@@ -532,18 +532,23 @@ static void thread_update_tag_speed(TTagItem *tag, const TTagItem *beacon, doubl
 	dY = beacon->pY - tag->pY;
 	dist = sqrt(dX*dX + dY*dY);
 
-	if(dist>0)
+	if(dist>0.1)
 	{
 		dX /= dist;
 		dY /= dist;
 	}
 
-	/* normalize power - FIXME */
+	/* simple power multilateration - FIXME! */
 	power = fabs(power);
-	if(power < 40)
-		power = 0;
+	if(power <= 40)
+		power = 1;
 	else
-		power -= 40;
+	{
+		power -= 39;
+		if(power > 40)
+			power = 40;
+		power = 40 - power;
+	}
 
 	/* register power */
 	tag->Fx += dX * power;
