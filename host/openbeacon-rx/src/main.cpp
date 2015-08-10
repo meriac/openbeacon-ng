@@ -44,6 +44,8 @@
 #include "bmMapHandleToItem.h"
 #include "../BeaconPositions.h"
 
+#define TAG_DAMPEN 10.0
+
 #define TAGAGGREGATION_TIME 30
 #define PROXAGGREGATION_TIME 10
 #define MAX_PROXIMITY_SLOTS 32
@@ -462,6 +464,7 @@ static void
 thread_iterate_tag (void *Context, double timestamp, bool realtime)
 {
 	int delta;
+	double dx, dy, distance;
 	TTagItem *tag = (TTagItem*)Context;
 
 	/* ignore empty slots */
@@ -491,7 +494,20 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 		fprintf(g_out,",\"px\":%i,\"py\":%i", (int)tag->pX, (int)tag->pY);
 
 	if(tag->Fcount)
-		fprintf(g_out,",\"Fx\":%1.1f,\"Fy\":%1.1f", tag->Fx/tag->Fcount,tag->Fy/tag->Fcount);
+	{
+		dx = tag->Fx/tag->Fcount;
+		dy = tag->Fy/tag->Fcount;
+		distance = sqrt(dx*dx + dy*dy);
+		if(distance>=0.1)
+		{
+			/* move only in unity-steps */
+			tag->pX += dx/distance;
+			tag->pY += dy/distance;
+		}
+//		fprintf(g_out,",\"Fx\":%1.1f,\"Fy\":%1.1f", dx, dy);
+	}
+	tag->visible = tag->fixed || (tag->Fcount>0);
+
 
 	fprintf(g_out,"}");
 
