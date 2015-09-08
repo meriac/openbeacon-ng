@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - OnAir protocol specification and definition
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2013-2015 Milosch Meriac <milosch@meriac.com>
  *
  ****************************************************************************
 
@@ -34,40 +34,43 @@
 #define CONFIG_SIGNATURE_SIZE 5
 #define CONFIG_SIGHTING_SLOTS 3
 
-#define RFBPROTO_BEACON_NG_SIGHTING 30
-#define RFBPROTO_BEACON_NG_STATUS   31
-#define RFBPROTO_BEACON_NG_PROX     32
+#define RFBPROTO_BEACON_NG_SIGHTING 33
+#define RFBPROTO_BEACON_NG_STATUS   34
+#define RFBPROTO_BEACON_NG_PROX     35
 
 typedef struct
 {
-	int16_t rx_loss;
-	int16_t tx_loss;
-	int16_t px_power;
+	uint32_t epoch;
 	uint16_t ticks;
+	uint8_t voltage;
+	int8_t  acc[3];
+	int16_t px_power;
+	int16_t tx_power;
+	int16_t tx_loss;
+	int16_t rx_loss;
 } PACKED TBeaconNgStatus;
 
 typedef struct
 {
-	int8_t rx_power;
 	uint32_t uid;
+	int8_t tx_power;
+	int8_t rx_power;
 } PACKED TBeaconNgSighting;
 
 typedef union
 {
 	TBeaconNgStatus status;
 	TBeaconNgSighting sighting[CONFIG_SIGHTING_SLOTS];
-	uint8_t raw[15];
+	uint8_t raw[18];
 } PACKED TBeaconNgPayload;
 
 typedef struct
 {
-	uint8_t proto;
-	int8_t tx_power;
-	int8_t angle;
-	uint8_t voltage;
 	uint32_t uid;
-	uint32_t epoch;
+	uint16_t counter;
+	uint16_t listen_wait_ms;
 	TBeaconNgPayload p;
+	uint8_t proto;
  	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgTracker;
 

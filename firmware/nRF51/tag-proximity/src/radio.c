@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - nRF51 2.4GHz Radio Routines
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2013-2015 Milosch Meriac <meriac@openbeacon.de>
  *
  ***************************************************************
 
@@ -30,7 +30,11 @@
 #include <rng.h>
 #include <timer.h>
 
-/* set proximity power */
+/* set tracker packet TX power */
+#define TX_POWER 4
+#define TX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Pos4dBm
+
+/* set proximity packet TX power */
 #define PX_POWER -20
 #define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Neg20dBm
 
@@ -72,7 +76,7 @@ static uint8_t g_pkt_tracker_enc[sizeof(g_pkt_tracker)] ALIGN4;
 #define NRF_STATE_TX_TRACKER     5
 
 #define RADIO_TRACKER_TXADDRESS 1
-#define RADIO_TRACKER_TXPOWER (RADIO_TXPOWER_TXPOWER_Pos4dBm << RADIO_TXPOWER_TXPOWER_Pos)
+#define RADIO_TRACKER_TXPOWER (TX_POWER_VALUE << RADIO_TXPOWER_TXPOWER_Pos)
 #define RADIO_TRACKER_PCNF1 \
 		(RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos) |\
 		(RADIO_PCNF1_ENDIAN_Big       << RADIO_PCNF1_ENDIAN_Pos)  |\
@@ -318,11 +322,14 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.p.status.rx_loss = (int16_t)((RX_LOSS*100)+0.5);
 						g_pkt_tracker.p.status.tx_loss = (int16_t)((TX_LOSS*100)+0.5);
 						g_pkt_tracker.p.status.px_power = (int16_t)((PX_POWER*100)+0.5);
+						g_pkt_tracker.p.status.tx_power = (int16_t)((TX_POWER*100)+0.5);
+						g_pkt_tracker.p.status.voltage = adc_bat();
+						g_pkt_tracker.p.status.epoch = g_time+g_time_offset;
 						g_pkt_tracker.p.status.ticks = NRF_RTC0->COUNTER + g_ticks_offset + g_pkt_tracker_ticks;
 					}
-					g_pkt_tracker.epoch = g_time+g_time_offset;
-					g_pkt_tracker.angle = tag_angle();
-					g_pkt_tracker.voltage = adc_bat();
+
+					/* increment counter to ensure distinctly encrypted packets */
+					g_pkt_tracker.counter++;
 
 					/* measure encryption time */
 					ticks = NRF_RTC0->COUNTER;
@@ -431,7 +438,6 @@ void radio_init(uint32_t uid)
 
 	/* initialize tracker packet */
 	memset(&g_pkt_tracker, 0, sizeof(g_pkt_tracker));
-	g_pkt_tracker.tx_power = 4;
 	g_pkt_tracker.uid = uid;
 
 	/* start random number genrator */
