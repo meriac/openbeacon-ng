@@ -35,20 +35,32 @@
 #define CONFIG_SIGHTING_SLOTS 3
 
 #define RFBPROTO_BEACON_NG_SIGHTING 33
-#define RFBPROTO_BEACON_NG_STATUS   34
-#define RFBPROTO_BEACON_NG_PROX     35
+#define RFBPROTO_BEACON_NG_FSTATUS  35
+#define RFBPROTO_BEACON_NG_SSTATUS  36
+#define RFBPROTO_BEACON_NG_PROX     37
 
 typedef struct
 {
-	uint32_t epoch;
-	uint16_t ticks;
+	uint16_t flags;
 	uint8_t voltage;
-	int8_t  acc[3];
+	uint8_t boot_count;
+	uint32_t epoch;
+	uint8_t pading[5];
+	int8_t acc[3];
+	uint16_t flash_log_blocks_filled;
+} PACKED TBeaconNgStatusFast;
+
+typedef struct
+{
+	uint16_t flags;
 	int16_t px_power;
 	int16_t tx_power;
 	int16_t tx_loss;
 	int16_t rx_loss;
-} PACKED TBeaconNgStatus;
+	uint32_t git_hash_32;
+	uint16_t firmware_version;
+	uint16_t flash_log_blocks_total;
+} PACKED TBeaconNgStatusSlow;
 
 typedef struct
 {
@@ -59,7 +71,8 @@ typedef struct
 
 typedef union
 {
-	TBeaconNgStatus status;
+	TBeaconNgStatusFast fstatus;
+	TBeaconNgStatusSlow sstatus;
 	TBeaconNgSighting sighting[CONFIG_SIGHTING_SLOTS];
 	uint8_t raw[18];
 } PACKED TBeaconNgPayload;
@@ -79,18 +92,7 @@ typedef struct
 	uint32_t uid;
 	uint32_t epoch;
 	uint16_t ticks;
-} PACKED TBeaconNgProxAnnounce;
-
-typedef union
-{
-	TBeaconNgProxAnnounce prox;
-	uint8_t raw[10];
-} PACKED TBeaconNgProxPayload;
-
-typedef struct
-{
-	TBeaconNgProxPayload p;
-	uint8_t proto;
+	int8_t tx_power;
 	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgProx;
 

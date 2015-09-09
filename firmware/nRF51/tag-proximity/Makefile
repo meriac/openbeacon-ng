@@ -24,6 +24,7 @@ APP_SRC= \
   src/flash.c \
   src/radio.c \
   src/timer.c \
+  src/tracker.c \
   src/main.c
 
 APP_SRC+=$(IMAGES_C)

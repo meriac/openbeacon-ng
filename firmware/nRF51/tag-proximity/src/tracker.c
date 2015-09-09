@@ -1,8 +1,8 @@
 /***************************************************************
  *
- * OpenBeacon.org - nRF51 2.4GHz Radio Routines
+ * OpenBeacon.org - nRF51 2.4GHz Reader Communication Handling
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2015 Milosch Meriac <milosch@meriac.com>
  *
  ***************************************************************
 
@@ -22,9 +22,28 @@
  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-#ifndef __RADIO_H__
-#define __RADIO_H__
 
-extern void radio_init(uint32_t uid);
+#include <openbeacon.h>
+#include <tracker.h>
+#include <openbeacon-proto.h>
 
-#endif/*__RADIO_H__*/
+static TBeaconNgTracker g_pkt_tracker ALIGN4;
+
+const void* tracker_transmit(int tx_delay_ticks)
+{
+	(void)tx_delay_ticks;
+	return &g_pkt_tracker;
+}
+
+void tracker_receive(uint32_t uid, int power)
+{
+	(void)uid;
+	(void)power;
+}
+
+void tracker_init(uint32_t uid)
+{
+	memset(&g_pkt_tracker, 0, sizeof(g_pkt_tracker));
+	g_pkt_tracker.uid = uid;
+}
+

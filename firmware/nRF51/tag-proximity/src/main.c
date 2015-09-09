@@ -23,7 +23,7 @@
 
 */
 #include <openbeacon.h>
-
+#include <openbeacon-proto.h>
 #include <acc.h>
 #include <flash.h>
 #include <radio.h>

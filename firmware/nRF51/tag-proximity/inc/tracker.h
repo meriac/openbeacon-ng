@@ -22,9 +22,11 @@
  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-#ifndef __RADIO_H__
-#define __RADIO_H__
+#ifndef __TRACKER_H__
+#define __TRACKER_H__
 
-extern void radio_init(uint32_t uid);
+extern const void* tracker_transmit(int tx_delay_ticks);
+extern void tracker_receive(uint32_t uid, int power);
+extern void tracker_init(uint32_t uid);
 
-#endif/*__RADIO_H__*/
+#endif/*__TRACKER_H__*/
