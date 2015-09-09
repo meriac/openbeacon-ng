@@ -69,9 +69,12 @@
 #define ACC_REG_FIFO_SRC_REG      0x2F
 #define ACC_REG_INT1_CFG          0x30
 
+typedef int16_t ACC_CHANNELS[3];
+
 extern uint8_t acc_init(void);
 extern void acc_write(uint8_t cmd, uint8_t data);
 extern void acc_read(uint8_t cmd, uint8_t len, uint8_t *data);
+extern void acc_channels(ACC_CHANNELS *ch);
 extern uint16_t acc_magnitude(int8_t* angle);
 
 #endif/*__ACC_H__*/

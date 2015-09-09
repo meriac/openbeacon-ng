@@ -28,5 +28,6 @@
 extern const void* tracker_transmit(int tx_delay_ticks);
 extern void tracker_receive(uint32_t uid, int tx_power, int rx_power);
 extern void tracker_init(uint32_t uid);
+extern uint8_t tracker_loop(void);
 
 #endif/*__TRACKER_H__*/

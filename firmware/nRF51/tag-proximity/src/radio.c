@@ -396,9 +396,6 @@ void radio_init(uint32_t uid)
 	memset(&g_pkt_prox, 0, sizeof(g_pkt_prox));
 	g_pkt_prox.uid = uid;
 
-	/* initialize tracker packet */
-	tracker_init(uid);
-
 	/* start random number genrator */
 	rng_init();
 	/* initialize AES encryption engine */
