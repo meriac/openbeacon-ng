@@ -239,7 +239,7 @@ static void radio_on_prox_packet(uint16_t delta_t)
 	}
 
 	/* process proximity package */
-	tracker_receive(g_pkt_prox_rx.uid, g_pkt_prox_rx.tx_power);
+	tracker_receive(g_pkt_prox_rx.uid, g_pkt_prox_rx.tx_power, g_rssi);
 }
 
 void RADIO_IRQ_Handler(void)

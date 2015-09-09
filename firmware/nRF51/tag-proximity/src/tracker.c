@@ -35,10 +35,11 @@ const void* tracker_transmit(int tx_delay_ticks)
 	return &g_pkt_tracker;
 }
 
-void tracker_receive(uint32_t uid, int power)
+void tracker_receive(uint32_t uid, int tx_power, int rx_power)
 {
 	(void)uid;
-	(void)power;
+	(void)tx_power;
+	(void)rx_power;
 }
 
 void tracker_init(uint32_t uid)

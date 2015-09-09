@@ -26,7 +26,7 @@
 #define __TRACKER_H__
 
 extern const void* tracker_transmit(int tx_delay_ticks);
-extern void tracker_receive(uint32_t uid, int power);
+extern void tracker_receive(uint32_t uid, int tx_power, int rx_power);
 extern void tracker_init(uint32_t uid);
 
 #endif/*__TRACKER_H__*/
