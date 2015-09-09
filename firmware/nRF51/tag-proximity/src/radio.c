@@ -344,10 +344,10 @@ void RADIO_IRQ_Handler(void)
 		}
 	}
 
-	if(NRF_RADIO->EVENTS_END)
+	if(NRF_RADIO->EVENTS_PAYLOAD)
 	{
 		/* acknowledge event */
-		NRF_RADIO->EVENTS_END = 0;
+		NRF_RADIO->EVENTS_PAYLOAD = 0;
 
 		/* received packet */
 		if(	(g_nrf_state == NRF_STATE_RX_PROX_PACKET) && 
@@ -430,7 +430,7 @@ void radio_init(uint32_t uid)
 	NRF_RADIO->INTENSET = (
 		(RADIO_INTENSET_RSSIEND_Enabled         << RADIO_INTENSET_RSSIEND_Pos)  |
 		(RADIO_INTENSET_DISABLED_Enabled        << RADIO_INTENSET_DISABLED_Pos) |
-		(RADIO_INTENSET_END_Enabled             << RADIO_INTENSET_END_Pos)
+		(RADIO_INTENSET_PAYLOAD_Enabled         << RADIO_INTENSET_PAYLOAD_Pos)
 	);
 	NVIC_SetPriority(RADIO_IRQn, IRQ_PRIORITY_RADIO);
 	NVIC_EnableIRQ(RADIO_IRQn);
