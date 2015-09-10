@@ -90,6 +90,8 @@ const void* tracker_tx(uint16_t listen_wait_ms, uint16_t tx_delay_us)
 		g_pkt_tracker.p.fstatus.voltage = adc_bat();
 		g_pkt_tracker.p.fstatus.boot_count = g_boot_count;
 		g_pkt_tracker.p.fstatus.epoch = g_time;
+		memcpy(&g_pkt_tracker.p.fstatus.acc, g_acc_channel,
+				sizeof(g_pkt_tracker.p.fstatus.acc));
 	}
 
 	/* increment slow ratio counter */
