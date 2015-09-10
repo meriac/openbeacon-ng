@@ -148,6 +148,10 @@ void RTC0_IRQ_Handler(void)
 				g_proximity_wait[g_proximity_wait_pos++] = delta_t;
 			}
 
+			/* correct last slot for listening time */
+			g_next_listen_slot -= CONFIG_PROX_LISTEN;
+			g_proximity_wait[0] -= CONFIG_PROX_LISTEN;
+
 			/* schedule first proximity transmission */
 			start_t = NRF_RTC0->COUNTER;
 			NRF_RTC0->CC[1] =  start_t + g_proximity_wait[--g_proximity_wait_pos];
