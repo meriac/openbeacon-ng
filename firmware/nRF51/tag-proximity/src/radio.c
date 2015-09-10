@@ -265,6 +265,7 @@ void RADIO_IRQ_Handler(void)
 				/* transmit original proximit packet
 				   just after the proximity listen slot */
 				radio_prox_tx();
+				break;
 			}
 
 			case NRF_STATE_TX_TRACKER:
