@@ -37,7 +37,7 @@
 
 static volatile uint16_t g_ticks_offset, g_pkt_tracker_ticks;
 static uint32_t g_next_listen_slot;
-static uint8_t g_nrf_state;
+static volatile int g_nrf_state;
 static int8_t g_rssi;
 static uint32_t g_uid;
 
@@ -63,8 +63,9 @@ static uint32_t g_proximity_wait[CONFIG_PROX_LISTEN_RATIO];
 #define NRF_STATE_TX_PROX         1
 #define NRF_STATE_RX_PROX         2
 #define NRF_STATE_RX_PROX_PACKET  3
-#define NRF_STATE_TX_TRACKER      4
-#define NRF_STATE_TX_TRACKER_DONE 5
+#define NRF_STATE_TX_TRACKER_PROX 4
+#define NRF_STATE_TX_TRACKER      5
+#define NRF_STATE_TX_TRACKER_DONE 6
 
 #define RADIO_TRACKER_TXADDRESS 1
 #define RADIO_TRACKER_TXPOWER (TX_POWER_VALUE << RADIO_TXPOWER_TXPOWER_Pos)
@@ -189,13 +190,13 @@ void RTC0_IRQ_Handler(void)
 		/* acknowledge event */
 		NRF_RTC0->EVENTS_COMPARE[2] = 0;
 
-		/* disable receive */
-		NRF_RADIO->TASKS_RXEN = 0;
-
 		/* transmit proximity event
 		   on same frequency */
-		g_nrf_state = NRF_STATE_TX_TRACKER;
-		radio_prox_tx();
+		g_nrf_state = NRF_STATE_TX_TRACKER_PROX;
+
+		/* disable receive */
+		NRF_RADIO->TASKS_DISABLE = 1;
+		NRF_RADIO->TASKS_RSSISTOP = 1;
 	}
 }
 
@@ -254,6 +255,16 @@ void RADIO_IRQ_Handler(void)
 				/* disable DC-DC converter */
 				NRF_POWER->DCDCEN = 0;
 				break;
+			}
+
+			case NRF_STATE_TX_TRACKER_PROX:
+			{
+				/* set next state */
+				g_nrf_state = NRF_STATE_TX_TRACKER;
+
+				/* transmit original proximit packet
+				   just after the proximity listen slot */
+				radio_prox_tx();
 			}
 
 			case NRF_STATE_TX_TRACKER:
