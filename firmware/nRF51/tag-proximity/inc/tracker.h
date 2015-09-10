@@ -25,9 +25,11 @@
 #ifndef __TRACKER_H__
 #define __TRACKER_H__
 
-extern const void* tracker_transmit(uint16_t tx_delay_us, uint16_t listen_wait_ms);
+extern const void* tracker_px(uint16_t listen_wait_ms);
+extern const void* tracker_tx(uint16_t listen_wait_ms, uint16_t tx_delay_us);
 extern void tracker_receive(uint32_t uid, int tx_power, int rx_power);
 extern void tracker_init(uint32_t uid);
 extern uint8_t tracker_loop(void);
+extern void tracker_second_tick(void);
 
 #endif/*__TRACKER_H__*/

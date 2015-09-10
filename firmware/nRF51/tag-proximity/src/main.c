@@ -25,6 +25,7 @@
 #include <openbeacon.h>
 #include <openbeacon-proto.h>
 #include <acc.h>
+#include <rng.h>
 #include <flash.h>
 #include <tracker.h>
 #include <radio.h>
@@ -63,6 +64,9 @@ void main_entry(void)
 
 	/* initialize UART */
 	uart_init();
+
+	/* start random number genrator */
+	rng_init();
 
 	/* start timer */
 	timer_init();

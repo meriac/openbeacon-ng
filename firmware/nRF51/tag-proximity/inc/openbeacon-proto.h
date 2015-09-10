@@ -91,7 +91,7 @@ typedef struct
 {
 	uint32_t uid;
 	uint32_t epoch;
-	uint16_t ticks;
+	uint16_t listen_wait_ms;
 	int8_t tx_power;
 	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgProx;
