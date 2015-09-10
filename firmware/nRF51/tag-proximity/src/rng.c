@@ -27,7 +27,7 @@
 
 /* allow overriding RNG pool size */
 #ifndef CONFIG_RNG_POOL_SIZE
-#define CONFIG_RNG_POOL_SIZE 32
+#define CONFIG_RNG_POOL_SIZE 64
 #endif/*CONFIG_RNG_POOL_SIZE*/
 
 static uint8_t g_rng_pool[CONFIG_RNG_POOL_SIZE];

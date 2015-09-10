@@ -25,7 +25,8 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#define LF_FREQUENCY 32768UL
+#define LF_FREQUENCY_BITS 15
+#define LF_FREQUENCY (1UL<<LF_FREQUENCY_BITS)
 
 #define SECONDS(x) ((uint32_t)((LF_FREQUENCY*x)+0.5))
 #define MILLISECONDS(x) ((uint32_t)(((LF_FREQUENCY*x)/1000.0)+0.5))

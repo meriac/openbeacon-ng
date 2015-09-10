@@ -34,9 +34,17 @@
 static TBeaconNgTracker g_pkt_tracker ALIGN4;
 static int8_t g_acc_channel[3];
 
-const void* tracker_transmit(int tx_delay_ticks)
+const void* tracker_transmit(uint16_t tx_delay_us, uint16_t listen_wait_ms)
 {
-	(void)tx_delay_ticks;
+	(void)tx_delay_us;
+
+	/* announce next listening slot */
+	g_pkt_tracker.listen_wait_ms = listen_wait_ms;
+
+	/* update counter to guarantee uniquely encrypted packets */
+	g_pkt_tracker.counter++;
+
+	/* return pointer to packet - needs to be in SRAM */
 	return &g_pkt_tracker;
 }
 
