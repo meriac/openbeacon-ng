@@ -49,6 +49,10 @@ static uint8_t g_pkt_tracker_enc[sizeof(TBeaconNgTracker)] ALIGN4;
 static int g_proximity_wait_pos;
 static uint32_t g_proximity_wait[CONFIG_PROX_LISTEN_RATIO];
 
+/* derived config values */
+#define CONFIG_PROX_LISTEN MILLISECONDS(CONFIG_PROX_LISTEN_MS)
+#define CONFIG_PROX_SPACING MILLISECONDS(CONFIG_PROX_SPACING_MS)
+
 /* don't start DC/DC converter for voltages below 2.3V */
 #define NRF_DCDC_STARTUP_VOLTAGE 23
 

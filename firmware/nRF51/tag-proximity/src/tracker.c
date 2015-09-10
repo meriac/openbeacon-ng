@@ -31,6 +31,9 @@
 #include <timer.h>
 #include <openbeacon-proto.h>
 
+/* derived config values */
+#define CONFIG_TRACKER_SLOW_INFO_RATIO ((uint32_t)((CONFIG_TRACKER_SLOW_INFO_SECONDS*1000UL)/(CONFIG_PROX_SPACING_MS*CONFIG_PROX_LISTEN_RATIO)))
+
 static TBeaconNgTracker g_pkt_tracker ALIGN4;
 static int8_t g_acc_channel[3];
 
