@@ -174,7 +174,7 @@ void RTC0_IRQ_Handler(void)
 		else
 		{
 			/* schedule next proximity event */
-			NRF_RTC0->CC[1] += g_proximity_wait[g_proximity_wait_pos--];
+			NRF_RTC0->CC[1] += g_proximity_wait[--g_proximity_wait_pos];
 			/* do proximity-tx-only for this event */
 			g_nrf_state = NRF_STATE_TX_PROX;
 		}
@@ -298,14 +298,14 @@ void RADIO_IRQ_Handler(void)
 				/* set next state */
 				g_nrf_state = NRF_STATE_IDLE;
 
-				/* stop HF clock */
-				NRF_CLOCK->TASKS_HFCLKSTOP = 1;
-
 				/* reconfigure radio back to proximity */
 				NRF_RADIO->FREQUENCY = CONFIG_PROX_CHANNEL;
 				NRF_RADIO->TXPOWER = RADIO_PROX_TXPOWER;
 				NRF_RADIO->TXADDRESS = RADIO_PROX_TXADDRESS;
 				NRF_RADIO->PCNF1 = RADIO_PROX_PCNF1;
+
+				/* stop HF clock */
+				NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 
 				/* disable DC-DC converter */
 				NRF_POWER->DCDCEN = 0;
