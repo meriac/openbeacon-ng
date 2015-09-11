@@ -160,6 +160,18 @@ void tracker_cmd(int cmd, uint16_t rx_cmd_counter, uint32_t param0, uint32_t par
 	if(rx_cmd_counter!=g_cmd_counter)
 		return;
 
+	switch(cmd)
+	{
+		case TBEACONPROX_CMD_LED:
+		{
+			if(param0)
+				nrf_gpio_pin_set(CONFIG_LED_PIN);
+			else
+				nrf_gpio_pin_clear(CONFIG_LED_PIN);
+			break;
+		}
+	}
+
 	/* increment cmd counter */
 	g_cmd_counter++;
 }
