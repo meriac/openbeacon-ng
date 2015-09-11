@@ -36,6 +36,11 @@
 /* derived config values */
 #define CONFIG_TRACKER_SLOW_INFO_RATIO ((uint32_t)((CONFIG_TRACKER_SLOW_INFO_SECONDS*1000UL)/(CONFIG_PROX_SPACING_MS*CONFIG_PROX_LISTEN_RATIO)))
 
+typedef struct {
+	uint32_t uid, count;
+	int rx_power, tx_power;
+} TProximityEntry;
+
 static volatile uint32_t g_time, g_time_offset;
 static TBeaconNgProx g_pkt_prox ALIGN4;
 static TBeaconNgTracker g_pkt_tracker ALIGN4;
@@ -43,6 +48,8 @@ static int8_t g_acc_channel[3];
 static uint8_t g_boot_count;
 static uint32_t g_slow_ratio_counter;
 static uint16_t g_tracker_flags;
+static TProximityEntry g_sightings[CONFIG_SIGHTING_SLOTS];
+static uint32_t g_sightings_sent, g_sightings_count;
 
 void tracker_second_tick(void)
 {
@@ -63,12 +70,49 @@ const void* tracker_px(uint16_t listen_wait_ms)
 
 const void* tracker_tx(uint16_t listen_wait_ms, uint16_t tx_delay_us)
 {
+	int i;
 	(void)tx_delay_us;
+	TBeaconNgSighting *dst;
+	TProximityEntry *src;
 
 	/* announce next listening slot */
 	g_pkt_tracker.listen_wait_ms = listen_wait_ms;
 	/* update counter to guarantee uniquely encrypted packets */
 	g_pkt_tracker.counter++;
+
+	/* ensure to send out a status regularly */
+	g_sightings_sent++;
+	if(!g_sightings_count || (g_sightings_sent>=CONFIG_TRACKER_STATUS_RATIO))
+		g_sightings_sent = 0;
+	else
+	{
+		/* send out sightings */
+		g_pkt_tracker.proto = RFBPROTO_BEACON_NG_SIGHTING;
+
+		/* erase empty slots */
+		i = g_sightings_count;
+		memset(&g_pkt_tracker.p.sighting[i],
+			0, sizeof(g_pkt_tracker.p.sighting[0])*(CONFIG_SIGHTING_SLOTS-i));
+
+		/* copy proimity data to tracker package */
+		dst = g_pkt_tracker.p.sighting;
+		src = g_sightings;
+		while(g_sightings_count--)
+		{
+			/* store average readings */
+			dst->uid = src->uid;
+			dst->tx_power = src->tx_power;
+			dst->rx_power = src->rx_power / src->count;
+			/* process next slot */
+			dst++;
+			src++;
+		}
+		/* reset sigthings buffer */
+		memset(&g_sightings, 0, sizeof(g_sightings));
+
+		/* return pointer to packet - needs to be in SRAM */
+		return &g_pkt_tracker;
+	}
 
 	/* prepare slow tracker status information */
 	if(!g_slow_ratio_counter)
@@ -103,11 +147,28 @@ const void* tracker_tx(uint16_t listen_wait_ms, uint16_t tx_delay_us)
 	return &g_pkt_tracker;
 }
 
-void tracker_receive(uint32_t uid, int tx_power, int rx_power)
+void tracker_receive(uint32_t uid, int8_t tx_power, int8_t rx_power)
 {
-	(void)uid;
-	(void)tx_power;
-	(void)rx_power;
+	int i;
+	TProximityEntry *sighting = g_sightings;
+
+	/* store sightings *, aggregate same readings */
+	for(i=0; i<CONFIG_SIGHTING_SLOTS; i++, sighting++)
+		if(!sighting->uid)
+		{
+			sighting->uid = uid;
+			sighting->count = 1;
+			sighting->tx_power = tx_power;
+			sighting->rx_power = rx_power;
+			g_sightings_count++;
+		}
+		else
+			/* aggregate entries with the same tx power */
+			if((sighting->uid==uid) && (sighting->tx_power==tx_power))
+			{
+				sighting->count++;
+				sighting->rx_power+= rx_power;
+			}
 }
 
 void tracker_init(uint32_t uid)
