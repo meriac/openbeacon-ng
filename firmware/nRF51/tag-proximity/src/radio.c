@@ -85,14 +85,28 @@ static uint32_t g_proximity_wait[CONFIG_PROX_LISTEN_RATIO];
 		(NRF_PROX_SIZE                << RADIO_PCNF1_STATLEN_Pos) |\
 		(NRF_PROX_SIZE                << RADIO_PCNF1_MAXLEN_Pos)
 
+static int radio_tdiff(uint32_t ticks)
+{
+	uint32_t delta_t, counter;
+
+	counter = NRF_RTC0->COUNTER;
+	delta_t = (ticks - counter) & RTC_COUNTER_COUNTER_Msk;
+
+	/* handle timer counter overflow */
+	if(delta_t <((RTC_COUNTER_COUNTER_Msk+1)/2))
+		return delta_t;
+	else
+		return -(RTC_COUNTER_COUNTER_Msk+1 - delta_t);
+}
+
 static void radio_prox_tx(void)
 {
 	uint32_t delta_t;
 	const void* prox_pkt;
 
 	/* calculate window of next proximity transmission */
-	delta_t = (((g_next_listen_slot-NRF_RTC0->COUNTER-g_pkt_tracker_ticks)
-		& RTC_COUNTER_COUNTER_Msk) * 1000UL)/LF_FREQUENCY;
+	delta_t = ((radio_tdiff(g_next_listen_slot)-g_pkt_tracker_ticks)
+		* 1000UL)/LF_FREQUENCY;
 	prox_pkt = tracker_px(delta_t);
 
 	/* encrypt data */
@@ -283,8 +297,8 @@ void RADIO_IRQ_Handler(void)
 				/* get tracker packet, correct for transmission time,
 				   calculate delta time till next transmission */
 				tracker_pkt = tracker_tx(
-					(((g_next_listen_slot-NRF_RTC0->COUNTER-g_pkt_tracker_ticks)
-						& RTC_COUNTER_COUNTER_Msk) * 1000UL)/LF_FREQUENCY,
+					((radio_tdiff(g_next_listen_slot)-g_pkt_tracker_ticks)
+						* 1000UL)/LF_FREQUENCY,
 					(g_pkt_tracker_ticks * 1000000UL)/LF_FREQUENCY
 				);
 				/* update encryption time */
@@ -431,4 +445,5 @@ void radio_init(uint32_t uid)
 	NVIC_SetPriority(RTC0_IRQn, IRQ_PRIORITY_RTC0);
 	NVIC_EnableIRQ(RTC0_IRQn);
 	NRF_RTC0->TASKS_START = 1;
+
 }
