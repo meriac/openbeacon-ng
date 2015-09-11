@@ -27,7 +27,8 @@
 
 extern const void* tracker_px(uint16_t listen_wait_ms);
 extern const void* tracker_tx(uint16_t listen_wait_ms, uint16_t tx_delay_us);
-extern void tracker_receive(uint32_t uid, int8_t tx_power, int8_t rx_power);
+extern void tracker_cmd(int cmd, uint16_t rx_cmd_counter, uint32_t param0, uint32_t param1);
+extern void tracker_receive(uint32_t uid, int8_t tx_power, int8_t rx_power, uint32_t epoch);
 extern void tracker_init(uint32_t uid);
 extern uint8_t tracker_loop(void);
 extern void tracker_second_tick(void);

@@ -357,9 +357,29 @@ void RADIO_IRQ_Handler(void)
 				sizeof(g_pkt_prox_rx),
 				CONFIG_SIGNATURE_SIZE))
 			{
-				/* process proximity package */
-				if(g_pkt_prox_rx.uid != g_uid)
-					tracker_receive(g_pkt_prox_rx.uid, g_pkt_prox_rx.tx_power, g_rssi);
+				/* process proximity packages & ccommands */
+				if(g_pkt_prox_rx.cmd_tx_power >= TBEACONGPROX_CMD_START)
+				{
+					/* ensure command is targetting us */
+					if(g_pkt_prox_rx.uid == g_uid)
+						tracker_cmd(
+							g_pkt_prox_rx.cmd_tx_power - TBEACONGPROX_CMD_START,
+							g_pkt_prox_rx.p.cmd.cmd_counter,
+							g_pkt_prox_rx.p.cmd.param0,
+							g_pkt_prox_rx.p.cmd.param1
+						);
+				}
+				else
+				{
+					/* proximity sighting, prevent replay attack to self */
+					if(g_pkt_prox_rx.uid != g_uid)
+						tracker_receive(
+							g_pkt_prox_rx.uid,
+							g_pkt_prox_rx.cmd_tx_power,
+							g_rssi,
+							g_pkt_prox_rx.p.sig.epoch
+						);
+				}
 			}
 		}
 	}

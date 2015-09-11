@@ -48,6 +48,7 @@ static int8_t g_acc_channel[3];
 static uint8_t g_boot_count;
 static uint32_t g_slow_ratio_counter;
 static uint16_t g_tracker_flags;
+static uint16_t g_cmd_counter;
 static TProximityEntry g_sightings[CONFIG_SIGHTING_SLOTS];
 static uint32_t g_sightings_sent, g_sightings_count;
 
@@ -62,9 +63,10 @@ void tracker_second_tick(void)
 
 const void* tracker_px(uint16_t listen_wait_ms)
 {
-	g_pkt_prox.epoch = g_time;
-	g_pkt_prox.listen_wait_ms = listen_wait_ms;
-	g_pkt_prox.tx_power = PX_POWER;
+	g_pkt_prox.cmd_tx_power = PX_POWER;
+	g_pkt_prox.p.sig.listen_wait_ms = listen_wait_ms;
+	/* only re-broadcast time if updated externally */
+	g_pkt_prox.p.sig.epoch = (g_tracker_flags & TRACKERFLAGS_TIME_UPDATED) ? g_time : 0;
 	return &g_pkt_prox;
 }
 
@@ -134,6 +136,7 @@ const void* tracker_tx(uint16_t listen_wait_ms, uint16_t tx_delay_us)
 		g_pkt_tracker.p.fstatus.voltage = adc_bat();
 		g_pkt_tracker.p.fstatus.boot_count = g_boot_count;
 		g_pkt_tracker.p.fstatus.epoch = g_time;
+		g_pkt_tracker.p.fstatus.cmd_counter = g_cmd_counter;
 		memcpy(&g_pkt_tracker.p.fstatus.acc, g_acc_channel,
 				sizeof(g_pkt_tracker.p.fstatus.acc));
 	}
@@ -147,10 +150,31 @@ const void* tracker_tx(uint16_t listen_wait_ms, uint16_t tx_delay_us)
 	return &g_pkt_tracker;
 }
 
-void tracker_receive(uint32_t uid, int8_t tx_power, int8_t rx_power)
+void tracker_cmd(int cmd, uint16_t rx_cmd_counter, uint32_t param0, uint32_t param1)
+{
+	(void)cmd;
+	(void)param0;
+	(void)param1;
+
+	/* filter for expected command counter, avoid replay-attacks */
+	if(rx_cmd_counter!=g_cmd_counter)
+		return;
+
+	/* increment cmd counter */
+	g_cmd_counter++;
+}
+
+void tracker_receive(uint32_t uid, int8_t tx_power, int8_t rx_power, uint32_t epoch)
 {
 	int i;
 	TProximityEntry *sighting = g_sightings;
+
+	/* update time if available and not set */
+	if(epoch && ((g_tracker_flags & TRACKERFLAGS_TIME_UPDATED)==0))
+	{
+		g_tracker_flags |= TRACKERFLAGS_TIME_UPDATED;
+		g_time = epoch;
+	}
 
 	/* store sightings *, aggregate same readings */
 	for(i=0; i<CONFIG_SIGHTING_SLOTS; i++, sighting++)

@@ -34,10 +34,16 @@
 #define CONFIG_SIGNATURE_SIZE 5
 #define CONFIG_SIGHTING_SLOTS 3
 
+#define TBEACONGPROX_CMD_START 64
+
 #define RFBPROTO_BEACON_NG_SIGHTING 33
 #define RFBPROTO_BEACON_NG_FSTATUS  35
 #define RFBPROTO_BEACON_NG_SSTATUS  36
 #define RFBPROTO_BEACON_NG_PROX     37
+
+#define TRACKERFLAGS_TIME_UPDATED   (1UL <<  0)
+#define TRACKERFLAGS_TIME_FIRSTHAND (1UL <<  1)
+#define TRACKERFLAGS_BUTTON_PRESS   (1UL <<  2)
 
 typedef struct
 {
@@ -45,7 +51,8 @@ typedef struct
 	uint8_t voltage;
 	uint8_t boot_count;
 	uint32_t epoch;
-	uint8_t pading[5];
+	uint16_t cmd_counter;
+	uint8_t padding[3];
 	int8_t acc[3];
 	uint16_t flash_log_blocks_filled;
 } PACKED TBeaconNgStatusFast;
@@ -87,12 +94,26 @@ typedef struct
  	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgTracker;
 
+typedef struct {
+	uint32_t epoch;
+	uint16_t listen_wait_ms;
+} PACKED TBeaconProxSig;
+
+typedef struct {
+	uint16_t cmd_counter;
+	uint16_t param0;
+	uint8_t param1;
+} PACKED TBeaconProxCmd;
+
 typedef struct
 {
 	uint32_t uid;
-	uint32_t epoch;
-	uint16_t listen_wait_ms;
-	int8_t tx_power;
+	union {
+		TBeaconProxSig sig;
+		TBeaconProxCmd cmd;
+		uint8_t raw[6];
+	} p;
+	int8_t cmd_tx_power;
 	uint8_t signature[CONFIG_SIGNATURE_SIZE];
 } PACKED TBeaconNgProx;
 
