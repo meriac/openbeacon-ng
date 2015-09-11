@@ -282,9 +282,9 @@ void RADIO_IRQ_Handler(void)
 				/* get tracker packet, correct for transmission time,
 				   calculate delta time till next transmission */
 				tracker_pkt = tracker_tx(
-					(g_pkt_tracker_ticks * 1000000UL)/LF_FREQUENCY,
 					(((g_next_listen_slot-NRF_RTC0->COUNTER-g_pkt_tracker_ticks)
-						& RTC_COUNTER_COUNTER_Msk) * 1000UL)/LF_FREQUENCY
+						& RTC_COUNTER_COUNTER_Msk) * 1000UL)/LF_FREQUENCY,
+					(g_pkt_tracker_ticks * 1000000UL)/LF_FREQUENCY
 				);
 				/* update encryption time */
 				g_pkt_tracker_ticks = NRF_RTC0->COUNTER;
