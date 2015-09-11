@@ -147,8 +147,9 @@ void RTC0_IRQ_Handler(void)
 			}
 
 			/* correct last slot for listening time */
-			g_next_listen_slot -= CONFIG_PROX_LISTEN;
-			g_proximity_wait[0] -= CONFIG_PROX_LISTEN;
+			g_proximity_wait[0] -=
+				CONFIG_PROX_LISTEN +
+				MILLISECONDS(1.5);
 
 			/* schedule first proximity transmission */
 			start_t = NRF_RTC0->COUNTER;
@@ -369,6 +370,7 @@ void radio_init(uint32_t uid)
 	g_nrf_state = 0;
 	g_rssi = 0;
 	g_proximity_wait_pos = 0;
+	g_next_listen_slot = 0;
 
 	/* remember tag uid */
 	g_uid = uid;
