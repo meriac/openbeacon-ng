@@ -84,6 +84,11 @@ void main_entry(void)
 
 	/* calculate tag ID from NRF_FICR->DEVICEID */
 	tag_id = crc32(&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
+#ifdef  MARKER_TAG
+	tag_id |= MARKER_TAG_BIT;
+#else /*MARKER_TAG*/
+	tag_id &= MARKER_TAG_BIT-1;
+#endif/*MARKER_TAG*/
 
 	/* start radio */
 	debug_printf("\n\rInitializing Tag[%08X] v" PROGRAM_VERSION " @24%02iMHz ...\n\r",

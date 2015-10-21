@@ -31,8 +31,13 @@
 #include <timer.h>
 
 /* set proximity power */
-#define PX_POWER -20
-#define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Neg20dBm
+#ifdef  MARKER_TAG
+#  define PX_POWER 4
+#  define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Pos4dBm
+#else /*MARKER_TAG*/
+#  define PX_POWER -20
+#  define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Neg20dBm
+#endif/*MARKER_TAG*/
 
 #define RXTX_BASELOSS -4.0
 #define BALUN_INSERT_LOSS -2.25
@@ -129,8 +134,10 @@ void RTC0_IRQ_Handler(void)
 		/* start HF crystal oscillator */
 		NRF_CLOCK->TASKS_HFCLKSTART = 1;
 
+#ifndef MARKER_TAG
 		/* listen every CONFIG_PROX_LISTEN_RATIO slots */
 		g_listen_ratio++;
+#endif/*MARKER_TAG*/
 		if(g_listen_ratio<CONFIG_PROX_LISTEN_RATIO)
 			g_nrf_state = NRF_STATE_TX_PROX;
 		else

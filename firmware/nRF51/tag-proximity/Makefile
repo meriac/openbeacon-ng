@@ -13,7 +13,7 @@ else
 	ENCRYPTION_KEY:=-DCUSTOM_ENCRYPTION_KEY
 endif
 
-APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS $(ENCRYPTION_KEY)
+APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D __USE_CMSIS $(ENCRYPTION_KEY) $(FEATURE)
 APP_LDFLAGS=-lm
 
 APP_SRC= \
@@ -28,7 +28,12 @@ APP_SRC= \
 
 APP_SRC+=$(IMAGES_C)
 
-all: $(TARGET).bin
+all: prox_tag
+
+prox_tag: $(TARGET).bin
+
+marker_tag: FEATURE=-D MARKER_TAG
+marker_tag: prox_tag
 
 publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/

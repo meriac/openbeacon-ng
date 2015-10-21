@@ -38,6 +38,8 @@
 #define RFBPROTO_BEACON_NG_STATUS   31
 #define RFBPROTO_BEACON_NG_PROX     32
 
+#define MARKER_TAG_BIT (1UL<<31)
+
 typedef struct
 {
 	int16_t rx_loss;
