@@ -6,6 +6,8 @@ DEBUG=-g
 OPTIM=-Os -mword-relocations
 CUSTOM_KEY=inc/custom-encryption-key.h
 
+SAMPLING_RATE=12000
+
 # determine if we have custom encryption keys
 ifeq ("$(wildcard $(CUSTOM_KEY))","")
 	ENCRYPTION_KEY:=
@@ -17,6 +19,7 @@ APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS $(ENCRYPTION_KEY)
 APP_LDFLAGS=-lm
 
 APP_SRC= \
+  src/sound.s \
   src/timer.c \
   src/main.c
 
@@ -28,13 +31,19 @@ publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 
 app_clean:
-	find src -name '*.o' -exec rm \{\} \;
-
-custom_key:
-	echo -e "static const uint32_t xxtea_key[XXTEA_BLOCK_COUNT] = {\n\t`od -v -t x4 -N 16 /dev/urandom | grep 0000000 | sed 's/^0\+ /0x/g' |  sed 's/ /, 0x/g'`\n};\n" > $(CUSTOM_KEY)
+	find src -name '*.[os]' -exec rm \{\} \;
+	rm -f sound.raw
 
 clean_all: clean
 	rm -f README $(CUSTOM_KEY)
+
+src/sound.S: sound.raw
+
+sound.raw: sound.wav
+	sox $^ -c1 -b8 -r$(SAMPLING_RATE) -e unsigned-integer $@
+
+play: sound.raw
+	play   -c1 -b8 -r$(SAMPLING_RATE) -e unsigned-integer $^
 
 indent:
 	find src inc -iname '*.[ch]' -exec indent -c81 -i4 -cli4 -bli0 -ts 4 \{\} \;

@@ -25,6 +25,8 @@
 #include <openbeacon.h>
 #include <timer.h>
 
+extern const uint8_t *audio_start, *audio_end;
+
 static int8_t g_tag_angle;
 
 int8_t tag_angle(void)
@@ -54,6 +56,8 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
+	uint32_t audio_len;
+
 	/* enabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
 	nrf_gpio_pin_set(CONFIG_LED_PIN);
@@ -66,6 +70,10 @@ void main_entry(void)
 
 	/* start timer */
 	timer_init();
+
+	/* get audio data */
+	audio_len = audio_end - audio_start;
+	debug_printf("Audio sample: %i\n\r", audio_len);
 
 	/* enter main loop */
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
