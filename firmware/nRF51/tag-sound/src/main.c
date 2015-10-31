@@ -40,9 +40,9 @@ void blink(uint8_t times)
 {
 	while(times--)
 	{
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(10));
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
+		timer_wait(MILLISECONDS(10));
+		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 		timer_wait(MILLISECONDS(490));
 	}
 }
@@ -145,7 +145,7 @@ void main_entry(void)
 {
 	/* disabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
-	nrf_gpio_pin_set(CONFIG_LED_PIN);
+	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
 	/* enabled input pin */
 	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_PULLUP);

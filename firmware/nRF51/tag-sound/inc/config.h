@@ -29,11 +29,11 @@
 #define SOUND_IRQn TIMER2_IRQn
 #define SOUND_IRQ_Handler TIMER2_IRQ_Handler
 
-#define CONFIG_LED_PIN       21
-#define CONFIG_SWITCH_PIN    17
+#define CONFIG_LED_PIN       17
+#define CONFIG_SWITCH_PIN    29
 
-#define CONFIG_PWM_PIN_A     23
-#define CONFIG_PWM_PIN_B     24
+#define CONFIG_PWM_PIN_A     1
+#define CONFIG_PWM_PIN_B     2
 
 /* only two priority bits available ! */
 
