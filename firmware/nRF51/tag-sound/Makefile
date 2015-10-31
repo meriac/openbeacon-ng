@@ -6,7 +6,7 @@ DEBUG=-g
 OPTIM=-Os -mword-relocations
 CUSTOM_KEY=inc/custom-encryption-key.h
 
-SAMPLING_RATE=15625
+SAMPLING_RATE=16000
 
 # determine if we have custom encryption keys
 ifeq ("$(wildcard $(CUSTOM_KEY))","")

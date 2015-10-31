@@ -62,14 +62,68 @@ void SOUND_IRQ_Handler(void)
 		SOUND->EVENTS_COMPARE[2] = 0;
 
 		next = SOUND->CC[2] + CLOCK_DIVIDER;
+		SOUND->CC[2] = next;
 
 		SOUND->CC[g_seq_counter & 1] = next + ((uint32_t)(*g_audio++))*4;
 		g_seq_counter++;
 		if(g_audio >= &audio_end)
 			g_audio = &audio_start;
-
-		SOUND->CC[2] = next;
 	}
+}
+
+static void sound_init(void)
+{
+	g_audio=&audio_start;
+
+	/* setup sound output */
+	SOUND->TASKS_CLEAR = 1;
+	SOUND->MODE = TIMER_MODE_MODE_Timer;
+	SOUND->PRESCALER = 0;
+	SOUND->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
+	SOUND->CC[0] = 0;
+	SOUND->CC[1] = 0;
+	SOUND->CC[2] = CLOCK_DIVIDER;
+	SOUND->INTENSET = TIMER_INTENSET_COMPARE2_Msk;
+	SOUND->SHORTS = 0;
+
+	/* update driver strength */
+	NRF_GPIO->PIN_CNF[CONFIG_PWM_PIN_A] = NRF_GPIO->PIN_CNF[CONFIG_PWM_PIN_B] =
+		(GPIO_PIN_CNF_DIR_Output       << GPIO_PIN_CNF_DIR_Pos) |
+		(GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos) |
+		(GPIO_PIN_CNF_DRIVE_S0S1       << GPIO_PIN_CNF_DRIVE_Pos);
+
+	/* create tasks for both GPIO pins */
+	nrf_gpiote_task_config(0, CONFIG_PWM_PIN_A,
+		GPIOTE_CONFIG_POLARITY_Toggle, GPIOTE_CONFIG_OUTINIT_Low);
+	nrf_gpiote_task_config(1, CONFIG_PWM_PIN_B,
+		GPIOTE_CONFIG_POLARITY_Toggle, GPIOTE_CONFIG_OUTINIT_High);
+
+	/* wire up PWM to output pins */
+	NRF_PPI->CHENCLR = 0x1F;
+	NRF_PPI->CH[0].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[0];
+	NRF_PPI->CH[0].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
+	NRF_PPI->CH[1].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[1];
+	NRF_PPI->CH[1].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
+
+	NRF_PPI->CH[2].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[0];
+	NRF_PPI->CH[2].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[1];
+	NRF_PPI->CH[3].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[1];
+	NRF_PPI->CH[3].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[1];
+
+	NRF_PPI->CH[4].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[2];
+	NRF_PPI->CH[4].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
+	NRF_PPI->CH[5].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[2];
+	NRF_PPI->CH[5].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[1];
+
+	NRF_PPI->CHEN = 0x3F;
+	NRF_PPI->CHG[0] = 0x3F;
+	NRF_PPI->TASKS_CHG[0].EN = 1;
+
+	NVIC_SetPriority(SOUND_IRQn, IRQ_PRIORITY_SOUND);
+	NVIC_EnableIRQ(SOUND_IRQn);
+
+	/* start audio handling */
+	SOUND->TASKS_START = 1;
 }
 
 void main_entry(void)
@@ -84,56 +138,8 @@ void main_entry(void)
 	/* start timer */
 	timer_init();
 
-	g_audio=&audio_start;
-
-	/* setup sound output */
-	SOUND->MODE = TIMER_MODE_MODE_Timer;
-	SOUND->PRESCALER = 0;
-	SOUND->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
-	SOUND->TASKS_CLEAR = 1;
-	SOUND->CC[0] = 0;
-	SOUND->CC[1] = 0;
-	SOUND->CC[2] = CLOCK_DIVIDER;
-	SOUND->INTENSET =
-		TIMER_INTENSET_COMPARE2_Msk;
-	SOUND->SHORTS = 0;
-
-	/* update driver strength */
-	NRF_GPIO->PIN_CNF[CONFIG_PWM_PIN_A] = NRF_GPIO->PIN_CNF[CONFIG_PWM_PIN_B] =
-		(GPIO_PIN_CNF_DIR_Output       << GPIO_PIN_CNF_DIR_Pos) |
-		(GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos) |
-		(GPIO_PIN_CNF_DRIVE_H0H1       << GPIO_PIN_CNF_DRIVE_Pos);
-
-	/* create tasks for both GPIO pins */
-	nrf_gpiote_task_config(0, CONFIG_PWM_PIN_A,
-		GPIOTE_CONFIG_POLARITY_Toggle, GPIOTE_CONFIG_OUTINIT_Low);
-	nrf_gpiote_task_config(1, CONFIG_PWM_PIN_B,
-		GPIOTE_CONFIG_POLARITY_Toggle, GPIOTE_CONFIG_OUTINIT_High);
-
-	/* wire up PWM to output pins */
-	NRF_PPI->CHENCLR = 0x1F;
-	NRF_PPI->CH[0].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[0];
-	NRF_PPI->CH[0].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
-	NRF_PPI->CH[1].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[1];
-	NRF_PPI->CH[1].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
-/*
-	NRF_PPI->CH[2].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[0];
-	NRF_PPI->CH[2].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[1];
-	NRF_PPI->CH[3].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[1];
-	NRF_PPI->CH[3].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[1];
-*/
-	NRF_PPI->CH[4].EEP = (uint32_t)&SOUND->EVENTS_COMPARE[2];
-	NRF_PPI->CH[4].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
-
-	NRF_PPI->CHEN = 0x1F;
-	NRF_PPI->CHG[0] = 0x1F;
-	NRF_PPI->TASKS_CHG[0].EN = 1;
-
-	NVIC_SetPriority(SOUND_IRQn, IRQ_PRIORITY_SOUND);
-	NVIC_EnableIRQ(SOUND_IRQn);
-
-	/* start audio handling */
-	SOUND->TASKS_START = 1;
+	/* init sound driver */
+	sound_init();
 
 	/* enter main loop */
 	while(TRUE)
