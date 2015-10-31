@@ -25,7 +25,8 @@
 #include <openbeacon.h>
 #include <timer.h>
 
-extern const uint8_t *audio_start, *audio_end;
+extern const uint8_t audio_start, audio_end;
+uint32_t audio_len;
 
 static int8_t g_tag_angle;
 
@@ -38,9 +39,9 @@ void blink(uint8_t times)
 {
 	while(times--)
 	{
-		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(10));
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		timer_wait(MILLISECONDS(10));
+		nrf_gpio_pin_set(CONFIG_LED_PIN);
 		timer_wait(MILLISECONDS(490));
 	}
 }
@@ -56,28 +57,23 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
-	uint32_t audio_len;
-
-	/* enabled LED output */
+	/* disabled LED output */
 	nrf_gpio_cfg_output(CONFIG_LED_PIN);
 	nrf_gpio_pin_set(CONFIG_LED_PIN);
 
 	/* enabled input pin */
-	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_NOPULL);
-
-	/* initialize UART */
-	uart_init();
+	nrf_gpio_cfg_input(CONFIG_SWITCH_PIN, NRF_GPIO_PIN_PULLUP);
 
 	/* start timer */
 	timer_init();
 
-	/* get audio data */
-	audio_len = audio_end - audio_start;
-	debug_printf("Audio sample: %i\n\r", audio_len);
+	/* determine audio length */
+	audio_len = &audio_end - &audio_start;
 
 	/* enter main loop */
-	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	while(TRUE)
 	{
+		blink(1);
+		timer_wait(SECONDS(1));
 	}
 }

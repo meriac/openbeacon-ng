@@ -25,42 +25,18 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define CONFIG_UART_BAUDRATE UART_BAUDRATE_BAUDRATE_Baud1M
-#define CONFIG_UART_FORCE_POWERED 1
-#define CONFIG_UART_TXD_PIN  9
-#ifdef  CONFIG_UART_RX
-#define CONFIG_UART_RXD_PIN  8
-#else
-#define CONFIG_GPIO3_PIN     8
-#endif/*CONFIG_UART_RX*/
+#define CONFIG_LED_PIN       21
+#define CONFIG_SWITCH_PIN    17
 
-#define CONFIG_FLASH_MISO    16
-#define CONFIG_FLASH_MOSI    15
-#define CONFIG_FLASH_SCK     14
-#define CONFIG_FLASH_nRESET  13
-#define CONFIG_FLASH_nCS     12
-#define SPI_FLASH            NRF_SPI0
-
-#define CONFIG_ACC_INT1_CH   0
-#define CONFIG_ACC_INT1      3
-#define CONFIG_ACC_nCS       4
-#define CONFIG_ACC_MISO      5
-#define CONFIG_ACC_MOSI      6
-#define CONFIG_ACC_SCK       7
-#define SPI_ACC              NRF_SPI1
-
-#define CONFIG_LED_PIN       17
-#define CONFIG_SWITCH_PIN    29
+#define CONFIG_PWM_PIN_A     23
+#define CONFIG_PWM_PIN_B     24
 
 /* only two priority bits available ! */
 
 #define IRQ_PRIORITY_HIGH        0
-#define IRQ_PRIORITY_POWER_CLOCK (IRQ_PRIORITY_HIGH+1)
-#define IRQ_PRIORITY_RADIO       (IRQ_PRIORITY_HIGH+2)
 
 #define IRQ_PRIORITY_LOW         (IRQ_PRIORITY_HIGH+3)
 #define IRQ_PRIORITY_RTC0        (IRQ_PRIORITY_LOW)
 #define IRQ_PRIORITY_RTC1        (IRQ_PRIORITY_LOW)
-#define IRQ_PRIORITY_UART0       (IRQ_PRIORITY_LOW)
 
 #endif/*__CONFIG_H__*/
