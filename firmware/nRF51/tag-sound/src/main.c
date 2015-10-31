@@ -26,12 +26,15 @@
 #include <math.h>
 #include <timer.h>
 
-#define CLOCK_DIVIDER (16000000UL / (SAMPLING_RATE))
+#define SAMPLE_OVS 4
+#define CLOCK_DIVIDER (16000000UL / (SAMPLING_RATE*SAMPLE_OVS))
 
 static uint32_t g_seq_counter;
 
 extern const uint8_t audio_start, audio_end;
 const uint8_t *g_audio;
+uint32_t g_buffer[SAMPLE_OVS];
+uint32_t g_buffer_pos, g_buffer_ovs;
 
 void blink(uint8_t times)
 {
@@ -55,7 +58,7 @@ void halt(uint8_t times)
 
 void SOUND_IRQ_Handler(void)
 {
-	uint32_t next;
+	uint32_t next, data;
 
 	if(SOUND->EVENTS_COMPARE[2])
 	{
@@ -64,10 +67,22 @@ void SOUND_IRQ_Handler(void)
 		next = SOUND->CC[2] + CLOCK_DIVIDER;
 		SOUND->CC[2] = next;
 
-		SOUND->CC[g_seq_counter & 1] = next + ((uint32_t)(*g_audio++))*4;
+		data = (*g_audio)*4;
+		g_buffer_ovs -= g_buffer[g_buffer_pos];
+		g_buffer_ovs += data;
+		g_buffer[g_buffer_pos] = data;
+		g_buffer_pos++;
+		if(g_buffer_pos >= SAMPLE_OVS)
+		{
+			g_buffer_pos = 0;
+
+			g_audio++;
+			if(g_audio >= &audio_end)
+				g_audio = &audio_start;
+		}
+
+		SOUND->CC[g_seq_counter & 1] = next + (g_buffer_ovs / SAMPLE_OVS);
 		g_seq_counter++;
-		if(g_audio >= &audio_end)
-			g_audio = &audio_start;
 	}
 }
 
