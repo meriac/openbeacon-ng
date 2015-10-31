@@ -25,6 +25,10 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#define SOUND NRF_TIMER2
+#define SOUND_IRQn TIMER2_IRQn
+#define SOUND_IRQ_Handler TIMER2_IRQ_Handler
+
 #define CONFIG_LED_PIN       21
 #define CONFIG_SWITCH_PIN    17
 
@@ -34,6 +38,7 @@
 /* only two priority bits available ! */
 
 #define IRQ_PRIORITY_HIGH        0
+#define IRQ_PRIORITY_SOUND       (IRQ_PRIORITY_HIGH)
 
 #define IRQ_PRIORITY_LOW         (IRQ_PRIORITY_HIGH+3)
 #define IRQ_PRIORITY_RTC0        (IRQ_PRIORITY_LOW)

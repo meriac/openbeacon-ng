@@ -6,7 +6,7 @@ DEBUG=-g
 OPTIM=-Os -mword-relocations
 CUSTOM_KEY=inc/custom-encryption-key.h
 
-SAMPLING_RATE=12000
+SAMPLING_RATE=15625
 
 # determine if we have custom encryption keys
 ifeq ("$(wildcard $(CUSTOM_KEY))","")
@@ -15,7 +15,7 @@ else
 	ENCRYPTION_KEY:=-DCUSTOM_ENCRYPTION_KEY
 endif
 
-APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS $(ENCRYPTION_KEY)
+APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS -DSAMPLING_RATE=$(SAMPLING_RATE)
 APP_LDFLAGS=-lm
 
 APP_SRC= \
