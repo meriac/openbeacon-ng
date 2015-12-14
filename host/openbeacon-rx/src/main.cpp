@@ -53,6 +53,10 @@
 #define PROX_STEP (1/PROXAGGREGATION_TIME)
 #define PROX_WEIGHT(x) (1-(PROX_STEP*x))
 
+#if __APPLE__ && __MACH__
+#define exp10(x) __exp10(x)
+#endif
+
 typedef struct
 {
 	uint32_t tag_id, epoch;
