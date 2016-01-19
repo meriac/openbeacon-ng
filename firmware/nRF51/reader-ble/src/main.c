@@ -114,7 +114,7 @@ void main_entry(void)
 	timer_init();
 
 	/* calculate tag ID from NRF_FICR->DEVICEID */
-	tag_id = crc32(&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
+	tag_id = crc32((void*)&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
 
 	/* start radio */
 	debug_printf("\n\rInitializing Reader[%08X] v" PROGRAM_VERSION "\n\r",

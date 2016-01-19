@@ -83,7 +83,7 @@ void main_entry(void)
 		halt(3);
 
 	/* calculate tag ID from NRF_FICR->DEVICEID */
-	tag_id = crc32(&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
+	tag_id = crc32((void*)&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
 #ifdef  MARKER_TAG
 	tag_id |= MARKER_TAG_BIT;
 #else /*MARKER_TAG*/
