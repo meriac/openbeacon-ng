@@ -231,12 +231,14 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 		}
 	}
 
+#ifdef REPLAY_PROTECTION
 	/* ignore doubled/replayed packets */
 	if(track.epoch <= tag->epoch)
 	{
 		pthread_mutex_unlock (tag_mutex);
 		return;
 	}
+#endif
 
 	/* remember reader time */
 	tag->epoch = track.epoch;
@@ -482,7 +484,6 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 
 	if(g_first)
 	{
-		g_first = false;
 		fprintf(g_out,"\n  ],\n  \"tag\":[");
 	}
 	fprintf(g_out,"%s\n    {\"id\":%u,\"hex\":\"0x%08X\",\"age\":%i,\"angle\":%i,\"voltage\":%1.1f",
@@ -493,6 +494,7 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 		tag->angle,
 		tag->voltage
 	);
+	g_first = false;
 
 	if(tag->fixed)
 		fprintf(g_out,",\"fixed\":true");
@@ -624,7 +626,6 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 
 	if(g_first)
 	{
-		g_first = false;
 		fprintf(g_out,"  \"edge\":[");
 	}
 	fprintf(g_out,"%s\n    {\"tag\":[%u,%u],\"age\":%i,\"count\":%u,\"power\":%1.1f",
@@ -635,6 +636,7 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 		count,
 		power
 	);
+	g_first = false;
 
 	if(totald>0)
 		fprintf(g_out,",\"dist\":%1.1f", (dist/totald)/1000.0);
