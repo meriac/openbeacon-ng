@@ -58,6 +58,7 @@ void halt(uint8_t times)
 
 void main_entry(void)
 {
+	int blink;
 	uint32_t tag_id;
 
 	/* enabled LED output */
@@ -91,15 +92,23 @@ void main_entry(void)
 	radio_init(tag_id);
 
 	/* enter main loop */
+	blink = 0;
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 	while(TRUE)
 	{
 		/* get tag angle once per second */
-		timer_wait(MILLISECONDS(5000));
+		acc_magnitude(&g_tag_angle);
+		timer_wait(MILLISECONDS(1000));
 
 		/* blink every 5 seconds */
-		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(0.5));
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		if(blink<5)
+			blink++;
+		else
+		{
+			blink = 0;
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+			timer_wait(MILLISECONDS(1));
+			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		}
 	}
 }
