@@ -1,6 +1,6 @@
 TARGET=tag-ipv6
-ARCH=nrf5
-CPU=$(ARCH)1822
+ARCH=NRF51
+CPU=$(ARCH)822
 VARIANT=xxAB
 DEBUG=-g
 OPTIM=-Os -mword-relocations
