@@ -108,9 +108,9 @@ static void sound_init(void)
 		(GPIO_PIN_CNF_DRIVE_S0S1       << GPIO_PIN_CNF_DRIVE_Pos);
 
 	/* create tasks for both GPIO pins */
-	nrf_gpiote_task_config(0, CONFIG_PWM_PIN_A,
+	nrf_gpiote_task_configure(0, CONFIG_PWM_PIN_A,
 		GPIOTE_CONFIG_POLARITY_Toggle, GPIOTE_CONFIG_OUTINIT_Low);
-	nrf_gpiote_task_config(1, CONFIG_PWM_PIN_B,
+	nrf_gpiote_task_configure(1, CONFIG_PWM_PIN_B,
 		GPIOTE_CONFIG_POLARITY_Toggle, GPIOTE_CONFIG_OUTINIT_High);
 
 	/* wire up PWM to output pins */

@@ -247,7 +247,6 @@ void radio_init(uint32_t uid)
 
 	/* setup radio timer */
 	NRF_RTC0->TASKS_STOP = 1;
-	NRF_RTC0->COUNTER = 0;
 	NRF_RTC0->PRESCALER = 0;
 	NRF_RTC0->CC[0] = LF_FREQUENCY;
 	NRF_RTC0->INTENSET = (

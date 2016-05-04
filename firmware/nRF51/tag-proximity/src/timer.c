@@ -62,7 +62,6 @@ void timer_init(void)
 	while(!NRF_CLOCK->EVENTS_LFCLKSTARTED);
 
 	/* setup delay routine */
-	NRF_RTC1->COUNTER = 0;
 	NRF_RTC1->PRESCALER = 0;
 	NRF_RTC1->TASKS_STOP = 1;
 	NRF_RTC1->INTENSET =
