@@ -13,7 +13,7 @@
 #ifndef NRF_TEMP_H__
 #define NRF_TEMP_H__
 
-#include "nrf51.h"
+#include "nrf.h"
 
 /**
 * @defgroup nrf_temperature TEMP (temperature) abstraction
@@ -23,14 +23,14 @@
 *
 */
 
-
+/**@cond NO_DOXYGEN */
+#define MASK_SIGN           (0x00000200UL)
+#define MASK_SIGN_EXTENSION (0xFFFFFC00UL)
 
 /**
  * @brief Function for preparing the temp module for temperature measurement.
  *
  * This function initializes the TEMP module and writes to the hidden configuration register.
- * 
- * @param none
  */
 static __INLINE void nrf_temp_init(void)
 {
@@ -38,23 +38,17 @@ static __INLINE void nrf_temp_init(void)
     *(uint32_t *) 0x4000C504 = 0;
 }
 
-
-
-#define MASK_SIGN           (0x00000200UL)
-#define MASK_SIGN_EXTENSION (0xFFFFFC00UL)
-
 /**
  * @brief Function for reading temperature measurement.
  *
  * The function reads the 10 bit 2's complement value and transforms it to a 32 bit 2's complement value.
- * 
- * @param none
  */
 static __INLINE int32_t nrf_temp_read(void)
 {    
     /**@note Workaround for PAN_028 rev2.0A anomaly 28 - TEMP: Negative measured values are not represented correctly */
-    return ((NRF_TEMP->TEMP & MASK_SIGN) != 0) ? (int32_t)(NRF_TEMP->TEMP | MASK_SIGN_EXTENSION) : (int32_t)(NRF_TEMP->TEMP);
+    return ((NRF_TEMP->TEMP & MASK_SIGN) != 0) ? (NRF_TEMP->TEMP | MASK_SIGN_EXTENSION) : (NRF_TEMP->TEMP);
 }
+/**@endcond */
 
 /** @} */
 

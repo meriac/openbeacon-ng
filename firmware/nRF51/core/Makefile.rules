@@ -27,7 +27,7 @@ CORE=../core/
 #
 COMMON_CFLAGS= \
 -D __$(CPU)__ \
--D __$(ARCH)__ \
+-D $(ARCH) \
 -D PROGRAM_VERSION=\"$(PROGRAM_VERSION)\" \
 -D PROGRAM_NAME=\"$(TARGET)\" \
 -I$(CORE)cmsis \

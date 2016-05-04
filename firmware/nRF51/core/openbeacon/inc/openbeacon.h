@@ -46,12 +46,21 @@ typedef uint8_t BOOL;
 /* this definition is linked weakly against uart_tx */
 extern BOOL default_putchar (uint8_t data);
 
-#ifdef  __nrf5__
-#include <nrf.h>
-#include <system_nrf51.h>
-#else /*__nrf5__*/
-#error Please specify architecture
-#endif/*__nrf5__*/
+#if defined(NRF51) || defined(NRF52)
+#  include <nrf.h>
+#  if     defined(NRF51)
+#    include <system_nrf51.h>
+#  elif   defined(NRF52)
+#    include <system_nrf52.h>
+#  endif
+
+#  include <nrf_gpio.h>
+#  include <nrf_gpiote.h>
+#  include <nrf_temp.h>
+#else
+#  error Please specify architecture
+#endif/* NRF51, NRF52 */
+
 
 #include <debug_printf.h>
 #include <string.h>
