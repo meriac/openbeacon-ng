@@ -110,9 +110,9 @@ uint16_t acc_magnitude(int8_t* angle)
 
 	/* get acceleration vector magnitude */
 	a =  sqrt32(
-		((uint32_t)acc[0])*acc[0] + 
-		((uint32_t)acc[1])*acc[1] +
-		((uint32_t)acc[2])*acc[2]
+		((int)acc[0])*acc[0] +
+		((int)acc[1])*acc[1] +
+		((int)acc[2])*acc[2]
 	)/64;
 
 	/* calculate tag angle */
