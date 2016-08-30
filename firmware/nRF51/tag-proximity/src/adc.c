@@ -55,6 +55,18 @@ uint8_t adc_bat(void)
 	return g_battery_voltage;
 }
 
+uint8_t adc_bat_sync(void)
+{
+	/* reset battery reading */
+	g_battery_voltage = 0;
+	/* start conversion */
+	adc_start();
+	/* wait for termination */
+	while(!g_battery_voltage);
+	/* return result */
+	return g_battery_voltage;
+}
+
 void adc_init(void)
 {
 	/* initialize batter voltage */
