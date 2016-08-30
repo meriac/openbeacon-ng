@@ -30,7 +30,7 @@
 extern void debug_printf (const char *fmt, ...);
 extern char hex_char (unsigned char hex);
 extern void hex_dump (const unsigned char *buf, unsigned int addr,
-					  unsigned int len);
+					  int len);
 #endif /*UART_DISABLE */
 
 #endif/*__DEBUG_PRINTF_H__*/

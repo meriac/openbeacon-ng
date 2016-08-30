@@ -54,39 +54,40 @@ hex_char (unsigned char hex)
 }
 
 void
-hex_dump (const unsigned char *buf, unsigned int addr, unsigned int len)
+hex_dump (const unsigned char *buf, unsigned int addr, int len)
 {
-	unsigned int start, i, j;
+	int i;
 	char c;
 
-	start = addr & ~0xf;
-
-	for (j = 0; j < len; j += 16)
+	while(len>0)
 	{
-		debug_printf ("%08x:", start + j);
+		debug_printf ("%08x:", addr);
 
+		/* print hex bytes */
 		for (i = 0; i < 16; i++)
 		{
-			if (start + i + j >= addr && start + i + j < addr + len)
-				debug_printf (" %02x", buf[start + i + j]);
-			else
+			if(i>=len)
 				debug_printf ("   ");
+			else
+				debug_printf (" %02x", buf[i]);
 		}
+
 		debug_printf ("  |");
+
+		/* print characters */
 		for (i = 0; i < 16; i++)
 		{
-			if (start + i + j >= addr && start + i + j < addr + len)
-			{
-				c = buf[start + i + j];
-				if (c >= ' ' && c < 127)
-					debug_printf ("%c", c);
-				else
-					debug_printf (".");
-			}
-			else
-				debug_printf (" ");
+			c = (i<len) ? *buf++ : ' ';
+			default_putchar ( ((c>=' ')&&(c<127)) ? c : '.' );
 		}
+
 		debug_printf ("|\n\r");
+
+		/* next block? */
+		if(len<=16)
+			break;
+		len-=16;
+		addr+=16;
 	}
 }
 #endif /* UART_DISABLE */
