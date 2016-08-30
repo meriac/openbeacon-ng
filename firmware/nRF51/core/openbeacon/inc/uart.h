@@ -33,6 +33,9 @@
 extern void uart_init(void);
 extern BOOL uart_tx(uint8_t data);
 extern int uart_rx(void);
+#  ifdef  CONFIG_UART_FORCE_POWERED
+extern void uart_power(uint8_t enable);
+#  endif/*CONFIG_UART_FORCE_POWERED*/
 #endif/*CONFIG_UART_BAUDRATE*/
 
 #endif/*__UART_H__*/

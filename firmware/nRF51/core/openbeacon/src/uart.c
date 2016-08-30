@@ -89,6 +89,19 @@ void uart_init(void)
 #endif/*CONFIG_UART_RXD_PIN*/
 }
 
+#if CONFIG_UART_FORCE_POWERED
+void uart_power(uint8_t enable)
+{
+	/* if disabling - wait for ongoing UART transmissions to finish */
+	if(!enable)
+		while(g_uart_buffer_count)
+			__WFE();
+
+	/* enable/disable USART */
+	NRF_UART0->ENABLE = enable ? (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos) : 0;
+}
+#endif/*CONFIG_UART_FORCE_POWERED*/
+
 #ifdef  CONFIG_UART_TXD_PIN
 BOOL uart_tx(uint8_t data)
 {
@@ -109,7 +122,9 @@ BOOL uart_tx(uint8_t data)
 	else
 	{
 		/* enable UART for sending out first byte */
+#if !CONFIG_UART_FORCE_POWERED
 		NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
+#endif/*CONFIG_UART_FORCE_POWERED*/
 		NRF_UART0->TASKS_STARTTX = 1;
 		NRF_UART0->TXD = data;
 	}
