@@ -25,7 +25,12 @@
 #ifndef __FLASH_H__
 #define __FLASH_H__
 
+#ifndef CONFIG_FLASH_PAGESIZE
+#define CONFIG_FLASH_PAGESIZE 264
+#endif/*CONFIG_FLASH_PAGESIZE*/
+
 extern uint8_t flash_init(void);
 extern uint32_t flash_size(void);
+extern void flash_read(uint32_t offset, uint32_t len, uint8_t *data);
 
 #endif/*__FLASH_H__*/

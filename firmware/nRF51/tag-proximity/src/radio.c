@@ -449,8 +449,6 @@ void radio_init(uint32_t uid)
 	rng_init();
 	/* initialize AES encryption engine */
 	aes_init(uid);
-	/* initialize ADC battery voltage measurements */
-	adc_init();
 
 	/* setup default radio settings for proximity mode */
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_2Mbit << RADIO_MODE_MODE_Pos;

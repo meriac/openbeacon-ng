@@ -35,35 +35,66 @@ uint32_t flash_size(void)
 	switch(g_flash_size)
 	{
 		case 0x25:
-			return MEGABYTE(1);
+			return CONFIG_FLASH_PAGESIZE*4096UL;
 		case 0x28:
-			return MEGABYTE(8);
+			return CONFIG_FLASH_PAGESIZE*32768UL;
 		default:
 			return 0;
 	}
 }
 
-static void flash_cmd_read(uint8_t cmd, uint8_t len, uint8_t *data)
+static uint8_t flash_cmd(uint8_t cmd)
 {
-	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
-
 	/* send command */
 	SPI_FLASH->TXD = cmd;
 	while (!SPI_FLASH->EVENTS_READY);
 	SPI_FLASH->EVENTS_READY = 0;
-	/* dummy read */
-	SPI_FLASH->RXD;
 
+	/* read result */
+	return SPI_FLASH->RXD;
+}
+
+static void flash_cmd_read(uint8_t cmd, uint32_t len, uint8_t *data)
+{
+	/* assert chipselect */
+	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
+
+	/* send command */
+	flash_cmd(cmd);
+
+	/* read result */
 	while(len--)
 	{
-		/* send dummy zero */
-		SPI_FLASH->TXD = 0;
-		while (!SPI_FLASH->EVENTS_READY);
-		SPI_FLASH->EVENTS_READY = 0;
-
-		*data++ = SPI_FLASH->RXD;
+		*data++ = flash_cmd(0x00);
 	}
 
+	/* de-assert chipselect */
+	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
+}
+
+void flash_read(uint32_t offset, uint32_t len, uint8_t *data)
+{
+	uint32_t page;
+
+	/* assert chipselect */
+	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
+
+	/* send read command */
+	flash_cmd(0x01);
+
+	/* calculate page & offset */
+	page = ((offset / CONFIG_FLASH_PAGESIZE) << 9) | (offset % CONFIG_FLASH_PAGESIZE);
+	flash_cmd ((uint8_t)(page >> 16));
+	flash_cmd ((uint8_t)(page >>  8));
+	flash_cmd ((uint8_t)(page >>  0));
+
+	/* read result */
+	while(len--)
+	{
+		*data++ = flash_cmd(0x00);
+	}
+
+	/* de-assert chipselect */
 	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
 }
 
