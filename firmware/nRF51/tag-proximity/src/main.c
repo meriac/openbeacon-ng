@@ -94,6 +94,7 @@ static void run_mode_beacon(uint32_t tag_id)
 
 static void run_mode_datadump(uint32_t tag_id)
 {
+	int i;
 	uint32_t addr, length;
 	uint8_t page[CONFIG_FLASH_PAGESIZE];
 	(void) tag_id;
@@ -115,20 +116,30 @@ static void run_mode_datadump(uint32_t tag_id)
 		addr = 0;
 		while(addr<length)
 		{
-			/* read page from flash */
-			debug_printf("\n\rPage[%05i]\n\r", addr/CONFIG_FLASH_PAGESIZE);
-
 			/* blink acknowledgement */
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 			/* read page from flash */
 			flash_read (addr, sizeof(page), page);
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
+			/* check for last page: all bytes are 0xFF */
+			for(i=0; i<CONFIG_FLASH_PAGESIZE; i++)
+				if(page[i]!=0xFF)
+					break;
+			/* terminate if we've found an empty page */
+			if(i==CONFIG_FLASH_PAGESIZE)
+				break;
+
+			/* read page from flash */
+			debug_printf("\n\rPage[%05i]\n\r", addr/CONFIG_FLASH_PAGESIZE);
+
+			/* dump page on UART */
 			hex_dump (page, 0, sizeof(page));
 			addr += CONFIG_FLASH_PAGESIZE;
-
-			timer_wait(MILLISECONDS(1));
 		}
+
+		/* wait if dump period is too short, wait for button release */
+		while(nrf_gpio_pin_read(CONFIG_SWITCH_PIN));
 
 		/* turn LED on again to indicate end of operation */
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
