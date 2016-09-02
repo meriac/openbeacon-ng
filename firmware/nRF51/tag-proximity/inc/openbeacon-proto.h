@@ -38,6 +38,10 @@
 #define RFBPROTO_BEACON_NG_STATUS   31
 #define RFBPROTO_BEACON_NG_PROX     32
 
+#define PROXSIGHTING_PAGE_FORMAT_FIRST 0x01
+#define PROXSIGHTING_PAGE_FORMAT_NEXT 0x02
+
+
 #define MARKER_TAG_BIT (1UL<<31)
 
 typedef struct
@@ -110,5 +114,22 @@ typedef struct
 	uint32_t timestamp;
 	TBeaconNgTracker log;
 } PACKED TBeaconLogSighting;
+
+typedef struct
+{
+	uint32_t tag_id;
+	uint32_t epoch_local, epoch_remote;
+	int8_t power;
+	int8_t angle;
+} PACKED TBeaconProxSighting;
+
+typedef struct
+{
+	uint8_t type;
+	uint8_t length;
+	uint16_t reserved;
+	uint8_t buffer[256];
+	uint32_t crc32;
+} PACKED TBeaconProxSightingPage;
 
 #endif/*__OPENBEACON_PROTO_H__*/

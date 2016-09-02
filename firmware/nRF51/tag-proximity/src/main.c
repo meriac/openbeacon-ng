@@ -26,7 +26,7 @@
 
 #include <acc.h>
 #include <adc.h>
-#include <flash.h>
+#include <log.h>
 #include <radio.h>
 #include <timer.h>
 
@@ -37,7 +37,7 @@ int8_t tag_angle(void)
 	return g_tag_angle;
 }
 
-void blink(uint8_t times)
+static void blink(uint8_t times)
 {
 	while(times--)
 	{
@@ -79,6 +79,9 @@ static void run_mode_beacon(uint32_t tag_id)
 		acc_magnitude(&g_tag_angle);
 		timer_wait(MILLISECONDS(1000));
 
+		/* process log entries */
+		log_process();
+
 		/* blink every 5 seconds */
 		if(blink<5)
 			blink++;
@@ -89,60 +92,6 @@ static void run_mode_beacon(uint32_t tag_id)
 			timer_wait(MILLISECONDS(1));
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
 		}
-	}
-}
-
-static void run_mode_datadump(uint32_t tag_id)
-{
-	int i;
-	uint32_t addr, length;
-	uint8_t page[CONFIG_FLASH_PAGESIZE];
-	(void) tag_id;
-
-	/* print detected flash memory size */
-	length = flash_size();
-	debug_printf("- Initialized %i bytes log memory\n\r", length);
-
-	while(1)
-	{
-		/* wait for button press to start data dump */
-		debug_printf("- Press [BUTTON] to start data dump...\n\r");
-		while(!nrf_gpio_pin_read(CONFIG_SWITCH_PIN));
-
-		/* turn off LED to indicate operation */
-		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-		debug_printf("- Start dumping data...\n\r");
-
-		addr = 0;
-		while(addr<length)
-		{
-			/* blink acknowledgement */
-			nrf_gpio_pin_set(CONFIG_LED_PIN);
-			/* read page from flash */
-			flash_read (addr, sizeof(page), page);
-			nrf_gpio_pin_clear(CONFIG_LED_PIN);
-
-			/* check for last page: all bytes are 0xFF */
-			for(i=0; i<CONFIG_FLASH_PAGESIZE; i++)
-				if(page[i]!=0xFF)
-					break;
-			/* terminate if we've found an empty page */
-			if(i==CONFIG_FLASH_PAGESIZE)
-				break;
-
-			/* read page from flash */
-			debug_printf("\n\rPage[%05i]\n\r", addr/CONFIG_FLASH_PAGESIZE);
-
-			/* dump page on UART */
-			hex_dump (page, 0, sizeof(page));
-			addr += CONFIG_FLASH_PAGESIZE;
-		}
-
-		/* wait if dump period is too short, wait for button release */
-		while(nrf_gpio_pin_read(CONFIG_SWITCH_PIN));
-
-		/* turn LED on again to indicate end of operation */
-		nrf_gpio_pin_set(CONFIG_LED_PIN);
 	}
 }
 
@@ -181,7 +130,7 @@ void main_entry(void)
 	debug_printf("- Supply voltage of %imV\n\r", voltage);
 
 	/* initialize external flash */
-	if(flash_init())
+	if(log_init(tag_id))
 		halt(2);
 
 	/* initialize accelerometer */
@@ -190,7 +139,7 @@ void main_entry(void)
 
 	/* for voltages above 3.2V assume to be in reader */
 	if(voltage >= 3200)
-		run_mode_datadump(tag_id);
+		log_dump();
 	else
 		run_mode_beacon(tag_id);
 }

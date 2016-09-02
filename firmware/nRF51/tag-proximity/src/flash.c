@@ -2,7 +2,7 @@
  *
  * OpenBeacon.org - nRF51 Flash Routines
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2013-2015 Milosch Meriac <milosch@meriac.com>
  *
  ***************************************************************
 
@@ -64,38 +64,69 @@ static void flash_cmd_read(uint8_t cmd, uint32_t len, uint8_t *data)
 
 	/* read result */
 	while(len--)
-	{
 		*data++ = flash_cmd(0x00);
-	}
 
 	/* de-assert chipselect */
 	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
 }
 
-void flash_read(uint32_t offset, uint32_t len, uint8_t *data)
+static void flash_cmd_seek(uint8_t cmd, uint32_t page)
 {
-	uint32_t page;
-
 	/* assert chipselect */
 	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
 
 	/* send read command */
-	flash_cmd(0x01);
+	flash_cmd(cmd);
 
 	/* calculate page & offset */
-	page = ((offset / CONFIG_FLASH_PAGESIZE) << 9) | (offset % CONFIG_FLASH_PAGESIZE);
+	page <<= 9;
 	flash_cmd ((uint8_t)(page >> 16));
 	flash_cmd ((uint8_t)(page >>  8));
 	flash_cmd ((uint8_t)(page >>  0));
+}
+
+void flash_page_read(uint32_t page, uint8_t *data, uint32_t length)
+{
+	/* prepare read command */
+	flash_cmd_seek(0x01, page);
 
 	/* read result */
-	while(len--)
-	{
+	while(length--)
 		*data++ = flash_cmd(0x00);
-	}
 
 	/* de-assert chipselect */
 	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
+}
+
+void flash_page_write(uint32_t page, const uint8_t *data, uint32_t length)
+{
+	/* prepare write command */
+	flash_cmd_seek(0x02, page);
+
+	/* write sector */
+	while(length--)
+		flash_cmd(*data++);
+
+	/* de-assert chipselect */
+	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
+}
+
+void flash_sleep(int sleep)
+{
+	if(sleep)
+	{
+		/* send flash to deep power down */
+		flash_cmd_read(0x79, 0, NULL);
+	}
+	else
+	{
+		/* wake up flash */
+		timer_wait(MILLISECONDS(1));
+		nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
+		timer_wait(MILLISECONDS(1));
+		nrf_gpio_pin_set(CONFIG_FLASH_nCS);
+		timer_wait(MILLISECONDS(1));
+	}
 }
 
 uint8_t flash_init(void)
@@ -133,11 +164,7 @@ uint8_t flash_init(void)
 		(SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos);
 
 	/* wake up flash */
-	timer_wait(MILLISECONDS(1));
-	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
-	timer_wait(MILLISECONDS(1));
-	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
-	timer_wait(MILLISECONDS(1));
+	flash_sleep(0);
 
 	/* check for flash */
 	flash_cmd_read(0x9F, sizeof(data), data);
@@ -149,8 +176,8 @@ uint8_t flash_init(void)
 	if(memcmp(data, g_flash_id, sizeof(g_flash_id)))
 		return 1;
 
-	/* send flash to deep power down */
-	flash_cmd_read(0x79, 0, NULL);
+	/* send flash to deep power down mode */
+	flash_sleep(1);
 
 	return 0;
 }

@@ -28,6 +28,7 @@
 #include <adc.h>
 #include <aes.h>
 #include <rng.h>
+#include <log.h>
 #include <timer.h>
 
 /* set proximity power */
@@ -50,7 +51,7 @@
 #define RX_LOSS ((RXTX_BASELOSS/2.0)+BALUN_RETURN_LOSS+ANTENNA_GAIN)
 #define TX_LOSS ((RXTX_BASELOSS/2.0)+BALUN_INSERT_LOSS+ANTENNA_GAIN)
 
-static volatile uint32_t g_time, g_time_offset, g_pkt_tracker_ticks;
+static volatile uint32_t g_time, g_pkt_tracker_ticks;
 static volatile uint16_t g_ticks_offset;
 static volatile uint8_t g_request_tx;
 static uint8_t g_listen_ratio;
@@ -196,8 +197,6 @@ void RTC0_IRQ_Handler(void)
 
 void POWER_CLOCK_IRQ_Handler(void)
 {
-	uint32_t ticks;
-
 	/* always transmit proximity packet */
 	if(NRF_CLOCK->EVENTS_HFCLKSTARTED)
 	{
@@ -205,11 +204,9 @@ void POWER_CLOCK_IRQ_Handler(void)
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 
 		/* update proximity time */
-		g_pkt_prox.p.prox.epoch = g_time+g_time_offset;
-		/* adjust transmitted time by time
-		 * it takes to encrypt the packet */
-		ticks = NRF_RTC0->COUNTER;
-		g_pkt_prox.p.prox.ticks += (ticks+g_ticks_offset);
+		g_pkt_prox.p.prox.epoch = g_time;
+		g_pkt_prox.p.prox.ticks = NRF_RTC0->COUNTER;
+
 		/* encrypt data */
 		aes_encr(
 			&g_pkt_prox,
@@ -217,8 +214,6 @@ void POWER_CLOCK_IRQ_Handler(void)
 			sizeof(g_pkt_prox_enc),
 			CONFIG_SIGNATURE_SIZE
 		);
-		/* remember time it took to encrypt packet for next TX */
-		g_pkt_prox.p.prox.ticks = NRF_RTC0->COUNTER-ticks;
 
 		/* set first packet pointer */
 		NRF_RADIO->PACKETPTR = (uint32_t)&g_pkt_prox_enc;
@@ -227,7 +222,7 @@ void POWER_CLOCK_IRQ_Handler(void)
 	}
 }
 
-static void radio_on_prox_packet(uint16_t delta_t)
+static void radio_on_prox_packet(void)
 {
 	int i;
 	TBeaconNgSighting *slot;
@@ -240,16 +235,14 @@ static void radio_on_prox_packet(uint16_t delta_t)
 	if(g_pkt_prox_rx.p.prox.uid == g_pkt_prox.p.prox.uid)
 		return;
 
-	/* adjust epoch time if needed */
-	if(g_pkt_prox_rx.p.prox.epoch > (g_time+g_time_offset))
-	{
-		g_time_offset = g_pkt_prox_rx.p.prox.epoch - g_time;
-
-		/* adjust fine-grained time by decryption time */
-		g_ticks_offset =
-			(delta_t + g_pkt_prox_rx.p.prox.ticks) -
-			((uint16_t)NRF_RTC0->COUNTER);
-	}
+	/* store sighting in external flash */
+	log_sighting(
+		g_time,
+		g_pkt_prox_rx.p.prox.epoch,
+		g_pkt_prox_rx.p.prox.uid,
+		g_rssi,
+		tag_angle()
+	);
 
 	/* remember proximity sighting */
 	slot = g_pkt_tracker.p.sighting;
@@ -331,7 +324,7 @@ void RADIO_IRQ_Handler(void)
 						g_pkt_tracker.p.status.px_power = (int16_t)((PX_POWER*100)+0.5);
 						g_pkt_tracker.p.status.ticks = NRF_RTC0->COUNTER + g_ticks_offset + g_pkt_tracker_ticks;
 					}
-					g_pkt_tracker.epoch = g_time+g_time_offset;
+					g_pkt_tracker.epoch = g_time;
 					g_pkt_tracker.angle = tag_angle();
 					g_pkt_tracker.voltage = adc_bat();
 
@@ -407,7 +400,7 @@ void RADIO_IRQ_Handler(void)
 				CONFIG_SIGNATURE_SIZE))
 			{
 				g_nrf_state = NRF_STATE_RX_PROX_BLINK;
-				radio_on_prox_packet(NRF_RTC0->COUNTER-ticks);
+				radio_on_prox_packet();
 			}
 		}
 	}
@@ -427,7 +420,7 @@ void RADIO_IRQ_Handler(void)
 void radio_init(uint32_t uid)
 {
 	/* reset variables */
-	g_time = g_time_offset = 0;
+	g_time = 0;
 	g_pkt_tracker_ticks = 0;
 	g_ticks_offset = 0;
 	g_listen_ratio = 0;

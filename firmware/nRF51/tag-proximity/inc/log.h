@@ -1,8 +1,8 @@
 /***************************************************************
  *
- * OpenBeacon.org - nRF51 Flash Routines
+ * OpenBeacon.org - log tag sigtings to external flash
  *
- * Copyright 2013 Milosch Meriac <meriac@openbeacon.de>
+ * Copyright 2015 Milosch Meriac <milosch@meriac.com>
  *
  ***************************************************************
 
@@ -22,17 +22,14 @@
  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-#ifndef __FLASH_H__
-#define __FLASH_H__
 
-#ifndef CONFIG_FLASH_PAGESIZE
-#define CONFIG_FLASH_PAGESIZE 264
-#endif/*CONFIG_FLASH_PAGESIZE*/
+#ifndef __LOG_H__
+#define __LOG_H__
 
-extern uint8_t flash_init(void);
-extern uint32_t flash_size(void);
-extern void flash_sleep(int sleep);
-extern void flash_page_read(uint32_t page, uint8_t *data, uint32_t length);
-void flash_page_write(uint32_t page, const uint8_t *data, uint32_t length);
+extern uint8_t log_init(uint32_t tag_id);
+extern void log_dump(void);
+extern void log_sighting(uint32_t epoch_local, uint32_t epoch_remote,
+	uint32_t tag_id, uint8_t power, int8_t angle);
+extern void log_process(void);
 
-#endif/*__FLASH_H__*/
+#endif/*__LOG_H__*/

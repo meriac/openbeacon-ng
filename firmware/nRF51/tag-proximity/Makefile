@@ -13,10 +13,12 @@ else
 	ENCRYPTION_KEY:=-DCUSTOM_ENCRYPTION_KEY
 endif
 
-APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D __USE_CMSIS $(ENCRYPTION_KEY) $(FEATURE)
+APP_CFLAGS=-Iinc -Ilib/heatshrink -std=gnu99 -fgnu89-inline -D __USE_CMSIS $(ENCRYPTION_KEY) $(FEATURE)
 APP_LDFLAGS=-lm
 
 APP_SRC= \
+  lib/heatshrink/heatshrink_encoder.c \
+  src/log.c \
   src/rng.c \
   src/acc.c \
   src/adc.c \
