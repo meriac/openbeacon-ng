@@ -116,6 +116,12 @@ void log_sighting(uint32_t epoch_local, uint32_t epoch_remote,
 
 	if(g_log.count<CONFIG_LOG_BUFFER_COUNT)
 	{
+		epoch_local = 1;
+		epoch_remote = 2;
+		tag_id = 0xDEADBEEF;
+		power = -3;
+		angle = -4;
+
 		log = &g_log.buffer[g_log.head++];
 		if(g_log.head>=CONFIG_LOG_BUFFER_COUNT)
 			g_log.head = 0;
@@ -151,84 +157,142 @@ static uint8_t log_read(TBeaconProxSighting *log)
 void log_process(void)
 {
 	size_t in,out;
-	HSE_poll_res res;
+	HSE_sink_res sres;
+	HSE_poll_res pres;
 	TBeaconProxSighting log;
 
 	while(log_read(&log) && (g_page_pos<g_page_count))
 	{
-		if(heatshrink_encoder_sink(&g_hse, (uint8_t*)&log, sizeof(log), &in)<0)
-			continue;
+		sres = heatshrink_encoder_sink(&g_hse, (uint8_t*)&log, sizeof(log), &in);
+
+		if(sres<0)
+			debug_printf("ERROR: heatshrink_encoder_sink sent=%i sres=%i in=%i\n\r", sizeof(log), sres, in);
 
 		do {
 			out = 0;
-			res = heatshrink_encoder_poll(
+			pres = heatshrink_encoder_poll(
 				&g_hse,
 				&g_log_page.buffer[g_log_page_pos],
 				sizeof(g_log_page.buffer) - g_log_page_pos,
 				&out);
 
-			if(res<0 || out==0)
+			if(pres<0)
+			{
+				debug_printf("ERROR: heatshrink_encoder_poll pres=%i\n\r", pres);
 				break;
+			}
 
+			debug_printf("g_log_page_pos=%i out=%i\n\r",g_log_page_pos,out);
 			g_log_page_pos += out;
 			if( g_log_page_pos>=sizeof(g_log_page.buffer) )
 			{
-				/* mark first record after boot */
-				g_log_page.type = g_log_page.type ?
-					PROXSIGHTING_PAGE_FORMAT_NEXT :
-					PROXSIGHTING_PAGE_FORMAT_FIRST;
-
 				g_log_page.length = g_log_page_pos;
-				g_log_page.reserved = 0;
-				g_log_page.crc32 = crc32(&g_log_page, sizeof(g_log_page.buffer)-sizeof(g_log_page.crc32));
+				g_log_page.crc32 = crc32(&g_log_page, sizeof(g_log_page)-sizeof(g_log_page.crc32));
 
 				/* write to flash */
 				flash_sleep(0);
 				flash_page_write(g_page_pos++, (uint8_t*)&g_log_page, sizeof(g_log_page));
-				timer_wait(MILLISECONDS(5));
+				timer_wait(MILLISECONDS(8));
 				flash_sleep(1);
 
 				/* start over again */
 				g_log_page_pos = 0;
 			}
 		}
-		while( res == HSER_POLL_MORE );
+		while( pres == HSER_POLL_MORE );
 	}
 }
 
-void log_dump(void)
+void log_dump_escaped(uint8_t type, const uint8_t* data, uint32_t size)
 {
+	uint8_t c;
+
+	/* issue frame start */
+	default_putchar(0xFF);
+	default_putchar(type);
+
+	while(size--)
+	{
+		c = *data++;
+		default_putchar(c);
+		/* escape FF by issuing code 0x00 */
+		if(c == 0xFF)
+			default_putchar(0x00);
+	}
+}
+
+void log_dump(uint32_t tag_id)
+{
+	int i;
 	uint32_t page;
 	uint8_t buffer[CONFIG_FLASH_PAGESIZE];
+
+	/* wake up flash */
+	flash_sleep(0);
 
 	while(1)
 	{
 		/* wait for button press to start data dump */
-		debug_printf("- Press [BUTTON] to start data dump...\n\r");
+		debug_printf("- Press [BUTTON] shortly to start data dump, or 3 seconds  to erase device...\n\r");
 		while(!nrf_gpio_pin_read(CONFIG_SWITCH_PIN));
-
-		/* turn off LED to indicate operation */
+		/* turn off LED */
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-		debug_printf("- Start dumping data...");
+
+		/* measure button press */
+		i = 0;
+		do {
+			/* turn off LED to indicate operation */
+			timer_wait(MILLISECONDS(900));
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+			timer_wait(MILLISECONDS(100));
+			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+			/* cancel after three seconds */
+			if(++i>=3)
+			{
+				/* erase flash */
+				flash_erase();
+				/* wait for erasing to terminate */
+				do {
+					timer_wait(MILLISECONDS(90));
+					nrf_gpio_pin_set(CONFIG_LED_PIN);
+					timer_wait(MILLISECONDS(10));
+					nrf_gpio_pin_clear(CONFIG_LED_PIN);
+				} while (!(flash_status()&0x80));
+
+				/* put flash to sleep again */
+				flash_sleep(1);
+				debug_printf(" [DONE]\n\r");
+
+				/* endless sleep */
+				while(1)
+					timer_wait(MILLISECONDS(5000));
+			}
+		} while (nrf_gpio_pin_read(CONFIG_SWITCH_PIN));
+
+		debug_printf("- Start dumping data...\n\r");
+
+		/* issue transmission start */
+		log_dump_escaped(0x01, (uint8_t*)&tag_id, sizeof(tag_id));
 
 		/* iterate over all pages */
 		for(page=0; page<g_page_pos; page++)
 		{
-			/* blink acknowledgement */
-			nrf_gpio_pin_set(CONFIG_LED_PIN);
+			/* blink acknowledgement for every 16th page */
+			if(!(page&0xF))
+				nrf_gpio_pin_set(CONFIG_LED_PIN);
 			/* read page from flash */
 			flash_page_read(page, buffer, sizeof(buffer));
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
-			/* read page from flash */
-			debug_printf("\n\rPage[%05i]\n\r", page);
-
 			/* dump page on UART */
-			hex_dump(buffer, 0, sizeof(buffer));
+			log_dump_escaped(0x02, buffer, sizeof(buffer));
 		}
+		/* issue transmission end */
+		default_putchar(0xFF);
+		default_putchar(0x03);
 
 		/* print confirmation */
-		debug_printf(" [DONE]\n\r");
+		debug_printf("\n\r[DONE]\n\r");
 
 		/* wait if dump period is too short, wait for button release */
 		while(nrf_gpio_pin_read(CONFIG_SWITCH_PIN));

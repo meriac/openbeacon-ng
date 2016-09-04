@@ -111,6 +111,43 @@ void flash_page_write(uint32_t page, const uint8_t *data, uint32_t length)
 	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
 }
 
+void flash_erase(void)
+{
+	/* assert chipselect */
+	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
+
+	/* send chip erase */
+	flash_cmd(0xC7);
+	flash_cmd(0x94);
+	flash_cmd(0x80);
+	flash_cmd(0x9A);
+
+	/* de-assert chipselect */
+	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
+}
+
+uint8_t flash_status(void)
+{
+	uint32_t res;
+
+	/* assert chipselect */
+	nrf_gpio_pin_clear(CONFIG_FLASH_nCS);
+
+	/* read status */
+	flash_cmd(0xD7);
+	res = flash_cmd(0x00);
+	if(res & 0x03)
+		debug_printf("ERROR: flash status byte 1 == 0x%02X\n", res);
+
+	/* read second data byte */
+	res = flash_cmd(0x00);
+
+	/* de-assert chipselect */
+	nrf_gpio_pin_set(CONFIG_FLASH_nCS);
+
+	return res;
+}
+
 void flash_sleep(int sleep)
 {
 	if(sleep)

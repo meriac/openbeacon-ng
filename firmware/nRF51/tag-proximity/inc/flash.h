@@ -32,7 +32,9 @@
 extern uint8_t flash_init(void);
 extern uint32_t flash_size(void);
 extern void flash_sleep(int sleep);
+extern void flash_erase(void);
+extern uint8_t flash_status(void);
 extern void flash_page_read(uint32_t page, uint8_t *data, uint32_t length);
-void flash_page_write(uint32_t page, const uint8_t *data, uint32_t length);
+extern void flash_page_write(uint32_t page, const uint8_t *data, uint32_t length);
 
 #endif/*__FLASH_H__*/

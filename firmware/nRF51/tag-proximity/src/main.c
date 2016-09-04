@@ -139,7 +139,7 @@ void main_entry(void)
 
 	/* for voltages above 3.2V assume to be in reader */
 	if(voltage >= 3200)
-		log_dump();
+		log_dump(tag_id);
 	else
 		run_mode_beacon(tag_id);
 }

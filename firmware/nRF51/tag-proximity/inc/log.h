@@ -27,7 +27,7 @@
 #define __LOG_H__
 
 extern uint8_t log_init(uint32_t tag_id);
-extern void log_dump(void);
+extern void log_dump(uint32_t tag_id);
 extern void log_sighting(uint32_t epoch_local, uint32_t epoch_remote,
 	uint32_t tag_id, uint8_t power, int8_t angle);
 extern void log_process(void);

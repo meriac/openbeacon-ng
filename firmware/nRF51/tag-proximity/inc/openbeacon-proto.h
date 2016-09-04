@@ -125,10 +125,8 @@ typedef struct
 
 typedef struct
 {
-	uint8_t type;
-	uint8_t length;
-	uint16_t reserved;
-	uint8_t buffer[256];
+	uint16_t length;
+	uint8_t buffer[258];
 	uint32_t crc32;
 } PACKED TBeaconProxSightingPage;
 
