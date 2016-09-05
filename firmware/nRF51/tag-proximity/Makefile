@@ -46,7 +46,7 @@ publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 
 app_clean:
-	find src -name '*.o' -exec rm \{\} \;
+	find src lib -name '*.o' -exec rm \{\} \;
 
 key:
 	printf "static const TAES g_default_key = {\n\t`od -v -t x1 -N 16 /dev/urandom | grep 0000000 | sed 's/^[0 ]* /0x/g' | sed 's/  */, 0x/g'`\n};\n" > $(CUSTOM_KEY)

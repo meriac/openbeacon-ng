@@ -1,12 +1,12 @@
 /***************************************************************
  *
- * OpenBeacon.org - log tag sigtings to external flash
+ * OpenBeacon.org - CRC32
  *
- * Copyright 2015 Milosch Meriac <milosch@meriac.com>
+ * Copyright 2016 Milosch Meriac <milosch@meriac.com>
  *
  ***************************************************************
 
- This file is part of the OpenBeacon.org active RFID firmware
+ This file is part of the OpenBeacon.org active RFID tracking project
 
  OpenBeacon is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -23,13 +23,9 @@
 
 */
 
-#ifndef __LOG_H__
-#define __LOG_H__
+#ifndef __CRC32_H__
+#define __CRC32_H__
 
-extern uint8_t log_init(uint32_t tag_id);
-extern void log_dump(uint32_t tag_id);
-extern void log_sighting(uint32_t epoch_local, uint32_t epoch_remote,
-	uint32_t tag_id, uint8_t power, int8_t angle);
-extern int log_process(void);
+extern uint32_t crc32(const void *buf, uint32_t size);
 
-#endif/*__LOG_H__*/
+#endif/*__CRC32_H__*/

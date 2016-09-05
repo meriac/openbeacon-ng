@@ -42,9 +42,9 @@ static void blink(uint8_t times)
 	while(times--)
 	{
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(10));
+		timer_wait(MILLISECONDS(1));
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
-		timer_wait(MILLISECONDS(490));
+		timer_wait(MILLISECONDS(499));
 	}
 }
 
@@ -59,7 +59,8 @@ void halt(uint8_t times)
 
 static void run_mode_beacon(uint32_t tag_id)
 {
-	uint8_t blink;
+	int i;
+	bool do_blink;
 
 	/* start radio */
 	radio_init(tag_id);
@@ -72,7 +73,8 @@ static void run_mode_beacon(uint32_t tag_id)
 	nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
 	/* enter main loop */
-	blink = 0;
+	i = 0;
+	do_blink = false;
 	while(TRUE)
 	{
 		/* get tag angle once per second */
@@ -80,17 +82,28 @@ static void run_mode_beacon(uint32_t tag_id)
 		timer_wait(MILLISECONDS(1000));
 
 		/* process log entries */
-		log_process();
+		if(log_process())
+			do_blink = true;
 
 		/* blink every 5 seconds */
-		if(blink<5)
-			blink++;
+		if(i<5)
+			i++;
 		else
 		{
-			blink = 0;
+			i = 0;
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 			timer_wait(MILLISECONDS(1));
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+
+			/* check whether to indicate logging of data */
+			if(do_blink)
+			{
+				do_blink = false;
+				timer_wait(MILLISECONDS(100));
+				nrf_gpio_pin_set(CONFIG_LED_PIN);
+				timer_wait(MILLISECONDS(1));
+				nrf_gpio_pin_clear(CONFIG_LED_PIN);
+			}
 		}
 	}
 }
