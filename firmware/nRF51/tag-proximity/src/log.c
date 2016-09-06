@@ -38,6 +38,7 @@
 static TBeaconProxSightingPage g_log_page;
 static uint32_t g_page_count, g_page;
 static uint32_t g_log_page_pos;
+static bool g_first;
 static heatshrink_encoder g_hse; 
 
 typedef struct {
@@ -74,11 +75,6 @@ static uint32_t log_scan_for_first_free_page(void)
 		break;
 	}
 
-	/* ensure there's at least one empty page between logs to mark
-	 * restarting of logging */
-	if(page)
-		page++;
-
 	return page;
 }
 
@@ -94,8 +90,11 @@ uint8_t log_init(uint32_t tag_id)
 	/* initialize compression library */
 	heatshrink_encoder_reset(&g_hse); 
 
-	/* wake up */
+	/* wake up flash */
 	flash_sleep(0);
+
+	/* issue flag for first sector */
+	g_first = true;
 
 	/* print detected flash memory size */
 	t = flash_size();
@@ -106,7 +105,7 @@ uint8_t log_init(uint32_t tag_id)
 	g_page = log_scan_for_first_free_page();
 	debug_printf("- Log size %u page%c...\n\r", g_page, g_page==1 ? '.':'s');
 
-	/* put flash to sleep */
+	/* put flash to sleep again */
 	flash_sleep(1);
 
 	return 0;
@@ -174,7 +173,6 @@ int log_process(void)
 	int res;
 	size_t ipos;
 	size_t in,out;
-	HSE_sink_res sres;
 	HSE_poll_res pres;
 	TBeaconProxSighting log;
 
@@ -185,32 +183,33 @@ int log_process(void)
 		ipos = 0;
 
 		do {
-			sres = heatshrink_encoder_sink(&g_hse, ((uint8_t*)&log)+ipos, sizeof(log)-ipos, &in);
-			if(sres<0)
-				debug_printf("ERROR: heatshrink_encoder_sink sent=%i sres=%i in=%i\n\r", sizeof(log), sres, in);
-			//FIXME
+			if(heatshrink_encoder_sink(&g_hse, ((uint8_t*)&log)+ipos, sizeof(log)-ipos, &in)<0)
+				goto error;
 
 			ipos += in;
 
 			do {
 				out = 0;
-				pres = heatshrink_encoder_poll(
+				if((pres = heatshrink_encoder_poll(
 					&g_hse,
 					&g_log_page.buffer[g_log_page_pos],
 					sizeof(g_log_page.buffer) - g_log_page_pos,
-					&out);
-
-				if(pres<0)
-				{
-					debug_printf("ERROR: heatshrink_encoder_poll pres=%i\n\r", pres);
-					break;
-				}
+					&out))<0)
+					goto error;
 
 				g_log_page_pos += out;
 
 				if( g_log_page_pos>=sizeof(g_log_page.buffer) )
 				{
 					g_log_page.length = g_log_page_pos;
+
+					/* mark first page */
+					if(g_first)
+					{
+						g_first = false;
+						g_log_page.length |= BEACON_PROXSIGHTING_PAGE_MARKER;
+					}
+
 					g_log_page.crc32 = crc32(&g_log_page, sizeof(g_log_page)-sizeof(g_log_page.crc32));
 
 					/* write to flash */
@@ -229,8 +228,18 @@ int log_process(void)
 			} while( pres == HSER_POLL_MORE );
 		} while ( ipos < sizeof(log) );
 	}
-
 	return res;
+
+	/* restart encoder upon error */
+error:
+	/* initialize compression library */
+	heatshrink_encoder_reset(&g_hse);
+	/* reset settings */
+	g_log_page_pos = 0;
+	/* issue new marker */
+	g_first = true;
+	/* return empty */
+	return 0;
 }
 
 void log_dump(uint32_t tag_id)

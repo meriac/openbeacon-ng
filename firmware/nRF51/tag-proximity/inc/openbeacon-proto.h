@@ -123,6 +123,7 @@ typedef struct
 	int8_t angle;
 } PACKED TBeaconProxSighting;
 
+#define BEACON_PROXSIGHTING_PAGE_MARKER 0x8000U
 typedef struct
 {
 	uint16_t length;
