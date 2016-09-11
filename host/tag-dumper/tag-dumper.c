@@ -44,7 +44,7 @@
 
 bool g_decoding;
 heatshrink_decoder g_hsd;
-uint32_t g_tag_id, g_page_count;
+uint32_t g_tag_id, g_page_count, g_group;
 size_t g_out_pos;
 TBeaconProxSighting g_sighting;
 
@@ -72,12 +72,15 @@ static int port_open(const char *device)
 
 static void port_process_tag(void)
 {
-	fprintf(stdout, "tag_rx: id=0x%08X tl=%08u tr=%08u rssi=%i angle=%i\n",
+	fprintf(stdout,
+		"{ \"tag_me\": \"0x%08X\", \"tag_them\": \"0x%08X\", \"time_local_s\": %8u, \"time_remote_s\": %8u, \"rssi\": %3i, \"angle\": %3i, \"group\": %u }\r\n",
+		g_tag_id,
 		g_sighting.tag_id,
 		g_sighting.epoch_local,
 		g_sighting.epoch_remote,
 		g_sighting.power,
-		g_sighting.angle);
+		g_sighting.angle,
+		g_group);
 }
 
 static bool port_rx(uint8_t last_type, const uint8_t* buffer, int size)
@@ -94,7 +97,7 @@ static bool port_rx(uint8_t last_type, const uint8_t* buffer, int size)
 			if(size==sizeof(uint32_t))
 			{
 				g_tag_id = *((uint32_t*)buffer);
-				fprintf(stdout, "Receive Tag ID=0x%08X\n", g_tag_id);
+				fprintf(stderr, "Received Tag ID=0x%08X\n", g_tag_id);
 			}
 			break;
 
@@ -128,10 +131,12 @@ static bool port_rx(uint8_t last_type, const uint8_t* buffer, int size)
 					/* restart decoding if new log is found */
 					if(page->length & BEACON_PROXSIGHTING_PAGE_MARKER)
 					{
-						fprintf(stderr, "Found new log at page %i\n", g_page_count);
+						fprintf(stderr, "Found new log group[%u] at page %u\n",
+							g_group, g_page_count);
 						heatshrink_decoder_reset(&g_hsd);
 						g_out_pos = 0;
 						g_decoding = true;
+						g_group++;
 					}
 
 					in_pos = 0;
@@ -222,16 +227,16 @@ int main( int argc, const char* argv[] )
 		timeout.tv_sec  = 1; /* seconds */
 		/* register descriptors */
 		FD_SET(fd, &fds);
-		/* wait for data */
-		res = select(maxfd, &fds, NULL, NULL, &timeout);
-		/* retry on timeout */
-		if(res == 0)
+		/* wait for data, retry on timeout */
+		if(select(maxfd, &fds, NULL, NULL, &timeout) == 0)
 			continue;
 
-		if(FD_ISSET(fd, &fds))
+		if(FD_ISSET(fd, &fds)==1)
 		{
 			do {
-				res = read(fd, buffer_in, BUFFER_SIZE);
+				/* quit if end of file is reached */
+				if((res = read(fd, buffer_in, BUFFER_SIZE))<=0)
+					goto done;
 
 				/* iterate through receive buffer */
 				for(i=0; i<res; i++)
@@ -265,7 +270,7 @@ int main( int argc, const char* argv[] )
 								if(overflow)
 								{
 									overflow = false;
-									fprintf (stdout, "ERROR overflow error, ignoring packet\n"); 
+									fprintf (stderr, "ERROR: overflow error, ignoring packet\n");
 								}
 								else
 									if(pos && last_type)
@@ -297,4 +302,8 @@ int main( int argc, const char* argv[] )
 			} while (res == BUFFER_SIZE);
 		}
 	}
+
+done:
+	close(fd);
+	return 0;
 }
