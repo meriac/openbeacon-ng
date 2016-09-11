@@ -42,6 +42,7 @@
 #include "crc32.h"
 #include "helper.h"
 
+bool g_decoding;
 heatshrink_decoder g_hsd;
 uint32_t g_tag_id, g_page_count;
 size_t g_out_pos;
@@ -81,7 +82,7 @@ static void port_process_tag(void)
 
 static bool port_rx(uint8_t last_type, const uint8_t* buffer, int size)
 {
-	uint32_t crc;
+	uint32_t crc, length;
 	HSD_sink_res sres;
 	HSD_poll_res pres;
 	size_t in_pos, read, written;
@@ -110,21 +111,36 @@ static bool port_rx(uint8_t last_type, const uint8_t* buffer, int size)
 					heatshrink_decoder_reset(&g_hsd);
 					g_out_pos = 0;
 					g_page_count++;
+					g_decoding = false;
 					break;
 				}
 
 				crc = crc32(page, sizeof(*page)-sizeof(page->crc32));
-				if((crc!=page->crc32) || (page->length>sizeof(page->buffer)))
+				length = page->length & BEACON_PROXSIGHTING_LENGTH_MASK;
+				if((crc!=page->crc32) || (length>sizeof(page->buffer)))
+				{
 					fprintf(stderr, "Invalid page at page number %05i of size %i bytes (len=%i)\n",
 						g_page_count, size, page->length);
+					g_decoding = false;
+				}
 				else
 				{
+					/* restart decoding if new log is found */
+					if(page->length & BEACON_PROXSIGHTING_PAGE_MARKER)
+					{
+						fprintf(stderr, "Found new log at page %i\n", g_page_count);
+						heatshrink_decoder_reset(&g_hsd);
+						g_out_pos = 0;
+						g_decoding = true;
+					}
+
 					in_pos = 0;
 					do {
 						if((sres = heatshrink_decoder_sink(
 							&g_hsd, &page->buffer[in_pos], sizeof(page->buffer)-in_pos, &read))<0)
 						{
 							fprintf(stderr, "ERROR: Invalid decoder result (%i)\n", sres);
+							g_decoding = false;
 							return false;
 						}
 						in_pos += read;
@@ -148,7 +164,11 @@ static bool port_rx(uint8_t last_type, const uint8_t* buffer, int size)
 								}
 							}
 							else
+							{
 								fprintf(stderr, "ERROR: poll error %i\n", pres);
+								g_decoding = false;
+								return false;
+							}
 						} while(pres == HSDR_POLL_MORE);
 					} while(in_pos<sizeof(page->buffer));
 				}
@@ -161,6 +181,7 @@ static bool port_rx(uint8_t last_type, const uint8_t* buffer, int size)
 		case 0x03:
 			fprintf(stdout, "Terminated reception ot tag data.\n");
 			g_tag_id = 0;
+			g_decoding = false;
 			break;
 	}
 

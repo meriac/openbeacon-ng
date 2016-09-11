@@ -124,6 +124,7 @@ typedef struct
 } PACKED TBeaconProxSighting;
 
 #define BEACON_PROXSIGHTING_PAGE_MARKER 0x8000U
+#define BEACON_PROXSIGHTING_LENGTH_MASK 0x0FFFU
 typedef struct
 {
 	uint16_t length;
