@@ -75,5 +75,9 @@
 #define IRQ_PRIORITY_RTC1        (IRQ_PRIORITY_LOW)
 #define IRQ_PRIORITY_ADC         (IRQ_PRIORITY_LOW)
 #define IRQ_PRIORITY_UART0       (IRQ_PRIORITY_LOW)
+#define IRQ_PRIORITY_GPIOTE      (IRQ_PRIORITY_LOW)
+
+/* keep button asserted for N seconds */
+#define CONFIG_BUTTON_DURATION_SECONDS 5
 
 #endif/*__CONFIG_H__*/

@@ -46,6 +46,7 @@
 
 #define TAG_DAMPEN 10.0
 
+#define TAGBUTTON_TIME 10
 #define TAGAGGREGATION_TIME 30
 #define PROXAGGREGATION_TIME 10
 #define MAX_PROXIMITY_SLOTS 32
@@ -62,8 +63,9 @@ typedef struct
 	uint32_t tag_id, epoch;
 	float voltage;
 	int angle;
-	bool button, calibrated, fixed, visible;
+	bool calibrated, fixed, visible;
 	double last_seen;
+	uint32_t button_time;
 	uint32_t last_reader_id;
 	int Fcount;
 	double Fx, Fy;
@@ -246,8 +248,10 @@ process_packet(double timestamp, uint32_t reader_id, const TBeaconNgTracker &tra
 	tag->last_reader_id = reader_id;
 	tag->voltage = track.voltage/10.0;
 	tag->angle = track.angle;
+	if(track.proto & RFBPROTO_PROTO_BUTTON)
+		tag->button_time = timestamp;
 
-	switch(track.proto)
+	switch(track.proto & RFBPROTO_PROTO_MASK)
 	{
 		case RFBPROTO_BEACON_NG_SIGHTING:
 		{
@@ -378,7 +382,7 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 	);
 
 	/* show specific fields */
-	switch(track.proto)
+	switch(track.proto & RFBPROTO_PROTO_MASK)
 	{
 		case RFBPROTO_BEACON_NG_SIGHTING:
 		{
@@ -452,18 +456,19 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 		return len;
 	}
 
-	/* ignore unknown packets */
-	if(!((track.proto == RFBPROTO_BEACON_NG_SIGHTING)||
-		(track.proto == RFBPROTO_BEACON_NG_STATUS)))
+	switch(track.proto & RFBPROTO_PROTO_MASK)
 	{
-		fprintf(stderr, " Unknown protocol [%i]\n\r", track.proto);
-		return len;
-	}
+		case RFBPROTO_BEACON_NG_SIGHTING:
+		case RFBPROTO_BEACON_NG_STATUS:
+			/* show & process latest packet */
+//			print_packet(stdout, reader_id, track);
+			process_packet(timestamp, reader_id, track);
+			return sizeof(TBeaconLogSighting);
 
-	/* show & process latest packet */
-//	print_packet(stdout, reader_id, track);
-	process_packet(timestamp, reader_id, track);
-	return sizeof(TBeaconLogSighting);
+		default:
+			fprintf(stderr, " Unknown protocol [0x%02X]\n\r", track.proto);
+			return len;
+	}
 }
 
 static void
@@ -495,6 +500,9 @@ thread_iterate_tag (void *Context, double timestamp, bool realtime)
 		tag->voltage
 	);
 	g_first = false;
+
+	if((timestamp - tag->button_time)<=TAGBUTTON_TIME)
+		fprintf(g_out,",\"button\":true");
 
 	if(tag->fixed)
 		fprintf(g_out,",\"fixed\":true");

@@ -57,6 +57,7 @@ static volatile uint8_t g_request_tx;
 static uint8_t g_listen_ratio;
 static uint8_t g_nrf_state;
 static int8_t g_rssi;
+static uint8_t g_button_pressed;
 
 static TBeaconNgProx g_pkt_prox ALIGN4;
 static uint8_t g_pkt_prox_enc[sizeof(g_pkt_prox)] ALIGN4;
@@ -114,6 +115,10 @@ void RTC0_IRQ_Handler(void)
 
 		/* increment time */
 		g_time++;
+
+		/* decrement button timer if needed */
+		if(g_button_pressed)
+			g_button_pressed--;
 
 		/* schedule tracker TX */
 		if(!g_request_tx)
@@ -328,6 +333,10 @@ void RADIO_IRQ_Handler(void)
 					g_pkt_tracker.angle = tag_angle();
 					g_pkt_tracker.voltage = adc_bat();
 
+					/* propagate button press if needed */
+					if(g_button_pressed)
+						g_pkt_tracker.proto |= RFBPROTO_PROTO_BUTTON;
+
 					/* measure encryption time */
 					ticks = NRF_RTC0->COUNTER;
 
@@ -417,6 +426,16 @@ void RADIO_IRQ_Handler(void)
 	}
 }
 
+void GPIOTE_IRQ_Handler(void)
+{
+	if(NRF_GPIOTE->EVENTS_IN[0])
+	{
+		NRF_GPIOTE->EVENTS_IN[0] = 0;
+
+		g_button_pressed = CONFIG_BUTTON_DURATION_SECONDS;
+	}
+}
+
 void radio_init(uint32_t uid)
 {
 	/* reset variables */
@@ -427,6 +446,7 @@ void radio_init(uint32_t uid)
 	g_nrf_state = 0;
 	g_request_tx = 0;
 	g_rssi = 0;
+	g_button_pressed = 0;
 
 	/* initialize proximity packet */
 	memset(&g_pkt_prox, 0, sizeof(g_pkt_prox));
@@ -494,4 +514,12 @@ void radio_init(uint32_t uid)
 	NVIC_SetPriority(RTC0_IRQn, IRQ_PRIORITY_RTC0);
 	NVIC_EnableIRQ(RTC0_IRQn);
 	NRF_RTC0->TASKS_START = 1;
+
+	/* configure button IRQ handler */
+	nrf_gpiote_event_config(0, CONFIG_SWITCH_PIN, GPIOTE_CONFIG_POLARITY_HiToLo);
+	NRF_GPIOTE->INTENSET = (
+		(GPIOTE_INTENSET_IN0_Enabled     << GPIOTE_INTENSET_IN0_Pos)
+	);
+	NVIC_SetPriority(GPIOTE_IRQn, IRQ_PRIORITY_GPIOTE);
+	NVIC_EnableIRQ(GPIOTE_IRQn);
 }
