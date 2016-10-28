@@ -1,2 +1,3 @@
 *.o
-tag-dumper
+/tag-dumper
+/logfile.*

@@ -213,6 +213,7 @@ int main( int argc, const char* argv[] )
 	fd = port_open(argv[1]);
 	maxfd = fd+1;
 
+
 	/* initialize decompression library */
 	heatshrink_decoder_reset(&g_hsd);
 
@@ -229,14 +230,17 @@ int main( int argc, const char* argv[] )
 		FD_SET(fd, &fds);
 		/* wait for data, retry on timeout */
 		if(select(maxfd, &fds, NULL, NULL, &timeout) == 0)
+		{
+			fprintf(stderr, ".");
 			continue;
-
-		if(FD_ISSET(fd, &fds)==1)
+		}
+		if(FD_ISSET(fd, &fds))
 		{
 			do {
 				/* quit if end of file is reached */
 				if((res = read(fd, buffer_in, BUFFER_SIZE))<=0)
 					goto done;
+				fprintf(stderr, "read=%i\r\n", res);
 
 				/* iterate through receive buffer */
 				for(i=0; i<res; i++)

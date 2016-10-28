@@ -8,7 +8,8 @@ SOURCES  := \
 	crc32.c
 OBJECTS  := $(patsubst %.c,%.o,$(SOURCES))
 
-CC       := g++
+CC       := gcc
+
 CPPFLAGS := -D_THREAD_SAFE -D_REENTRANT
 CFLAGS   := -O3 -W -Wall -Werror -I. -I$(PROX_TAG) -I$(COMP_LIB)
 LDLIBS   :=
