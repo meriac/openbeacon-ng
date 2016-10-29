@@ -1,8 +1,14 @@
 CXX     :=g++
 TARGET  :=openbeacon-rx
-SOURCES :=src/bmMapHandleToItem.cpp src/main.cpp src/crypto.cpp
+SOURCES := \
+	src/bmMapHandleToItem.cpp \
+	src/main.cpp \
+	src/helper.cpp \
+	src/crypto.cpp \
+	src/network.cpp \
+	src/replay.cpp
 FILTERSS:=filter-singularsighting
-LIBS    :=-lm -pthread
+LIBS    :=-lm -lpthread -lpcap
 
 # determine program version
 PROGRAM_VERSION:=$(shell git describe --tags --abbrev=4 --dirty 2>/dev/null | sed s/^v//)
