@@ -98,7 +98,6 @@ typedef struct
 
 static FILE* g_out;
 static bool g_first;
-static bool g_DoEstimation = true;
 static bmMapHandleToItem g_map_reader, g_map_tag, g_map_proximity;
 
 static uint32_t g_total_crc_ok, g_total_crc_errors;
@@ -286,7 +285,7 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 	const TBeaconNgSighting *slot;
 
 	/* show common fields */
-	fprintf(out, "{\"id\"=\"0x%08X\",\"t\"=%i,\"voltage\"=%1.1f,\"angle\"=%03i,",
+	fprintf(out, "{\"id\":\"0x%08X\",\"t\":%i,\"voltage\":%1.1f,\"angle\":%03i,",
 		track.uid,
 		track.epoch,
 		track.voltage/10.0,
@@ -304,7 +303,7 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 			{
 				if(slot->uid)
 				{
-					fprintf(out, "%s{\"id\"=\"0x%08X\",\"dBm\"=%03i}",
+					fprintf(out, "%s{\"id\":\"0x%08X\",\"dBm\":%03i}",
 						t ? ",":"",
 						slot->uid,
 						slot->rx_power
@@ -318,7 +317,7 @@ print_packet(FILE *out, uint32_t reader_id, const TBeaconNgTracker &track)
 
 		case RFBPROTO_BEACON_NG_STATUS:
 		{
-			fprintf(out, "\"status\"={\"rx_loss\"=%1.2f,\"tx_loss\"=%1.2f,\"px_power\"=%2.0f,\"ticks\"=%06i}",
+			fprintf(out, "\"status\":{\"rx_loss\":%1.2f,\"tx_loss\":%1.2f,\"px_power\":%2.0f,\"ticks\":%06i}",
 				track.p.status.rx_loss/100.0,
 				track.p.status.tx_loss/100.0,
 				track.p.status.px_power/100.0,
@@ -373,7 +372,7 @@ parse_packet (double timestamp, uint32_t reader_id, const void *data, int len)
 		case RFBPROTO_BEACON_NG_SIGHTING:
 		case RFBPROTO_BEACON_NG_STATUS:
 			/* show & process latest packet */
-			print_packet(stdout, reader_id, track);
+//			print_packet(stdout, reader_id, track);
 			process_packet(timestamp, reader_id, track);
 			return sizeof(TBeaconLogSighting);
 
@@ -544,10 +543,6 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 				thread_update_tag_speed(prox->tag1p, prox->tag2p, power);
 	}
 
-	if(g_first)
-	{
-		fprintf(g_out,"  \"edge\":[");
-	}
 	fprintf(g_out,"%s\n    {\"tag\":[%u,%u],\"age\":%i,\"count\":%u,\"power\":%1.1f",
 		g_first ? "":",",
 		prox->tag1,
@@ -564,7 +559,7 @@ thread_iterate_prox (void *Context, double timestamp, bool realtime)
 	fprintf(g_out,"}");
 }
 
-static void
+void
 thread_estimation_step (FILE *out, double timestamp, bool realtime)
 {
 	static uint32_t sequence = 0;
@@ -575,7 +570,7 @@ thread_estimation_step (FILE *out, double timestamp, bool realtime)
 	/* tracking dump state in JSON format */
 	fprintf (out, "{\n  \"id\":%u,\n"
 			"  \"api\":{\"name\":\"" PROGRAM_NAME "\",\"ver\":\""
-			PROGRAM_VERSION "\"},\n" "  \"time\":%u,\n",
+			PROGRAM_VERSION "\"},\n" "  \"time\":%u,\n  \"edge\":[",
 			sequence++, (uint32_t) timestamp);
 
 	g_out = out;
@@ -596,14 +591,6 @@ thread_estimation_step (FILE *out, double timestamp, bool realtime)
 
 	/* propagate object on stdout */
 	fflush (out);
-}
-
-void *
-thread_estimation (void *context)
-{
-	while (g_DoEstimation)
-		thread_estimation_step ((FILE*)context, microtime (), true);
-	return NULL;
 }
 
 int

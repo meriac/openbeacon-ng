@@ -27,7 +27,7 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-extern void * thread_estimation (void *context);
+extern void thread_estimation_step (FILE *out, double timestamp, bool realtime);
 extern int parse_packet (double timestamp, uint32_t reader_id, const void *data, int len);
 
 #endif/*__MAIN_H__*/
