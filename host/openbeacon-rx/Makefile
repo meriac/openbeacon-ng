@@ -65,7 +65,7 @@ $(TARGET): .depend $(OBJS)
 	$(CXX) $(CXXFLAGS) $(CXXOPT) -c $< -o $@
 
 dependencies-fedora:
-	sudo yum install gcc-c++ zlib zlib-devel
+	sudo yum install gcc-c++ zlib zlib-devel libpcap-devel
 
 cleanall: clean
 	rm -f .depend
