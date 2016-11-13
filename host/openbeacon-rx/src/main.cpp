@@ -596,7 +596,7 @@ thread_estimation_step (FILE *out, double timestamp, bool realtime)
 int
 main (int argc, char **argv)
 {
-	bool realtime;
+	int mode;
 
 	/* initialize statistics */
 	g_unknown_reader = 0;
@@ -616,7 +616,13 @@ main (int argc, char **argv)
 		return listen_packets (stdout);
 	else
 	{
-		realtime = (argc >= 3) ? (atoi (argv[2]) ? true : false) : false;
-		parse_pcap (argv[1], realtime);
+		mode = (argc >= 3) ? atoi (argv[2]) : 0;
+
+		/* mode one means realtime replay, zero or two maximum speed */
+		parse_pcap (argv[1], mode == 1);
+
+		/* if mode is two, then start listening */
+		if(mode == 2)
+			listen_packets (stdout);
 	}
 }
