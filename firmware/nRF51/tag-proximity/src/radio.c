@@ -36,8 +36,8 @@
 #  define PX_POWER 4
 #  define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Pos4dBm
 #elif  MARKER_TAG_NEAR
-#  define PX_POWER -20
-#  define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Neg20dBm
+#  define PX_POWER -16
+#  define PX_POWER_VALUE RADIO_TXPOWER_TXPOWER_Neg16dBm
 #else/*PROX_TAG*/
 #  define PROX_TAG
 #  define PX_POWER -20
