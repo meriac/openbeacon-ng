@@ -42,6 +42,9 @@ marker_tag_far: prox_tag
 marker_tag_near: FEATURE=-D MARKER_TAG_NEAR
 marker_tag_near: prox_tag
 
+log_tag: FEATURE=-D LOG_TAG
+log_tag: prox_tag
+
 publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 

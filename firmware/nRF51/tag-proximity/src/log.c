@@ -35,8 +35,9 @@
 #define CONFIG_LOG_BUFFER_COUNT 32
 #endif/*CONFIG_LOG_BUFFER_COUNT*/
 
-static TBeaconProxSightingPage g_log_page;
+#ifdef  LOG_TAG
 static uint32_t g_page_count, g_page;
+static TBeaconProxSightingPage g_log_page;
 static uint32_t g_log_page_pos;
 static bool g_first;
 static heatshrink_encoder g_hse; 
@@ -77,15 +78,18 @@ static uint32_t log_scan_for_first_free_page(void)
 
 	return page;
 }
+#endif/*LOG_TAG*/
 
 uint8_t log_init(uint32_t tag_id)
 {
-	uint32_t t;
 	(void)tag_id;
 
 	/* initialize flash */
 	if(flash_init())
 		return 1;
+
+#ifdef  LOG_TAG
+	uint32_t t;
 
 	/* initialize compression library */
 	heatshrink_encoder_reset(&g_hse); 
@@ -108,12 +112,20 @@ uint8_t log_init(uint32_t tag_id)
 	/* put flash to sleep again */
 	flash_sleep(1);
 
+#endif/*LOG_TAG*/
 	return 0;
 }
 
 void log_sighting(uint32_t epoch_local, uint32_t epoch_remote,
 	uint32_t tag_id, uint8_t power, int8_t angle)
 {
+#ifndef LOG_TAG
+	(void)epoch_local;
+	(void)epoch_remote;
+	(void)tag_id;
+	(void)power;
+	(void)angle;
+#else /*LOG_TAG*/
 	TBeaconProxSighting *log;
 
 	if(g_log.count<CONFIG_LOG_BUFFER_COUNT)
@@ -131,8 +143,10 @@ void log_sighting(uint32_t epoch_local, uint32_t epoch_remote,
 		/* update counter */
 		g_log.count++;
 	}
+#endif/*LOG_TAG*/
 }
 
+#ifdef  LOG_TAG
 static uint8_t log_read(TBeaconProxSighting *log)
 {
 	if(!g_log.count)
@@ -149,6 +163,7 @@ static uint8_t log_read(TBeaconProxSighting *log)
 
 	return 1;
 }
+#endif/*LOG_TAG*/
 
 void log_dump_escaped(uint8_t type, const uint8_t* data, uint32_t size)
 {
@@ -170,6 +185,7 @@ void log_dump_escaped(uint8_t type, const uint8_t* data, uint32_t size)
 
 int log_process(void)
 {
+#ifdef  LOG_TAG
 	int res;
 	size_t ipos;
 	size_t in,out;
@@ -238,12 +254,17 @@ error:
 	g_log_page_pos = 0;
 	/* issue new marker */
 	g_first = true;
+
+#endif/*LOG_TAG*/
 	/* return empty */
 	return 0;
 }
 
 void log_dump(uint32_t tag_id)
 {
+#ifndef LOG_TAG
+	(void)tag_id;
+#else /*LOG_TAG*/
 	int i;
 	uint32_t page;
 	uint8_t buffer[CONFIG_FLASH_PAGESIZE];
@@ -321,4 +342,5 @@ void log_dump(uint32_t tag_id)
 		/* turn LED on again to indicate end of operation */
 		nrf_gpio_pin_set(CONFIG_LED_PIN);
 	}
+#endif/*LOG_TAG*/
 }
