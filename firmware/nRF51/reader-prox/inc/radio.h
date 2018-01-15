@@ -30,20 +30,26 @@
 #endif/*RADIO_MAX_PKT_BUFFERS*/
 
 #ifdef  RADIO_OLD_FORMAT
-#  define NRF_TRACKER_SIZE 16
+#  define NRF_PACKET_SIZE 16
 #  define NRF_TRACKER_PREFIX  0x80UL
 #  define NRF_TRACKER_ADDRESS 0x40C04080UL
+#  define CONFIG_RADIO_CHANNEL 81
+#elif defined TAG_PROX
+#  define NRF_PACKET_SIZE 16
+#  define NRF_TRACKER_PREFIX 0xD7UL
+#  define NRF_TRACKER_ADDRESS 0xEA8AF0B1UL
+#  define CONFIG_RADIO_CHANNEL 76
 #else
-#  define NRF_TRACKER_SIZE 32
-#  define NRF_TRACKER_PREFIX 0x46UL //NRF_RADIO->PREFIX0 = 0x46D7UL
-//#  define NRF_TRACKER_ADDRESS 0xEA8AF0B1UL
+#  define NRF_PACKET_SIZE 32
+#  define NRF_TRACKER_PREFIX 0x46UL
 #  define NRF_TRACKER_ADDRESS 0xCC864569UL
+#  define CONFIG_RADIO_CHANNEL 81
 #endif/*RADIO_OLD_FORMAT*/
 
 typedef struct
 {
 	int8_t rssi;
-	uint8_t buf[NRF_TRACKER_SIZE];
+	uint8_t buf[NRF_PACKET_SIZE];
 } TBeaconBuffer;
 
 extern void radio_init(void);

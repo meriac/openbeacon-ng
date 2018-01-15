@@ -32,12 +32,22 @@
 #define RADIO_TRACKER_TXADDRESS 0
 #define RADIO_TRACKER_TXPOWER (RADIO_TXPOWER_TXPOWER_Neg16dBm << RADIO_TXPOWER_TXPOWER_Pos)
 #define RADIO_TRACKER_TXPOWER_NUM -16
+
+#ifdef TAG_PROX
+#define RADIO_TRACKER_PCNF1 \
+		(RADIO_PCNF1_WHITEEN_Enabled  << RADIO_PCNF1_WHITEEN_Pos) |\
+		(RADIO_PCNF1_ENDIAN_Big       << RADIO_PCNF1_ENDIAN_Pos)  |\
+		((NRF_MAC_SIZE-1UL)           << RADIO_PCNF1_BALEN_Pos)   |\
+		(NRF_PACKET_SIZE              << RADIO_PCNF1_STATLEN_Pos) |\
+		(NRF_PACKET_SIZE              << RADIO_PCNF1_MAXLEN_Pos)
+#else /*TAG_PROX*/
 #define RADIO_TRACKER_PCNF1 \
 		(RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos) |\
 		(RADIO_PCNF1_ENDIAN_Big       << RADIO_PCNF1_ENDIAN_Pos)  |\
 		((NRF_MAC_SIZE-1UL)           << RADIO_PCNF1_BALEN_Pos)   |\
-		(NRF_TRACKER_SIZE             << RADIO_PCNF1_STATLEN_Pos) |\
-		(NRF_TRACKER_SIZE             << RADIO_PCNF1_MAXLEN_Pos)
+		(NRF_PACKET_SIZE              << RADIO_PCNF1_STATLEN_Pos) |\
+		(NRF_PACKET_SIZE              << RADIO_PCNF1_MAXLEN_Pos)
+#endif/*TAG_PROX*/
 
 static volatile int g_pkt_count;
 static volatile int g_pkt_pos_wr, g_pkt_pos_rd;

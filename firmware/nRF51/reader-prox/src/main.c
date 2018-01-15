@@ -81,8 +81,8 @@ void main_entry(void)
 	tag_id = crc32((void*)&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
 
 	/* start radio */
-	debug_printf("\n\rInitializing Reader[%08X] v" PROGRAM_VERSION "\n\r",
-		tag_id);
+	debug_printf("\n\rInitializing Reader[%08X] (CH:%02i) v" PROGRAM_VERSION "\n\r",
+		tag_id, CONFIG_RADIO_CHANNEL);
 	radio_init();
 
 	/* enter main loop */
