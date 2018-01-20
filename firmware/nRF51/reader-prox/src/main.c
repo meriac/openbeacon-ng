@@ -93,6 +93,11 @@ void main_entry(void)
 			__WFE();
 		else
 		{
+#ifdef  RSSI_FILTERING
+			if(pkt.rssi<=RSSI_FILTERING)
+				continue;
+#endif/*RSSI_FILTERING*/
+
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
 
 			/* output packet, escape 0xFF's by appending 0x01's */

@@ -23,6 +23,9 @@ tracker_tag: $(TARGET).$(FORMAT)
 prox_tag: FEATURE=-D TAG_PROX
 prox_tag: tracker_tag
 
+testing_tag: FEATURE=-D RSSI_FILTERING=-70 -D TAG_PROX
+testing_tag: tracker_tag
+
 publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 
