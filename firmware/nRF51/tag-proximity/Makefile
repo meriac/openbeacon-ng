@@ -1,5 +1,6 @@
 TARGET=tag-proximity
 ARCH=nrf5
+FORMAT=bin
 CPU=$(ARCH)1822
 VARIANT=xxAB
 DEBUG=-g
@@ -32,7 +33,7 @@ APP_SRC+=$(IMAGES_C)
 
 all: prox_tag
 
-prox_tag: $(TARGET).bin
+prox_tag: $(TARGET).$(FORMAT)
 
 marker_tag: marker_tag_far
 
@@ -49,6 +50,7 @@ publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 
 app_clean:
+	rm -f $(TARGET).$(FORMAT)
 	find src lib -name '*.o' -exec rm \{\} \;
 
 key:

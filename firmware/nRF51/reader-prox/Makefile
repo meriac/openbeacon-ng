@@ -1,5 +1,6 @@
 TARGET=reader-prox
 ARCH=nrf5
+FORMAT=bin
 CPU=$(ARCH)1822
 VARIANT=xxAB
 DEBUG=-g
@@ -17,7 +18,7 @@ APP_SRC+=$(IMAGES_C)
 
 all: tracker_tag
 
-tracker_tag: $(TARGET).bin
+tracker_tag: $(TARGET).$(FORMAT)
 
 prox_tag: FEATURE=-D TAG_PROX
 prox_tag: tracker_tag
@@ -26,6 +27,7 @@ publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 
 app_clean:
+	rm -f $(TARGET).$(FORMAT)
 	find src -name '*.o' -exec rm \{\} \;
 
 clean_all: clean
