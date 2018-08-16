@@ -143,6 +143,9 @@ erase:
 version:
 	@echo "$(TARGET) version $(PROGRAM_VERSION)"
 
-clean : app_clean
+clean_ci: app_clean
 	find $(CORE) -name '*.o' -exec rm \{\} \;
-	rm -f $(TARGET).bin $(TARGET).elf $(TARGET).map $(TARGET).asm $(TARGET)-$(CPU).bin JLink.log
+	rm -f $(TARGET)*.elf $(TARGET)*.map $(TARGET)*.asm JLink.log
+
+clean: clean_ci
+	rm -f $(TARGET)*.bin $(TARGET)*.hex

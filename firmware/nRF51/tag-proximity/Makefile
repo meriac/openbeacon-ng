@@ -1,4 +1,4 @@
-TARGET=tag-proximity
+TARGET=tag-proximity$(EXT)
 ARCH=nrf5
 FORMAT=bin
 CPU=$(ARCH)1822
@@ -37,12 +37,15 @@ prox_tag: $(TARGET).$(FORMAT)
 
 marker_tag: marker_tag_far
 
+marker_tag_far: EXT=-marker-far
 marker_tag_far: FEATURE=-D MARKER_TAG_FAR
 marker_tag_far: prox_tag
 
+marker_tag_near: EXT=-marker-near
 marker_tag_near: FEATURE=-D MARKER_TAG_NEAR
 marker_tag_near: prox_tag
 
+log_tag: EXT=-log-tag
 log_tag: FEATURE=-D LOG_TAG
 log_tag: prox_tag
 
@@ -50,7 +53,6 @@ publish: clean $(TARGET).bin
 	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
 
 app_clean:
-	rm -f $(TARGET).$(FORMAT)
 	find src lib -name '*.o' -exec rm \{\} \;
 
 key:

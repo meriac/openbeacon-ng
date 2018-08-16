@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/meriac/openbeacon-ng.svg?style=svg)](https://circleci.com/gh/meriac/openbeacon-ng)
+
 ### Introduction
 
 The [get.OpenBeacon.org](http://get.openbeacon.org/) project provides Active 2.4 GHz RFID Realtime Proximity and Position Tracking using the BlueTooth Low Energy (BLE) compatible [nRF51822](https://www.nordicsemi.com/eng/Products/Bluetooth-Smart-Bluetooth-low-energy/nRF51822) chip from Nordic Semiconductors.

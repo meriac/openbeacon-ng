@@ -1,0 +1,29 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: meriac/arm-gcc-dev
+        user: build
+    steps:
+      - checkout
+      - run:
+          name: Setup Environment Variables
+          command: echo 'export PATH="$PATH:/usr/gcc-arm-none-eabi/bin"' >> $BASH_ENV
+      - run:
+          name: Build proximity tag in all variants
+          command: |
+            echo -e "prox_tag\nmarker_tag_far\nmarker_tag_near\nlog_tag" | xargs -I@ -n1 make clean_ci @ -C firmware/nRF51/tag-proximity
+      - run:
+          name: Build all remaining firmware, but the proximity-tag
+          command: |
+            circleci tests glob "firmware/nRF51/*/Makefile" | sed 's/\/Makefile//g' | grep -v /tag-proximity$ | circleci tests split --split-by=timings | xargs -n 1 make clean_ci all -C
+      - run:
+          name: Build host software
+          command: |
+            circleci tests glob "host/*/Makefile" | sed 's/\/Makefile//g' | circleci tests split --split-by=timings | xargs -n 1 make clean all -C
+      - run:
+          name: Collect firmware files
+          command: |
+            mkdir -p results && find firmware -name '*.bin' | xargs -I@ -n1 cp "@" results/
+      - store_artifacts:
+          path: results
