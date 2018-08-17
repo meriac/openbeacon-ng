@@ -45,16 +45,16 @@ diep (const char *fmt, ...)
 	exit (EXIT_FAILURE);
 }
 
-u_int16_t
+uint16_t
 icrc16 (const unsigned char *buffer, int size)
 {
 	return crc16 (buffer, size) ^ 0xFFFF;
 }
 
-u_int16_t
+uint16_t
 crc16 (const unsigned char *buffer, int size)
 {
-	u_int16_t crc = 0xFFFF;
+	uint16_t crc = 0xFFFF;
 
 	if (buffer && size)
 		while (size--)

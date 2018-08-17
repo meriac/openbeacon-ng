@@ -29,8 +29,8 @@
 
 extern void diep (const char *fmt, ...);
 extern void hex_dump (const void *data, unsigned int addr, unsigned int len);
-extern u_int16_t icrc16 (const unsigned char *buffer, int size);
-extern u_int16_t crc16 (const unsigned char *buffer, int size);
+extern uint16_t icrc16 (const unsigned char *buffer, int size);
+extern uint16_t crc16 (const unsigned char *buffer, int size);
 
 static inline double
 microtime_calc (struct timeval *tv)
