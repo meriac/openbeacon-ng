@@ -2,19 +2,17 @@
 
 ### Introduction
 
-The [get.OpenBeacon.org](http://get.openbeacon.org/) project provides Active 2.4 GHz RFID Realtime Proximity and Position Tracking using the BlueTooth Low Energy (BLE) compatible [nRF51822](https://www.nordicsemi.com/eng/Products/Bluetooth-Smart-Bluetooth-low-energy/nRF51822) chip from Nordic Semiconductors.
+The [OpenBeacon.org](https://www.openbeacon.org/) project provides Active 2.4 GHz RFID Realtime Proximity and Position Tracking using the BlueTooth Low Energy (BLE) compatible [nRF51822](https://www.nordicsemi.com/eng/Products/Bluetooth-Smart-Bluetooth-low-energy/nRF51822) chip from Nordic Semiconductors.
 
-Location tracking using [OpenBeacon tags](http://get.openbeacon.org/device.html) can be implemented by running an [OpenBeacon proximity tag firmware](http://get.openbeacon.org/source#github) that regularly transmits beacon packets. Such packets can then be received by [OpenBeacon base stations](http://www.openbeacon.org/EasyReader) in the vicinity. Signals received by one or more base stations can then be used to determine the [position of each tag in real time](http://www.openbeacon.org/API).
+Location tracking using [OpenBeacon tags](https://www.openbeacon.org/device.html) can be implemented by running an [OpenBeacon proximity tag firmware](https://www.openbeacon.org/source/) that regularly transmits beacon packets. Such packets can then be received by OpenBeacon base stations in the vicinity. Signals received by one or more base stations can then be used to determine the position of each tag in real time.
 
-The proximity feature additionally allows to resolve human contacts by sending detecting other tags in a range of up to 6 meters and a resolution of approximately 0.5 meters. Once a contact is detected, that information is forwarded by the surrounding [PoE Ethernet readers](http://www.openbeacon.org/EasyReader) to the server infrastructure. Due to the shielding effect of the body, face-to-face contacts can be accurately detected. Optional encryption can make sure, that only base stations inside the system can read the packet information.
+The proximity feature additionally allows to resolve human contacts by sending detecting other tags in a range of up to 6 meters and a resolution of approximately 0.5 meters. Once a contact is detected, that information is forwarded by the surrounding PoE Ethernet readers to the server infrastructure. Due to the shielding effect of the body, face-to-face contacts can be accurately detected. Optional encryption can make sure, that only base stations inside the system can read the packet information.
 
-On this page you can find the OpenBeacon proximity tag [hardware design](http://get.openbeacon.org/device.html#download) and the [firmware source code](http://get.openbeacon.org/source#github). You can find more information here:
+On this page you can find the OpenBeacon proximity tag [hardware design](https://github.com/meriac/openbeacon-ng/tree/master/hardware) and the [firmware source code](https://github.com/meriac/openbeacon-ng). You can find more information here:
 
-- [OpenBeacon.org](http://www.openbeacon.org) Active 2.4GHz RFID Proximity TAG based on the nRF51822 chip from Nordic Semiconductors.
+- [OpenBeacon.org](https://www.openbeacon.org) Active 2.4GHz RFID Proximity TAG based on the nRF51822 chip from Nordic Semiconductors.
 
 - [SocioPatterns.org](http://www.sociopatterns.org) research project on High-Resolution Social Networks from Wearable Proximity Sensors
-
-- [OpenBeacon EasyReader](http://openbeacon.org/EasyReader) Active 2.4GHz RFID Ethernet Reader
 
 - [Contact us](mailto:info@bitmanufactory.com) for further information.
 
@@ -47,7 +45,7 @@ The files in the folders **firmware** and **host** are free software. You can re
 
 #### OpenBeacon.org
 
-The [OpenBeacon.org](http://openbeacon.org) project was founded by [Milosch Meriac](https://www.meriac.com) and [Brita Meriac](mailto:brita@bitmanufaktory.com) in 2006 at the Berlin located company Bitmanufaktur GmbH as an open platform for active RFID applications operating in the license free 2.4GHz ISM band. OpenBeacon is based on Open Source software and a very flexible and a open design of a reprogrammable low cost Open Source Active 2.4GHz RFID hardware module. The RFID tag and reader firmware sources are available under GPL license the and tag hardware schematics are available under the open [Creative Commons license](https://creativecommons.org/). We encourage the development of new ideas for OpenBeacon setups and firmware improvements.
+The [OpenBeacon.org](https://www.openbeacon.org) project was founded by [Milosch Meriac](https://www.meriac.com) and [Brita Meriac](mailto:brita@bitmanufaktory.com) in 2006 at the Berlin located company Bitmanufaktur GmbH as an open platform for active RFID applications operating in the license free 2.4GHz ISM band. OpenBeacon is based on Open Source software and a very flexible and a open design of a reprogrammable low cost Open Source Active 2.4GHz RFID hardware module. The RFID tag and reader firmware sources are available under GPL license the and tag hardware schematics are available under the open [Creative Commons license](https://creativecommons.org/). We encourage the development of new ideas for OpenBeacon setups and firmware improvements.
 
 #### SocioPatterns
 
@@ -61,4 +59,4 @@ The SocioPatterns collaboration was founded by researchers and developers from t
 
 - [ENS Lyon - Laboratoire de Physique](http://www.ens-lyon.fr/PHYSIQUE/) -- Lyon, France
 
-- [Bitmanufactory](http://bitmanufactory.com) -- Cambridge, United Kingdom
+- [Bitmanufactory](https://www.bitmanufactory.com/about/) -- Cambridge, United Kingdom
