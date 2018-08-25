@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define TAG_UART_BAUD_RATE 921600
 #define BUFFER_SIZE 1024
 #define PACKED __attribute__((packed))
 
@@ -63,8 +64,14 @@ static int port_open(const char *device)
 	/* apply serial port settings */
 	tcgetattr(handle, &options);
 	cfmakeraw(&options);
-	cfsetspeed(&options, B115200);
-	tcsetattr(handle, TCSANOW, &options);
+	cfsetspeed(&options, TAG_UART_BAUD_RATE);
+
+	if(tcsetattr(handle, TCSANOW, &options))
+	{
+		fprintf(stderr, "error: failed to set baud %i rate for '%s'\n", TAG_UART_BAUD_RATE, device);
+		exit(11);
+	}
+
 	tcflush(handle, TCIFLUSH);
 
 	return handle;
@@ -240,7 +247,6 @@ int main( int argc, const char* argv[] )
 				/* quit if end of file is reached */
 				if((res = read(fd, buffer_in, BUFFER_SIZE))<=0)
 					goto done;
-				fprintf(stderr, "read=%i\r\n", res);
 
 				/* iterate through receive buffer */
 				for(i=0; i<res; i++)
