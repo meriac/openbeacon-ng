@@ -4,7 +4,7 @@ CFLAGS   := -O3 -W -Wall -Werror -I.
 LDLIBS   := 
 
 TARGET   := openbeacon_sniffer
-SOURCES  := $(TARGET).c crypto.c crc32.c
+SOURCES  := $(TARGET).c crypto.c
 OBJECTS  := $(patsubst %.c,%.o,$(SOURCES))
 
 all: $(TARGET)

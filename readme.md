@@ -4,7 +4,7 @@
 
 The [OpenBeacon.org](https://www.openbeacon.org/) project provides Active 2.4 GHz RFID Realtime Proximity and Position Tracking using the BlueTooth Low Energy (BLE) compatible [nRF51822](https://www.nordicsemi.com/eng/Products/Bluetooth-Smart-Bluetooth-low-energy/nRF51822) chip from Nordic Semiconductors.
 
-Location tracking using [OpenBeacon tags](https://www.openbeacon.org/device.html) can be implemented by running an [OpenBeacon proximity tag firmware](https://www.openbeacon.org/source/) that regularly transmits beacon packets. Such packets can then be received by OpenBeacon base stations in the vicinity. Signals received by one or more base stations can then be used to determine the position of each tag in real time.
+Location tracking using [OpenBeacon tags](https://www.openbeacon.org/device.html) can be implemented by running an [OpenBeacon proximity tag firmware](https://github.com/meriac/openbeacon-ng/tree/master/firmware/nRF51/tag-proximity) that regularly transmits beacon packets. Such packets can then be received by OpenBeacon base stations in the vicinity. Signals received by one or more base stations can then be used to determine the position of each tag in real time.
 
 The proximity feature additionally allows to resolve human contacts by sending detecting other tags in a range of up to 6 meters and a resolution of approximately 0.5 meters. Once a contact is detected, that information is forwarded by the surrounding PoE Ethernet readers to the server infrastructure. Due to the shielding effect of the body, face-to-face contacts can be accurately detected. Optional encryption can make sure, that only base stations inside the system can read the packet information.
 
