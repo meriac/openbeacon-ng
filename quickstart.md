@@ -151,3 +151,9 @@ make
 #  { "uid":"0x7EA7D3ED", "time_local_s":1535276484, "time_remote_s":    7898, "rssi":-82, "angle": 90, "voltage":2.8, "tx_power":4}
 #  { "uid":"0x1AFF5471", "time_local_s":1535276485, "time_remote_s":    7895, "rssi":-74, "angle": 90, "voltage":2.8, "tx_power":4, "sighting": [{"uid":"0x4A1
 ```
+For writing the collected tag data into a file, you simply redirect into a log file:
+```bash
+./openbeacon_sniffer /dev/tty.usbserial-* >>logfile.json
+```
+Please note that '>>' keeps on appending to **logfile.json** when you run openbeacon_sniffer multiple
+times. This way you can combine data from multiple runs in case you have to replaunch openbeacon_sniffer.
