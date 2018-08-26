@@ -84,7 +84,7 @@ define TARGET_FLASH
 	w4 4001e504 1
 	erase
 	sleep 1000
-	loadbin $(TARGET).bin 0
+	loadbin $(wildcard $(TARGET)*.bin) 0
 	rx 100
 	g
 	exit
@@ -134,7 +134,7 @@ $(ARM_OBJ_S) : %.o : %.s
 $(ARM_OBJ_CPP) : %.o : %.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-flash: $(TARGET).bin
+flash:
 	@echo "$$TARGET_FLASH" | $(JLINK) $(JLINK_OPT)
 
 erase:

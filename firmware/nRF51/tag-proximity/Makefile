@@ -49,9 +49,6 @@ log_tag: EXT=-log-tag
 log_tag: FEATURE=-D LOG_TAG
 log_tag: prox_tag
 
-publish: clean $(TARGET).bin
-	scp $(TARGET).bin openbeacon.org:/home/wwwrun/open.bitmanufaktur.com/web/www/people/milosch/nrf5/
-
 app_clean:
 	find src lib -name '*.o' -exec rm \{\} \;
 

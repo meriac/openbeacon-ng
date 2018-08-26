@@ -275,8 +275,20 @@ void log_dump(uint32_t tag_id)
 	while(1)
 	{
 		/* wait for button press to start data dump */
-		debug_printf("- Press [BUTTON] shortly to start data dump, or 3 seconds  to erase device...\n\r");
-		while(!nrf_gpio_pin_read(CONFIG_SWITCH_PIN));
+		debug_printf("- Press [BUTTON] shortly to start data dump, or 3 seconds to erase device [0x%08X] ...\n\r", tag_id);
+		while(!nrf_gpio_pin_read(CONFIG_SWITCH_PIN))
+		{
+			/* issue transmission start */
+			log_dump_escaped(0x01, (uint8_t*)&tag_id, sizeof(tag_id));
+			/* issue transmission end */
+			default_putchar(0xFF);
+			default_putchar(0x03);
+
+			timer_wait(MILLISECONDS(749));
+			nrf_gpio_pin_set(CONFIG_LED_PIN);
+			timer_wait(MILLISECONDS(1));
+			nrf_gpio_pin_clear(CONFIG_LED_PIN);
+		}
 		/* turn off LED */
 		nrf_gpio_pin_clear(CONFIG_LED_PIN);
 
@@ -284,9 +296,9 @@ void log_dump(uint32_t tag_id)
 		i = 0;
 		do {
 			/* turn off LED to indicate operation */
-			timer_wait(MILLISECONDS(900));
+			timer_wait(MILLISECONDS(500));
 			nrf_gpio_pin_set(CONFIG_LED_PIN);
-			timer_wait(MILLISECONDS(100));
+			timer_wait(MILLISECONDS(250));
 			nrf_gpio_pin_clear(CONFIG_LED_PIN);
 			/* cancel after three seconds */
 			if(++i>=3)
@@ -304,10 +316,6 @@ void log_dump(uint32_t tag_id)
 				/* put flash to sleep again */
 				flash_sleep(1);
 				debug_printf(" [DONE]\n\r");
-
-				/* endless sleep */
-				while(1)
-					timer_wait(MILLISECONDS(5000));
 			}
 		} while (nrf_gpio_pin_read(CONFIG_SWITCH_PIN));
 
@@ -315,6 +323,9 @@ void log_dump(uint32_t tag_id)
 
 		/* issue transmission start */
 		log_dump_escaped(0x01, (uint8_t*)&tag_id, sizeof(tag_id));
+		/* issue transmission end */
+		default_putchar(0xFF);
+		default_putchar(0x03);
 
 		/* iterate over all pages */
 		for(page=0; page<g_page; page++)
