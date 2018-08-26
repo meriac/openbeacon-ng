@@ -10,7 +10,9 @@ The proximity feature additionally allows to resolve human contacts by sending d
 
 On this page you can find the OpenBeacon proximity tag [hardware design](https://github.com/meriac/openbeacon-ng/tree/master/hardware) and the [firmware source code](https://github.com/meriac/openbeacon-ng). You can find more information here:
 
-- [OpenBeacon.org](https://www.openbeacon.org) Active 2.4GHz RFID Proximity TAG based on the nRF51822 chip from Nordic Semiconductors.
+- [QuickStart for OpenBeacon Tracking](quickstart.md) - this covers serial logging only. For networked live logging, please [contact us](mailto:info@bitmanufactory.com) for more information on our Linux-based network readers (Wifi & Ethernet).
+
+- [OpenBeacon.org](https://www.openbeacon.org/device.html) Active 2.4GHz RFID Proximity TAG based on the nRF51822 chip from Nordic Semiconductors.
 
 - [SocioPatterns.org](http://www.sociopatterns.org) research project on High-Resolution Social Networks from Wearable Proximity Sensors
 
