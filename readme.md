@@ -4,13 +4,15 @@
 
 The [OpenBeacon.org](https://www.openbeacon.org/) project provides Active 2.4 GHz RFID Realtime Proximity and Position Tracking using the BlueTooth Low Energy (BLE) compatible [nRF51822](https://www.nordicsemi.com/eng/Products/Bluetooth-Smart-Bluetooth-low-energy/nRF51822) chip from Nordic Semiconductors.
 
-Location tracking using [OpenBeacon tags](https://www.openbeacon.org/device.html) can be implemented by running an [OpenBeacon proximity tag firmware](https://www.openbeacon.org/source/) that regularly transmits beacon packets. Such packets can then be received by OpenBeacon base stations in the vicinity. Signals received by one or more base stations can then be used to determine the position of each tag in real time.
+Location tracking using [OpenBeacon tags](https://www.openbeacon.org/device.html) can be implemented by running an [OpenBeacon proximity tag firmware](https://github.com/meriac/openbeacon-ng/tree/master/firmware/nRF51/tag-proximity) that regularly transmits beacon packets. Such packets can then be received by OpenBeacon base stations in the vicinity. Signals received by one or more base stations can then be used to determine the position of each tag in real time.
 
 The proximity feature additionally allows to resolve human contacts by sending detecting other tags in a range of up to 6 meters and a resolution of approximately 0.5 meters. Once a contact is detected, that information is forwarded by the surrounding PoE Ethernet readers to the server infrastructure. Due to the shielding effect of the body, face-to-face contacts can be accurately detected. Optional encryption can make sure, that only base stations inside the system can read the packet information.
 
 On this page you can find the OpenBeacon proximity tag [hardware design](https://github.com/meriac/openbeacon-ng/tree/master/hardware) and the [firmware source code](https://github.com/meriac/openbeacon-ng). You can find more information here:
 
-- [OpenBeacon.org](https://www.openbeacon.org) Active 2.4GHz RFID Proximity TAG based on the nRF51822 chip from Nordic Semiconductors.
+- [QuickStart for OpenBeacon Tracking](quickstart.md) - this covers serial logging only. For networked live logging, please [contact us](mailto:info@bitmanufactory.com) for more information on our Linux-based network readers (Wifi & Ethernet).
+
+- [OpenBeacon.org](https://www.openbeacon.org/device.html) Active 2.4GHz RFID Proximity TAG based on the nRF51822 chip from Nordic Semiconductors.
 
 - [SocioPatterns.org](http://www.sociopatterns.org) research project on High-Resolution Social Networks from Wearable Proximity Sensors
 

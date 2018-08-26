@@ -33,13 +33,11 @@
 #include <termios.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 #define PACKED __attribute__((packed))
 #include "openbeacon-proto.h"
-#include "crc32.h"
 #include "crypto.h"
 
 #define TAG_UART_BAUD_RATE 921600
