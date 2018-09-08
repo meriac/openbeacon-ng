@@ -2,14 +2,14 @@
 
 ## Offline Logging
 
-When using the [Proximity Tag](firmware/nRF51/tag-proximity) firmware,
+When using the [Proximity Tag](../firmware/nRF51/tag-proximity) firmware,
 tags can store many days of tag sightings in their proximity inside their 8MB external flash storage by using data compression.
 
-For retrieving the stored data, we made the [tag-dumper](host/tag-dumper) host software available. An [OpenBeacon Programmer](https://www.openbeacon.org/device.html) is used to connecting tag to a host computer for data extraction. **Always remove batteries from tags before placing them into OpenBeacon Programmer. You might destroy the reader or the tag otherwise.**
+For retrieving the stored data, we made the [tag-dumper](../host/tag-dumper) host software available. An [OpenBeacon Programmer](https://www.openbeacon.org/device.html) is used to connecting tag to a host computer for data extraction. **Always remove batteries from tags before placing them into OpenBeacon Programmer. You might destroy the reader or the tag otherwise.**
 
 For each observation of different tags, the proximity tag stores the local time when observing the
 opposite tag, the power level of the received data packet in dBm, the current angle of the tag and the
-remote tag id **tag_them**. For convenience in the data processing, [tag-dumper](host/tag-dumper) also
+remote tag id **tag_them**. For convenience in the data processing, [tag-dumper](../host/tag-dumper) also
 displays the tag ID of the currently connected tag.
 
 > In case the tag is power-cycled, the tag time starts counting from zero again. To protect
@@ -80,7 +80,7 @@ the tag will go back into idle mode.
 
 ## Live Wireless Sniffing of OpenBeacon Tags
 
-The same hardware as used can be used to observe tags in operation. By using the [reader-prox](firmware/nRF51/reader-prox) firmware and the [openbeacon-sniffer](host/openbeacon-sniffer) software, a tag sitting
+The same hardware as used can be used to observe tags in operation. By using the [reader-prox](../firmware/nRF51/reader-prox) firmware and the [openbeacon-sniffer](../host/openbeacon-sniffer) software, a tag sitting
 in the [OpenBeacon Programmer](https://www.openbeacon.org/device.html) sniffs and decodes tag
 transmissions off the air.
 
@@ -91,7 +91,7 @@ sight of the reporting tag, RSSI-values are reported as well (-63dBm, -66dBm, 58
 
 The tag also reports its angle, battery voltage and its internal time stamp **time_remote_s**
 (seconds after battery insertion). The key here is the **time_local_s** field - which represents the time
-receiving this sighting at the host running [openbeacon-sniffer](host/openbeacon-sniffer).
+receiving this sighting at the host running [openbeacon-sniffer](../host/openbeacon-sniffer).
 The time unit for the local time is [Unix Epoch Time](https://www.epochconverter.com/) - which is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT).
 By combining the local time and the remote tags time, the log files for each tag can be converted into the common local time.
 
