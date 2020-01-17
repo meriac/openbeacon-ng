@@ -35,7 +35,7 @@ void ResetDefaultHandler(void) __attribute__ ((noreturn));
 // precedence over these weak definitions
 //
 //*****************************************************************************
-void Reset_Handler(void) ALIAS(ResetDefaultHandler);
+void Reset_Handler(void) ALIAS(ResetDefaultHandler) __attribute__ ((noreturn));
 void NMI_Handler(void) ALIAS(IntDefaultHandler);
 void HardFault_Handler(void) ALIAS(IntDefaultHandler);
 void SVC_Handler(void) ALIAS(IntDefaultHandler);
