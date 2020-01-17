@@ -26,7 +26,7 @@
 #include <math.h>
 #include <timer.h>
 
-#define SAMPLE_OVS 2
+#define SAMPLE_OVS 4
 #define CLOCK_DIVIDER (16000000UL / (SAMPLING_RATE*SAMPLE_OVS))
 
 static uint32_t g_seq_counter;
@@ -67,7 +67,7 @@ void SOUND_IRQ_Handler(void)
 		next = SOUND->CC[2] + CLOCK_DIVIDER;
 		SOUND->CC[2] = next;
 
-		data = (*g_audio)*4;
+		data = ((*g_audio)*3)/2;
 		g_buffer_ovs -= g_buffer[g_buffer_pos];
 		g_buffer_ovs += data;
 		g_buffer[g_buffer_pos] = data;
