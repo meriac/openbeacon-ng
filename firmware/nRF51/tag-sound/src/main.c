@@ -33,7 +33,7 @@ static uint32_t g_seq_counter;
 
 extern const uint8_t audio_start, audio_end;
 const uint8_t *g_audio;
-uint32_t g_buffer[SAMPLE_OVS];
+uint8_t g_buffer[SAMPLE_OVS];
 uint32_t g_buffer_pos, g_buffer_ovs;
 
 void blink(uint8_t times)
@@ -58,7 +58,8 @@ void halt(uint8_t times)
 
 void SOUND_IRQ_Handler(void)
 {
-	uint32_t next, data;
+	uint32_t next;
+	uint8_t data;
 
 	if(SOUND->EVENTS_COMPARE[2])
 	{
@@ -67,7 +68,7 @@ void SOUND_IRQ_Handler(void)
 		next = SOUND->CC[2] + CLOCK_DIVIDER;
 		SOUND->CC[2] = next;
 
-		data = ((*g_audio)*3)/2;
+		data = *g_audio;
 		g_buffer_ovs -= g_buffer[g_buffer_pos];
 		g_buffer_ovs += data;
 		g_buffer[g_buffer_pos] = data;
@@ -81,7 +82,7 @@ void SOUND_IRQ_Handler(void)
 				g_audio = &audio_start;
 		}
 
-		SOUND->CC[g_seq_counter & 1] = next + (g_buffer_ovs / SAMPLE_OVS);
+		SOUND->CC[g_seq_counter & 1] = next + ((g_buffer_ovs*3) / (2*SAMPLE_OVS)) + 16;
 		g_seq_counter++;
 	}
 }
@@ -89,6 +90,10 @@ void SOUND_IRQ_Handler(void)
 static void sound_init(void)
 {
 	g_audio=&audio_start;
+
+	/* Product Anomaly Notice 73 - nRF51822-PAN-v3.3 */
+	SOUND->TASKS_STOP = 1;
+	*(uint32_t *)0x40008C0C = 0;
 
 	/* setup sound output */
 	SOUND->TASKS_CLEAR = 1;
@@ -136,6 +141,9 @@ static void sound_init(void)
 
 	NVIC_SetPriority(SOUND_IRQn, IRQ_PRIORITY_SOUND);
 	NVIC_EnableIRQ(SOUND_IRQn);
+
+	/* Product Anomaly Notice 73 - nRF51822-PAN-v3.3 */
+	*(uint32_t *)0x40008C0C = 1;
 
 	/* start audio handling */
 	SOUND->TASKS_START = 1;
