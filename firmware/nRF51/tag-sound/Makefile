@@ -1,12 +1,12 @@
 TARGET=tag-sound
 ARCH=nrf5
-CPU=$(ARCH)1822
-VARIANT=xxAB
+CPU=$(ARCH)1422
+VARIANT=xxAC
 DEBUG=-g
 OPTIM=-Os -mword-relocations
 CUSTOM_KEY=inc/custom-encryption-key.h
 
-SAMPLING_RATE=10000
+SAMPLING_RATE=20000
 
 # determine if we have custom encryption keys
 ifeq ("$(wildcard $(CUSTOM_KEY))","")

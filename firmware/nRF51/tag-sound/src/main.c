@@ -26,7 +26,7 @@
 #include <math.h>
 #include <timer.h>
 
-#define SAMPLE_OVS 4
+#define SAMPLE_OVS 2
 #define CLOCK_DIVIDER (16000000UL / (SAMPLING_RATE*SAMPLE_OVS))
 
 static uint32_t g_seq_counter;
