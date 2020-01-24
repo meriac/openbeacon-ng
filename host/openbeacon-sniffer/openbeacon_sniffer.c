@@ -40,7 +40,10 @@
 #include "openbeacon-proto.h"
 #include "crypto.h"
 
+
+#ifndef TAG_UART_BAUD_RATE
 #define TAG_UART_BAUD_RATE 921600
+#endif/*TAG_UART_BAUD_RATE*/
 
 typedef struct
 {
@@ -106,10 +109,13 @@ static void port_rx(const TBeaconNgTracker* pkt_encrypted, int rssi)
 	fflush(stdout);
 }
 
-static int port_open(const char *device)
+static int port_open(const char *device, int baud_rate)
 {
 	int handle;
 	struct termios options;
+
+
+	fprintf(stderr, "opening %s @ %i baud\n\r", device, baud_rate);
 
 	/* open serial port */
 	if((handle = open( device, O_RDONLY | O_NOCTTY | O_NDELAY)) == -1)
@@ -121,11 +127,11 @@ static int port_open(const char *device)
 	/* apply serial port settings */
 	tcgetattr(handle, &options);
 	cfmakeraw(&options);
-	cfsetspeed(&options, TAG_UART_BAUD_RATE);
+	cfsetspeed(&options, baud_rate);
 
 	if(tcsetattr(handle, TCSANOW, &options))
 	{
-		fprintf(stderr, "error: failed to set baud %i rate for '%s'\n", TAG_UART_BAUD_RATE, device);
+		fprintf(stderr, "error: failed to set baud %i rate for '%s'\n", baud_rate, device);
 		exit(11);		
 	}
 
@@ -147,13 +153,12 @@ int main( int argc, const char* argv[] )
 
 	if( argc < 2 )
 	{
-		fprintf (stderr, "usage: %s /dev/tty.usbserial-AK0535TL\n", argv[0]);
+		fprintf (stderr, "usage: %s /dev/ttyACM0 [baudrate]\n", argv[0]);
 		return 1;
 	}
 
 	/* initialize descriptor list */
-	fd = port_open(argv[1]);
-	printf("fd=%i\n", fd);
+	fd = port_open(argv[1], (argc == 3) ? atoi(argv[2]) : TAG_UART_BAUD_RATE);
 
 	/* loop over UART data */
 	len = prev = 0;
