@@ -86,13 +86,13 @@ static void port_rx(const void* pkt_encrypted, int rssi)
 	}
 
 	debug_printf(
-		"{ \"uid\":\"0x%08X\", \"time_local_s\":%8u, \"time_remote_s\":%8u, \"rssi\":%3i, \"angle\":%3i, \"voltage\":%4i, \"tx_power\":%i",
+		"{ \"uid\":\"0x%08X\", \"time_local_s\":%8u, \"time_remote_s\":%8u, \"rssi\":%3i, \"angle\":%3i, \"voltage\":%2i, \"tx_power\":%i",
 		pkt.uid,
 		clock_get(),
 		pkt.epoch,
 		rssi,
 		pkt.angle,
-		pkt.voltage * 100,
+		pkt.voltage,
 		pkt.tx_power);
 
 	/* optionally decode button */
