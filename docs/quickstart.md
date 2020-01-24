@@ -1,4 +1,10 @@
+
 # QuickStart for OpenBeacon Tracking
+
+
+## Turning the BBC micro:bit into an OpenBeacon Reader
+
+See documentation on [Turning the BBC micro:bit into an OpenBeacon Reader](microbit.md) for live sniffing of OpenBeacon sightings. For using the [OpenBeacon Programmer](https://www.openbeacon.org/device.html) instead for offline data data dumping and for live OpenBeacon monotoring, see the documentation below.
 
 ## Offline Logging
 
@@ -78,7 +84,10 @@ For erasing the tag, you need to press the button on the tag for more than 3 sec
 starts blinking very quickly. Erasing the tag takes 10's of seconds. Once the erasing stopped,
 the tag will go back into idle mode.
 
+
 ## Live Wireless Sniffing of OpenBeacon Tags
+
+> See latest documentation on [Turning the BBC micro:bit into an OpenBeacon Reader](microbit.md) for live sniffing of OpenBeacon sightings.
 
 The same hardware as used can be used to observe tags in operation. By using the [reader-prox](../firmware/nRF51/reader-prox) firmware and the [openbeacon-sniffer](../host/openbeacon-sniffer) software, a tag sitting
 in the [OpenBeacon Programmer](https://www.openbeacon.org/device.html) sniffs and decodes tag
