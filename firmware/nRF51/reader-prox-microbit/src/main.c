@@ -25,6 +25,9 @@
 #include <openbeacon.h>
 #include <radio.h>
 #include <timer.h>
+#include <clock.h>
+#include <aes.h>
+#include <../../tag-proximity/inc/openbeacon-proto.h>
 
 static int8_t g_tag_angle;
 
@@ -61,11 +64,67 @@ void halt(uint8_t times)
 	}
 }
 
+static void port_rx(const void* pkt_encrypted, int rssi)
+{
+	int proto, i;
+	int status;
+	TBeaconNgTracker pkt;
+
+	/* decrypt valid packet */
+	if((status = aes_decr(pkt_encrypted, &pkt, sizeof(pkt), CONFIG_SIGNATURE_SIZE))!=0)
+	{
+		debug_printf("error: failed decrypting packet with error [%i]\n", status);
+		return;
+	}
+
+	/* white-list supported protocols */
+	proto = pkt.proto & RFBPROTO_PROTO_MASK;
+	if(!((proto == 30) || (proto == 31)))
+	{
+		debug_printf("error: uknnown protocol %i\n", proto);
+		return;
+	}
+
+	debug_printf(
+		"{ \"uid\":\"0x%08X\", \"time_local_s\":%8u, \"time_remote_s\":%8u, \"rssi\":%3i, \"angle\":%3i, \"voltage\":%4i, \"tx_power\":%i",
+		pkt.uid,
+		clock_get(),
+		pkt.epoch,
+		rssi,
+		pkt.angle,
+		pkt.voltage * 100,
+		pkt.tx_power);
+
+	/* optionally decode button */
+	if(pkt.proto & RFBPROTO_PROTO_BUTTON)
+		debug_printf(", \"button\": 1");
+
+	switch(proto)
+	{
+		case 30:
+			if(pkt.p.sighting[0].uid)
+			{
+				debug_printf(", \"sighting\": ");
+				for(i=0; i<CONFIG_SIGHTING_SLOTS; i++)
+					if(pkt.p.sighting[i].uid)
+						debug_printf("%c{\"uid\":\"0x%08X\",\"rssi\":%i}",
+							i ? ',':'[',
+							pkt.p.sighting[i].uid,
+							pkt.p.sighting[i].rx_power
+						);
+				debug_printf("]");
+			}
+			break;
+	}
+	debug_printf("}\n\r");
+}
+
 void main_entry(void)
 {
-	int i;
+	int i, decode;
 	uint8_t *p, data;
 	TBeaconBuffer pkt;
+
 	uint32_t tag_id;
 
 	/* enable LED output */
@@ -82,9 +141,14 @@ void main_entry(void)
 
 	/* start timer */
 	timer_init();
+	/* start clock */
+	clock_init();
 
 	/* calculate tag ID from NRF_FICR->DEVICEID */
 	tag_id = crc32((void*)&NRF_FICR->DEVICEID, sizeof(NRF_FICR->DEVICEID));
+
+	/* Initialize AES decryption */
+	aes_init(tag_id);
 
 	/* start radio */
 	debug_printf("\n\rInitializing Reader[%08X] (CH:%02i) v" PROGRAM_VERSION "\n\r",
@@ -92,13 +156,27 @@ void main_entry(void)
 	radio_init();
 
 	/* enter main loop */
-	blink(3);
+	blink(5);
 	led_set(0);
+	decode = 0;
 	while(TRUE)
 	{
-		if(!radio_rx(&pkt))
-			__WFE();
-		else
+
+		if(!nrf_gpio_pin_read(CONFIG_BTN_A))
+		{
+			blink(2);
+			timer_wait(MILLISECONDS(1000));
+			decode = 1;
+		}
+
+		if(!nrf_gpio_pin_read(CONFIG_BTN_B))
+		{
+			blink(3);
+			timer_wait(MILLISECONDS(1000));
+			decode = 0;
+		}
+
+		if(radio_rx(&pkt))
 		{
 #ifdef  RSSI_FILTERING
 			if(pkt.rssi<=RSSI_FILTERING)
@@ -108,19 +186,24 @@ void main_entry(void)
 			led_set(1);
 
 			/* output packet, escape 0xFF's by appending 0x01's */
-			p = (uint8_t*)&pkt;
-			for(i=0; i<(int)sizeof(pkt); i++)
+			if(decode)
+				port_rx(&pkt.buf, pkt.rssi);
+			else
 			{
-				data = *p++;
-				default_putchar(data);
-				/* if data is 0xFF, emit control character */
-				if(data == 0xFF)
-					default_putchar(0x00);
-			}
+				p = (uint8_t*)&pkt;
+				for(i=0; i<(int)sizeof(pkt); i++)
+				{
+					data = *p++;
+					default_putchar(data);
+					/* if data is 0xFF, emit control character */
+					if(data == 0xFF)
+						default_putchar(0x00);
+				}
 
-			/* issue frame termination indicator */
-			default_putchar(0xFF);
-			default_putchar(0x01);
+				/* issue frame termination indicator */
+				default_putchar(0xFF);
+				default_putchar(0x01);
+			}
 			led_set(0);
 		}
 	}

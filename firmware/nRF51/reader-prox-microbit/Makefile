@@ -10,6 +10,8 @@ APP_CFLAGS=-Iinc -std=gnu99 -fgnu89-inline -D__USE_CMSIS $(FEATURE)
 APP_LDFLAGS=-lm
 
 APP_SRC= \
+  src/aes.c \
+  src/clock.c \
   src/radio.c \
   src/timer.c \
   src/main.c
