@@ -73,7 +73,7 @@ static void port_rx(const void* pkt_encrypted, int rssi)
 	/* decrypt valid packet */
 	if((status = aes_decr(pkt_encrypted, &pkt, sizeof(pkt), CONFIG_SIGNATURE_SIZE))!=0)
 	{
-		debug_printf("error: failed decrypting packet with error [%i]\n", status);
+		debug_printf("error: failed decrypting packet with error [%i]\n\r", status);
 		return;
 	}
 
@@ -81,7 +81,7 @@ static void port_rx(const void* pkt_encrypted, int rssi)
 	proto = pkt.proto & RFBPROTO_PROTO_MASK;
 	if(!((proto == 30) || (proto == 31)))
 	{
-		debug_printf("error: uknnown protocol %i\n", proto);
+		debug_printf("error: uknnown protocol %i\n\r", proto);
 		return;
 	}
 
