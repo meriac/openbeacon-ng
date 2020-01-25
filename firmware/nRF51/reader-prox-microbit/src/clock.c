@@ -26,7 +26,7 @@
 #include <timer.h>
 #include <clock.h>
 
-static volatile uint8_t g_clock_time;
+static volatile uint32_t g_clock_time;
 
 void RTC0_IRQ_Handler(void)
 {
